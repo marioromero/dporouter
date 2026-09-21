@@ -28,48 +28,43 @@ Do not invent them.
 
 Current iteration:
 
-`Prompt 0 — project governance foundation`
+`Prompt 1 — Stage 1 application shell`
 
-Expected repository state after this iteration:
+Status:
 
-- Git repository initialized;
-- canonical governance files present;
-- project skills present;
-- read-only reviewer agent present;
-- no application stack selected;
-- no UI implemented;
-- no domain activity data imported;
-- no MCP configured.
+`COMPLETED`
 
-## Not yet approved
+Implemented:
 
-The following are NOT yet approved for implementation:
+* application shell;
+* primary navigation;
+* Map Mode entry;
+* Guided Mode entry;
+* D1-D12 domain registry;
+* domain deep links;
+* activity deep-link infrastructure;
+* non-canonical activity demo;
+* domain search;
+* provenance presentation;
+* sources empty state;
+* desktop/tablet responsive behavior;
+* baseline automated tests.
 
-- application framework;
-- package manager;
-- UI component library;
-- CSS strategy;
-- router;
-- state-management library;
-- persistence layer;
-- database;
-- authentication;
-- Stage 2 client data;
-- executable applicability engine;
-- executable state-effect engine;
-- document generation;
-- AI generation;
-- external integrations;
-- MCP configuration.
+Still not implemented:
 
-Do not select or implement these independently.
+* D01-D12 detailed activities;
+* canonical legal sources;
+* characterization questions;
+* applicability engine;
+* state-effect engine;
+* client persistence;
+* Stage 2 roadmap;
+* authentication;
+* database;
+* document generation;
+* AI;
+* MCP.
 
-## Next controlled iteration
+Next controlled iteration:
 
-After Prompt 0 is reviewed and accepted:
-
-`Prompt 1 — technical foundation, navigation shell and Stage 1 information architecture`
-
-Prompt 1 must not begin automatically.
-
-Wait for explicit instruction.
+`Pending review of Prompt 1. Do not proceed without explicit instruction.`

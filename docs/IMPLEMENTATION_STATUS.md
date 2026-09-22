@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-21
+Last controlled update: 2026-09-22
 
 ## Functional baseline
 
@@ -28,7 +28,7 @@ Do not invent them.
 
 Current iteration:
 
-`Prompt 3 — canonical D2 import`
+`Prompt 4 — guided execution engine pilot`
 
 Status:
 
@@ -66,9 +66,32 @@ Implemented adicionalmente:
 * inventory revalidation;
 * D1 → D2 dependency resolution.
 
+Implemented adicionalmente:
+
+* ExecutionProtocol canonical layer;
+* GuidanceNode model;
+* deterministic decision rules;
+* fact reuse architecture;
+* protocol deep links;
+* explainable outcomes;
+* next-action links;
+* D1.02 guided DPO assessment pilot.
+
 Canonical activity count:
 
 `32`
+
+Stage 1 canonical activities:
+
+`32`
+
+Guided protocols:
+
+`1`
+
+Protocol coverage:
+
+`D1.02 only`
 
 Pending canonical cross-domain targets:
 
@@ -80,24 +103,14 @@ Pending canonical cross-domain targets:
 
 Still not implemented:
 
-* D03-D12 detailed activities;
-* characterization questions;
-* applicability engine;
+* protocols for remaining activities;
+* D03-D12;
+* real characterization UI;
+* persistent client context;
 * state-effect engine;
-* client persistence;
-* Stage 2 roadmap;
-* authentication;
-* database;
-* document generation;
-* AI;
-* MCP.
-
-Canonical content architecture:
-
-* `/content/domains` — structured single source of truth
-* `/docs/domains` — generated human-readable projections
-* `/content/sources.ts` — canonical legal-source registry
+* Stage 2 persistence;
+* AI.
 
 Next controlled iteration:
 
-`Pending review of canonical D2 import. Do not proceed without explicit instruction.`
+`Pending architectural review of guided execution pilot. Do not proceed without explicit instruction.`

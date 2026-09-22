@@ -1,0 +1,127 @@
+/**
+ * Contratos canónicos de ejecución guiada (Stage 1).
+ *
+ * Sintaxis TypeScript de la ampliación de `docs/DATA_CONTRACTS.md`
+ * (ExecutionProtocol y conceptos asociados).
+ *
+ * Separación estructural obligatoria:
+ * - `ActivityDefinition` (universal, intacta en `src/types.ts`) describe
+ *   QUÉ actividad existe.
+ * - `ExecutionProtocol` define CÓMO el profesional es guiado a través de
+ *   hechos, preguntas, reglas y resultados.
+ *
+ * Un protocolo NUNCA se hardcodea dentro de componentes React: vive como
+ * contenido canónico bajo `/content/protocols` y la UI lo consume de forma
+ * genérica. `unknown` nunca se coacciona a `false`.
+ */
+
+export type ProtocolMode = "decision" | "procedure" | "checklist";
+
+export type GuidanceNodeType = "question" | "decision" | "result";
+
+export type GuidanceAnswerType = "yes_no_unknown" | "single_select" | "none";
+
+/** Procedencia de un protocolo, nodo o resultado. */
+export type ProtocolProvenance = "legal_requirement" | "agency_standard";
+
+/** Efecto de una respuesta sobre un hecho estable. */
+export interface FactEffect {
+  fact_key: string;
+  value: string;
+}
+
+/** Opción de respuesta de un nodo pregunta. */
+export interface AnswerOption {
+  value: string;
+  label: string;
+  description?: string;
+  fact_effect?: FactEffect;
+  /** Destino directo; ausente cuando decide la regla o el flujo por defecto. */
+  next_node_key?: string;
+}
+
+/**
+ * Condición declarativa mínima y explicable. No es un lenguaje de
+ * programación general: solo comparaciones de hechos, combinadores
+ * booleanos y conteo de factores verdaderos.
+ */
+export type FactCondition =
+  | { op: "all"; conditions: FactCondition[] }
+  | { op: "any"; conditions: FactCondition[] }
+  | { op: "not"; condition: FactCondition }
+  | { op: "fact_equals"; fact_key: string; value: string }
+  | { op: "fact_in"; fact_key: string; values: string[] }
+  | { op: "fact_unresolved"; fact_key: string }
+  | { op: "count_true"; facts: string[]; equals: string; at_least: number };
+
+/** Regla determinística con destino y explicación textual. */
+export interface DecisionRule {
+  rule_id: string;
+  description: string;
+  when: FactCondition;
+  goto_outcome_key?: string;
+  goto_node_key?: string;
+  explanation: string;
+}
+
+/** Nodo de guía: pregunta, decisión o resultado intermedio. */
+export interface GuidanceNode {
+  node_key: string;
+  node_type: GuidanceNodeType;
+  title: string;
+  prompt?: string;
+  why_it_matters?: string;
+  fact_key?: string;
+  answer_type: GuidanceAnswerType;
+  options?: AnswerOption[];
+  evidence_to_review?: string[];
+  help_text?: string[];
+  /** Destino cuando ninguna transición ni opción directa aplica. */
+  default_next_node_key?: string;
+  /** Reglas evaluadas en orden; la primera coincidencia gana. */
+  transitions?: DecisionRule[];
+  related_activity_keys?: string[];
+  provenance?: ProtocolProvenance;
+}
+
+/** Siguiente acción de un resultado. */
+export interface NextAction {
+  kind: "activity" | "node" | "restart" | "info";
+  label: string;
+  activity_key?: string;
+  node_key?: string;
+  note?: string;
+  /** Condición declarativa de visibilidad; ausente = siempre visible. */
+  show_when?: FactCondition;
+}
+
+/** Resultado explicable de un protocolo. */
+export interface ProtocolOutcome {
+  outcome_key: string;
+  label: string;
+  classification: "legal_requirement" | "agency_standard";
+  explanation: string;
+  detail?: string;
+  provenance: ProtocolProvenance;
+  next_actions: NextAction[];
+}
+
+/** Protocolo de ejecución guiada de una actividad. */
+export interface ExecutionProtocol {
+  protocol_key: string;
+  activity_key: string;
+  version: number;
+  mode: ProtocolMode;
+  title: string;
+  description: string;
+  entry_node_key: string;
+  nodes: GuidanceNode[];
+  outcomes: ProtocolOutcome[];
+  /** Hechos que deben estar resueltos antes de una conclusión definitiva. */
+  decision_fact_keys: string[];
+  last_review: string;
+  provenance: ProtocolProvenance;
+}
+
+/** Mapa transitorio de hechos de sesión: fact_key → valor respondido. */
+export type FactMap = Record<string, string>;

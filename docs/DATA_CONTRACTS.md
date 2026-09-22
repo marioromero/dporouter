@@ -678,3 +678,174 @@ Eventually:
 
 Never silently discard an invalid reference.
 
+## 33. ExecutionProtocol
+
+An execution protocol defines HOW a professional is guided through facts,
+questions, rules and outcomes for one activity. It complements, never
+replaces, the `ActivityDefinition`.
+
+An execution protocol must be capable of representing:
+
+```text
+protocol_key
+activity_key
+version
+mode
+title
+description
+entry_node_key
+nodes[]
+outcomes[]
+decision_fact_keys[]
+last_review
+provenance
+```
+
+Allowed baseline `mode` values:
+
+```text
+decision
+procedure
+checklist
+```
+
+Rules:
+
+* One activity has zero or one active protocol in Stage 1.
+* Historical versions are reserved for later; no persistent versioning now.
+* Protocols live as canonical structured content, never hardcoded in UI.
+* The relation resolves via the protocol registry (`activity_key →
+  ExecutionProtocol`); `ActivityDefinition` carries no protocol fields.
+
+## 34. GuidanceNode
+
+A guidance node must be capable of representing:
+
+```text
+node_key
+node_type
+title
+prompt
+why_it_matters
+fact_key
+answer_type
+options[]
+evidence_to_review[]
+help_text[]
+default_next_node_key
+transitions[]
+related_activity_keys[]
+provenance
+```
+
+Allowed baseline `node_type` values:
+
+```text
+question
+decision
+result
+```
+
+Allowed baseline `answer_type` values:
+
+```text
+yes_no_unknown
+single_select
+none
+```
+
+Rules:
+
+* Do not force irrelevant fields on nodes that do not need them.
+* Every `node_key` has a stable deep link.
+* Opening a node without prior session state must work and must not invent
+  prior answers.
+
+## 35. AnswerOption
+
+An answer option must be capable of representing:
+
+```text
+value
+label
+description
+fact_effect
+next_node_key (only when the transition is direct)
+```
+
+Rules:
+
+* Options produce facts with stable keys.
+* A response never coerces `unknown` into `no`.
+
+## 36. DecisionRule
+
+A decision rule is declarative and explainable. It must support at minimum:
+
+```text
+all
+any
+not
+comparison of a fact_key against a value
+count of true factors within a set
+destination route
+textual explanation of why the rule fired
+```
+
+Rules:
+
+* No general-purpose programming language is constructed.
+* Rules are evaluated in order; the first match wins.
+* Every fired rule exposes its explanation to the user.
+
+## 37. ProtocolOutcome
+
+A protocol outcome must be capable of representing:
+
+```text
+outcome_key
+label
+classification
+explanation
+provenance
+next_actions[]
+```
+
+`classification` preserves the legal-requirement / agency-standard
+distinction at result level. A methodological recommendation must never be
+labeled as a legal requirement.
+
+## 38. NextAction
+
+A next action may link to:
+
+* another activity;
+* another node;
+* an evaluation restart;
+* an informational action without destination.
+
+Rules:
+
+* Existing activities render as real links.
+* Future targets not yet imported use the canonical pending-reference
+  mechanism. No broken links are generated.
+
+## 39. Guided Facts and Evaluation Context
+
+Guidance nodes produce facts with stable keys. A protocol must not assume it
+will always have to ask them: the engine receives an evaluation context and
+reuses known facts, marking them as already available without demanding a
+new answer.
+
+Rules:
+
+```text
+unknown != no
+unanswered != no
+```
+
+An unresolved mandatory fact prevents a definitive outcome when the protocol
+marks it as necessary; the system reports which facts are missing instead.
+Session answers in Stage 1 are transient and are never presented as saved
+client records.
+

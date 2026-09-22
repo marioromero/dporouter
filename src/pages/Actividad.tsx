@@ -7,7 +7,9 @@ import {
   getDomainForActivity,
   getUnresolvedReferences,
 } from "../../content/registry";
+import { getProtocolForActivity } from "../../content/protocols/registry";
 import { ActivitySheet } from "../components/ActivitySheet";
+import { ActivityGuidedSection } from "../components/GuidedSection";
 import { NotFoundPage } from "./NotFound";
 
 export function ActividadPage() {
@@ -28,6 +30,7 @@ export function ActividadPage() {
     return <NotFoundPage />;
   }
   const domain = getDomainForActivity(activityKey);
+  const protocol = getProtocolForActivity(activityKey);
 
   return (
     <ActivitySheet
@@ -36,6 +39,11 @@ export function ActividadPage() {
         pendingImportKeys: getUnresolvedReferences(),
         domain,
       })}
+      guided={
+        protocol ? (
+          <ActivityGuidedSection protocol={protocol} activityKey={activityKey} />
+        ) : undefined
+      }
     />
   );
 }

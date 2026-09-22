@@ -22,7 +22,14 @@ function modeFor(pathname: string): { label: string; className: string } | null 
 function crumbsFor(pathname: string): string {
   if (pathname === "/") return "Inicio";
   if (pathname.startsWith("/dominios/")) return `Dominios / ${pathname.split("/")[2] ?? ""}`;
-  if (pathname.startsWith("/actividad/")) return `Actividad / ${pathname.split("/")[2] ?? ""}`;
+  if (pathname.startsWith("/actividad/")) {
+    const parts = pathname.split("/");
+    const base = `Actividad / ${parts[2] ?? ""}`;
+    if (parts[3] === "guia") {
+      return parts[4] ? `${base} / Guía / ${parts[4]}` : `${base} / Guía`;
+    }
+    return base;
+  }
   const found = NAV.find((n) => n.to !== "/" && (pathname === n.to || pathname.startsWith(n.to + "/")));
   if (found) {
     return found.label;

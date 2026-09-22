@@ -12,9 +12,12 @@ import type { ActivityViewModel } from "../activityViewModel";
 export function ActivitySheet({
   view,
   banner,
+  guided,
 }: {
   view: ActivityViewModel;
   banner?: string;
+  /** Sección opcional de evaluación guiada (solo actividades con protocolo). */
+  guided?: React.ReactNode;
 }) {
   return (
     <>
@@ -70,6 +73,8 @@ export function ActivitySheet({
         <h2>Pregunta gatillo</h2>
         <p>{view.triggerQuestion}</p>
       </section>
+
+      {guided ?? null}
 
       <section className="activity-section" aria-label="Qué debe hacer el profesional">
         <h2>Qué debe hacer el profesional</h2>

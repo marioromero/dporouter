@@ -360,3 +360,31 @@ Canonical legal or operational content must not be independently duplicated insi
 A content change is made once in the canonical structured source, followed by regeneration and integrity validation.
 
 Runtime behavior must not parse domain Markdown.
+
+---
+
+## ADR-042 — Guided execution is a separate canonical layer
+
+Status: ACCEPTED
+
+ActivityDefinition describes the operational activity.
+
+ExecutionProtocol defines how a professional is guided through facts, questions, rules and outcomes.
+
+Protocols live as canonical structured content and are not hardcoded inside UI components.
+
+Map Mode, Guided Mode and future Stage 2 workflows may reuse the same protocol definitions.
+
+---
+
+## ADR-043 — Decision support must be deterministic and explainable
+
+Status: ACCEPTED
+
+Canonical legal and professional decision protocols use explicit facts and deterministic rules.
+
+Unknown required facts prevent a definitive outcome when the protocol marks them as necessary.
+
+The system must expose the facts and rules that produced each conclusion.
+
+An LLM must not silently determine a legal obligation or professional classification in place of the canonical rules.

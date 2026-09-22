@@ -1,5 +1,7 @@
 import type { ExecutionProtocol } from "./types";
 import { DPO_NEED_ASSESSMENT_PROTOCOL } from "./dpo.need_assessment";
+import { MPI_FORMALIZE_ADOPTION_PROTOCOL } from "./mpi.formalize_adoption";
+import { DPO_GOVERNANCE_VALIDATION_PROTOCOL } from "./dpo.initial_governance_validation";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -13,7 +15,11 @@ import {
  * permanece intacta y no conoce los protocolos.
  */
 
-const PROTOCOLS: ExecutionProtocol[] = [DPO_NEED_ASSESSMENT_PROTOCOL];
+const PROTOCOLS: ExecutionProtocol[] = [
+  DPO_NEED_ASSESSMENT_PROTOCOL,
+  MPI_FORMALIZE_ADOPTION_PROTOCOL,
+  DPO_GOVERNANCE_VALIDATION_PROTOCOL,
+];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(
   PROTOCOLS.map((p) => [p.activity_key, p]),

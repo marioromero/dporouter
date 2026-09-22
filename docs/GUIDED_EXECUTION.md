@@ -45,6 +45,23 @@ never demands having visited previous nodes. Missing prerequisites are
 reported with human-language labels and a link to the next node able to
 produce one of them; prior answers are never invented.
 
+## 2b. Mode calibration
+
+The same node contract serves the three modes without new node or answer
+types:
+
+* `decision` — facts feed deterministic rules toward a classified outcome;
+* `procedure` — steps are represented as verifications of facts ("verified
+  and recorded" vs "pending"), never as artificial yes/no discovery
+  questions; `single_select` carries the explicit state labels;
+* `checklist` — each check uses one `yes_no_unknown` fact with explicit
+  human meaning per check (satisfactory / requires action / insufficient
+  information); no global score is derived.
+
+If a future activity cannot be represented cleanly within these shapes,
+the content stays intact and the gap is reported (ENGINE_GAP) instead of
+forcing a misleading workaround.
+
 ## 3. Facts
 
 Nodes produce facts with stable keys (e.g. an MPI lifecycle state, or one

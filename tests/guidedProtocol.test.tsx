@@ -69,7 +69,11 @@ describe("motor de ejecución guiada — piloto D1.02", () => {
     expect(
       listProtocols().filter((p) => p.activity_key === "dpo.need_assessment"),
     ).toHaveLength(1);
-    expect(listProtocols()).toHaveLength(1);
+    expect(
+      listProtocols().map((p) => p.activity_key).sort(),
+    ).toEqual(
+      ["dpo.initial_governance_validation", "dpo.need_assessment", "mpi.formalize_adoption"].sort(),
+    );
   });
 
   it("2. activity key coincide con la ActivityDefinition", () => {

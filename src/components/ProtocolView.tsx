@@ -23,6 +23,7 @@ import {
 } from "../guidance/engine";
 import { CopyLinkButton, ProvenanceBadge, provenanceHuman } from "./ui";
 import { ConflictResolver } from "./ConflictResolver";
+import { modeStartLabel } from "./ActivityWorkView";
 import { useWorkspace } from "../workspace/context";
 import { getFactStatus, blockingConflicts } from "../workspace/facts";
 import { describeFactKey } from "../workspace/factLabels";
@@ -226,14 +227,14 @@ export function ProtocolEntryView({
             </Link>
           ) : session.started ? (
             <Link className="btn" to={nodeHref(activity.activityKey, targetNode)}>
-              Continuar evaluación
+              {modeStartLabel(protocol.mode, true)}
             </Link>
           ) : (
             <Link
               className="btn"
               to={nodeHref(activity.activityKey, protocol.entry_node_key)}
             >
-              Iniciar evaluación
+              {modeStartLabel(protocol.mode, false)}
             </Link>
           )}
           <Link

@@ -29,7 +29,7 @@ import { ProtocolActivityLink } from "./ProtocolView";
  * vista normal; quedan en un <details> de auditoría colapsado.
  */
 
-function modeStartLabel(mode: ExecutionProtocol["mode"], started: boolean): string {
+export function modeStartLabel(mode: ExecutionProtocol["mode"], started: boolean): string {
   if (mode === "procedure") {
     return started ? "Continuar procedimiento" : "Iniciar procedimiento";
   }

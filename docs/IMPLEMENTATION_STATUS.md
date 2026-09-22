@@ -121,11 +121,11 @@ Stage 1 canonical activities:
 
 Guided protocols:
 
-`1`
+`3`
 
 Protocol coverage:
 
-`D1.02 only`
+`D1.02, D1.04, D1.09 (D1.03 blocked: no deterministic canonical criteria)`
 
 Pending canonical cross-domain targets:
 

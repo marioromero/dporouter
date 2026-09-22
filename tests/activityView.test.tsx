@@ -118,7 +118,9 @@ describe("infraestructura de ficha desacoplada del fixture", () => {
     // Dependencias: relaciones actividad → actividad.
     expect(byLabel["dependencies"]).toContain("d2.treatment_inventory");
     expect(byLabel["dependencies"]).not.toContain("high_risk_treatment");
-    expect(view.dependencies[0]).toContain("input_dependency");
+    expect(view.dependencies[0].targetKey).toBe("d2.treatment_inventory");
+    expect(view.dependencies[0].type).toBe("input_dependency");
+    expect(view.dependencies[0].typeLabel).toBe("Insumo de otra actividad");
   });
 
   it("ActivityDefinition no recibió campos específicos de DEMO", () => {

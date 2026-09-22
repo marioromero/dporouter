@@ -3,17 +3,40 @@ import type { DomainDefinition } from "../types";
 /**
  * Registro canónico de dominios D1-D12.
  * Códigos, claves y nombres exactos según la iteración vigente.
- * Sin actividades inventadas: `activity_keys` permanece vacío hasta
- * la importación controlada de D01-D12.
+ * D1 importado (D01); D2-D12 permanecen sin actividades hasta su
+ * importación controlada.
  */
 export const DOMAINS: DomainDefinition[] = [
   {
     domain_key: "d1",
     human_code: "D1",
     name: "Gobernanza, accountability, DPO y MPI",
-    objective: "",
-    description: "",
-    activity_keys: [],
+    objective:
+      "Establecer y mantener el marco de gobernanza, prevención, DPO y Modelo de Prevención de Infracciones del responsable, asegurando que las decisiones, designaciones, facultades, recursos, estados y mecanismos de supervisión permanezcan formalizados, trazables y operativos.",
+    description:
+      "Este dominio gobierna la prevención general de infracciones, la evaluación y ciclo de vida del DPO, la decisión de adoptar un Modelo de Prevención de Infracciones, sus componentes organizativos y su eventual certificación. Coordina actividades especializadas de otros dominios sin duplicarlas.",
+    activity_keys: [
+      "governance.preventive_framework",
+      "dpo.need_assessment",
+      "mpi.need_assessment",
+      "mpi.formalize_adoption",
+      "mpi.internal_reporting_and_whistleblowing",
+      "mpi.internal_disciplinary_framework",
+      "mpi.internal_regulation_integrate",
+      "dpo.designate",
+      "dpo.initial_governance_validation",
+      "dpo.contact_and_agency_notification",
+      "dpo.operating_model",
+      "dpo.confidentiality_duty",
+      "dpo.annual_plan",
+      "dpo.annual_report",
+      "dpo.infringement_escalation",
+      "dpo.governance_revalidation",
+      "dpo.terminate_or_replace",
+      "mpi.assemble_program",
+      "mpi.certification_lifecycle",
+      "mpi.lifecycle_review",
+    ],
     related_domain_keys: [],
   },
   {

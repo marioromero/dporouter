@@ -1,4 +1,9 @@
-import { ProvenanceCard } from "../components/ui";
+import { SOURCES } from "../data/sources";
+import {
+  ProvenanceCard,
+  TransitionalBadge,
+  sourceKindLabel,
+} from "../components/ui";
 
 export function FuentesPage() {
   return (
@@ -26,11 +31,43 @@ export function FuentesPage() {
       </div>
 
       <h2>Fuentes canónicas</h2>
-      <div className="empty">
-        <p>
-          Las fuentes jurídicas se incorporarán junto con las actividades
-          canónicas. No se mostrarán referencias provisionales.
-        </p>
+      <div className="source-list">
+        {SOURCES.map((s) => (
+          <article key={s.source_id} className="source-card">
+            <h3>{s.name}</h3>
+            <dl>
+              <dt>Tipo</dt>
+              <dd>{sourceKindLabel(s.kind)}</dd>
+              <dt>Estado regulatorio</dt>
+              <dd>
+                {s.regulatory_status === "transitional" ? (
+                  <>
+                    <TransitionalBadge />{" "}
+                    <span>Nuevo régimen con vigencia desde 01-12-2026</span>
+                  </>
+                ) : (
+                  s.regulatory_status
+                )}
+              </dd>
+              {s.published_at.trim() !== "" ? (
+                <>
+                  <dt>Publicación</dt>
+                  <dd>{s.published_at}</dd>
+                </>
+              ) : null}
+              <dt>Última revisión</dt>
+              <dd>{s.last_review}</dd>
+              <dt>Nota temporal</dt>
+              <dd>{s.note}</dd>
+            </dl>
+            <h3>Provisiones utilizadas</h3>
+            <ul>
+              {s.provisions_used.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ul>
+          </article>
+        ))}
       </div>
     </>
   );

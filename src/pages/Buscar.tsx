@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { searchDomains } from "../data/domains";
+import { searchActivities } from "../data/d01";
+import { activityTypeLabel } from "../components/ui";
 
 export function BuscarPage() {
   const [term, setTerm] = useState("");
   const trimmed = term.trim();
-  const results = useMemo(() => searchDomains(trimmed), [trimmed]);
+  const domains = useMemo(() => searchDomains(trimmed), [trimmed]);
+  const activities = useMemo(() => searchActivities(trimmed), [trimmed]);
 
   return (
     <>
@@ -28,17 +31,18 @@ export function BuscarPage() {
         />
       </div>
 
+      <h2>Dominios</h2>
       {trimmed === "" ? (
         <div className="empty">
           <p>Escribe un término para comenzar.</p>
         </div>
-      ) : results.length === 0 ? (
+      ) : domains.length === 0 ? (
         <div className="empty">
           <p>No encontramos coincidencias.</p>
         </div>
       ) : (
         <ul className="domain-rows">
-          {results.map((d) => (
+          {domains.map((d) => (
             <li key={d.domain_key}>
               <Link className="domain-row" to={`/dominios/${d.domain_key}`}>
                 <span className="domain-code" aria-hidden="true">
@@ -55,12 +59,40 @@ export function BuscarPage() {
       )}
 
       <h2>Actividades</h2>
-      <div className="empty">
-        <p>
-          La búsqueda de actividades se habilitará al importar las definiciones
-          canónicas D1–D12.
-        </p>
-      </div>
+      {trimmed === "" ? (
+        <div className="empty">
+          <p>Escribe un término para comenzar.</p>
+        </div>
+      ) : activities.length === 0 ? (
+        <div className="empty">
+          <p>No encontramos coincidencias.</p>
+        </div>
+      ) : (
+        <ul className="domain-rows">
+          {activities.map((a) => (
+            <li key={a.activity_key}>
+              <Link className="domain-row" to={`/actividad/${a.activity_key}`}>
+                <span className="domain-code" aria-hidden="true">
+                  {a.human_code}
+                </span>
+                <span className="activity-row-main">
+                  <span className="activity-row-name">{a.name}</span>
+                  <span className="activity-row-meta">
+                    <span>D1</span>
+                    <span>{activityTypeLabel(a.activity_type)}</span>
+                    <span>
+                      <code>{a.activity_key}</code>
+                    </span>
+                  </span>
+                </span>
+                <span className="domain-go" aria-hidden="true">
+                  Abrir →
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }

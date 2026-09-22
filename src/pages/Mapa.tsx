@@ -20,7 +20,15 @@ export function MapaPage() {
                 <span className="domain-code" aria-hidden="true">
                   {d.human_code}
                 </span>
-                <span className="domain-name">{d.name}</span>
+                <span className="domain-name">
+                  {d.name}
+                  {d.activity_keys.length > 0 ? (
+                    <span className="domain-count">
+                      {" "}
+                      · {d.activity_keys.length} actividades
+                    </span>
+                  ) : null}
+                </span>
                 <span className="domain-go" aria-hidden="true">
                   Abrir →
                 </span>

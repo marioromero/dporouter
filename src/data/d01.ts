@@ -1,0 +1,1343 @@
+import type { ActivityDefinition } from "../types";
+import { basis } from "./sources";
+import { normalizeText } from "./domains";
+
+/**
+ * Definiciones estructuradas canónicas D1 (20 actividades).
+ * Contenido aprobado textualmente por la iteración vigente; no inventar,
+ * completar ni reinterpretar. La especificación humana vive en
+ * `docs/domains/D01.md` (generada desde esta representación).
+ */
+
+const REVIEW = "2026-09-21";
+const TRANSITIONAL = "transitional" as const;
+const RESPONSIBLE = ["responsible"];
+
+export const D01_ACTIVITIES: ActivityDefinition[] = [
+  {
+    activity_key: "governance.preventive_framework",
+    human_code: "D1.01",
+    name: "Establecer marco general de prevención",
+    objective:
+      "Asegurar que el responsable adopte un marco organizado de acciones destinado a prevenir infracciones a la normativa de protección de datos, con independencia de que adopte o no un MPI.",
+    trigger_question:
+      "¿El cliente realiza al menos una operación de tratamiento en calidad de responsable y cuenta con acciones organizadas para prevenir infracciones?",
+    interlocutors: [
+      "Alta dirección",
+      "Asesoría jurídica",
+      "DPO, si existe",
+      "Responsables de procesos",
+      "TI o seguridad cuando corresponda",
+    ],
+    data_collection_methods: [
+      "Revisión documental",
+      "Entrevista",
+      "Reunión de levantamiento",
+      "Revisión de controles existentes",
+    ],
+    steps_operational: [
+      "Confirmar que el cliente actúa como responsable en al menos un tratamiento.",
+      "Identificar las acciones preventivas existentes y sus responsables.",
+      "Determinar vacíos de gobierno, documentación o coordinación.",
+      "Definir un marco preventivo que distribuya responsabilidades y conecte los controles especializados de los demás dominios.",
+      "Establecer mecanismo de seguimiento de las acciones preventivas.",
+    ],
+    evidence_required: [
+      "Marco o política interna de prevención",
+      "Asignación de responsables",
+      "Matriz o registro de acciones preventivas",
+      "Evidencia de aprobación o comunicación interna cuando corresponda",
+    ],
+    evidence_basis: "agency_standard",
+    deliverable: "Marco General de Prevención y Responsabilidades",
+    estimated_time: "2–6 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 48"),
+      basis("cl_decreto_662_2026", "Artículo 1"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["client.roles_present incluye responsible"],
+    reasoning_record_required: false,
+    state_effect: ["governance.prevention_framework_status = established"],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [],
+  },
+  {
+    activity_key: "dpo.need_assessment",
+    human_code: "D1.02",
+    name: "Evaluar necesidad y recomendación de DPO",
+    objective:
+      "Determinar si existe obligación de contar con DPO por un MPI activo y, cuando no exista obligación, establecer separadamente la recomendación profesional de designarlo.",
+    trigger_question:
+      "¿El cliente está obligado por un MPI a contar con DPO o su nivel de riesgo y complejidad justifican recomendarlo voluntariamente?",
+    interlocutors: [
+      "Alta dirección",
+      "Asesoría jurídica",
+      "Compliance",
+      "Responsables de negocio",
+      "Seguridad o TI cuando corresponda",
+    ],
+    data_collection_methods: [
+      "Revisión del estado MPI",
+      "Entrevista",
+      "Revisión de caracterización",
+      "Análisis de riesgo organizacional",
+    ],
+    steps_operational: [
+      "Verificar si existe un MPI formalmente adoptado o implementado.",
+      "Si existe MPI activo, identificar el DPO como componente obligatorio del programa.",
+      "Si no existe MPI activo, evaluar profesionalmente volumen, categorías de datos, complejidad, automatización, exposición regulatoria y madurez.",
+      "Separar expresamente obligación jurídica y recomendación profesional.",
+      "Documentar la conclusión.",
+    ],
+    evidence_required: [
+      "Evaluación de necesidad de DPO",
+      "Estado MPI considerado",
+      "Factores de riesgo considerados",
+      "Conclusión profesional",
+    ],
+    evidence_basis: "agency_standard",
+    deliverable: "Evaluación de Necesidad y Recomendación de DPO",
+    estimated_time: "1–3 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículos 49 y 50"),
+      basis("cl_decreto_662_2026", "Artículo 6"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["client.roles_present incluye responsible"],
+    reasoning_record_required: true,
+    state_effect: [
+      "dpo.recommendation_outcome = required_by_mpi | strongly_recommended | recommended | not_priority",
+      "No activar obligación jurídica únicamente por una recomendación profesional",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "assessment",
+    activity_dependencies: [],
+  },
+  {
+    activity_key: "mpi.need_assessment",
+    human_code: "D1.03",
+    name: "Evaluar conveniencia de adoptar MPI",
+    objective:
+      "Determinar si resulta profesionalmente recomendable adoptar voluntariamente un Modelo de Prevención de Infracciones.",
+    trigger_question:
+      "¿La exposición, complejidad y madurez del responsable justifican recomendar la adopción de un MPI?",
+    interlocutors: [
+      "Alta dirección",
+      "Asesoría jurídica",
+      "Compliance",
+      "DPO, si existe",
+    ],
+    data_collection_methods: [
+      "Entrevista",
+      "Revisión documental",
+      "Revisión de madurez",
+      "Revisión de riesgos",
+      "Revisión de historial de incidentes o hallazgos cuando exista",
+    ],
+    steps_operational: [
+      "Confirmar que la adopción del MPI es voluntaria.",
+      "Evaluar tamaño, complejidad, exposición, categorías de datos, riesgos y madurez.",
+      "Considerar capacidad organizacional para implementar y mantener el programa.",
+      "Distinguir conveniencia profesional de obligación legal.",
+      "Documentar recomendación y fundamentos.",
+    ],
+    evidence_required: [
+      "Evaluación de conveniencia MPI",
+      "Factores considerados",
+      "Recomendación documentada",
+    ],
+    evidence_basis: "agency_standard",
+    deliverable: "Evaluación de Conveniencia de MPI",
+    estimated_time: "1–3 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 49"),
+      basis("cl_decreto_662_2026", "Artículo 1"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["client.roles_present incluye responsible"],
+    reasoning_record_required: true,
+    state_effect: [
+      "mpi.recommendation_outcome = recommended | worth_considering | not_priority",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "assessment",
+    activity_dependencies: [],
+  },
+  {
+    activity_key: "mpi.formalize_adoption",
+    human_code: "D1.04",
+    name: "Formalizar adopción del MPI",
+    objective:
+      "Registrar de manera trazable la decisión efectiva del responsable de adoptar voluntariamente el MPI y activar los estados organizacionales que se derivan de esa decisión.",
+    trigger_question: "¿La máxima autoridad decidió adoptar efectivamente un MPI?",
+    interlocutors: [
+      "Máxima autoridad directiva o administrativa",
+      "Asesoría jurídica",
+      "Compliance",
+      "DPO, si ya existe",
+    ],
+    data_collection_methods: [
+      "Revisión de decisión interna",
+      "Revisión documental",
+      "Entrevista de confirmación",
+    ],
+    steps_operational: [
+      "Confirmar decisión efectiva de adopción.",
+      "Obtener evidencia interna fechada de la decisión.",
+      "Registrar fecha efectiva de adopción.",
+      "Actualizar ciclo de vida MPI.",
+      "Activar requerimiento de DPO derivado del MPI.",
+    ],
+    evidence_required: [
+      "Acta, resolución, acuerdo o evidencia interna equivalente",
+      "Fecha efectiva",
+      "Autoridad que adopta",
+      "Referencia documental",
+    ],
+    evidence_basis: "agency_standard",
+    deliverable: "Registro Formal de Adopción MPI",
+    estimated_time: "0,5–2 h",
+    complexity: "Media",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 49"),
+      basis("cl_decreto_662_2026", "Artículos 1 y 18"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["mpi decision = adopt"],
+    reasoning_record_required: false,
+    state_effect: [
+      "mpi.lifecycle_status = adoption_formalized",
+      "mpi.adoption_effective_at = fecha efectiva",
+      "mpi.adoption_evidence_ref = referencia de evidencia",
+      "mpi.adoption_evidence_basis = agency_standard",
+      "dpo.requirement.active = true",
+      "dpo.requirement.source = mpi",
+      "dpo.requirement.effective_at = mpi.adoption_effective_at",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "mpi.need_assessment",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "si existe evaluación previa",
+        rationale:
+          "La evaluación puede informar la decisión, pero no constituye requisito jurídico para adoptar el MPI.",
+      },
+    ],
+  },
+  {
+    activity_key: "mpi.internal_reporting_and_whistleblowing",
+    human_code: "D1.05",
+    name: "Implementar reporte interno y canal de denuncias MPI",
+    objective:
+      "Implementar mecanismos internos para reportar infracciones y permitir denuncias ante el DPO con reserva de identidad y protección frente a represalias.",
+    trigger_question:
+      "¿El MPI dispone de mecanismos internos de denuncia operativos y protegidos?",
+    interlocutors: [
+      "DPO",
+      "Compliance",
+      "Recursos Humanos",
+      "Asesoría jurídica",
+      "Alta dirección",
+    ],
+    data_collection_methods: [
+      "Revisión documental",
+      "Prueba de canal",
+      "Entrevista",
+      "Walkthrough",
+    ],
+    steps_operational: [
+      "Definir canal de denuncia ante el DPO.",
+      "Permitir solicitud de reserva de identidad.",
+      "Establecer medidas para evitar consecuencias desfavorables por denunciar.",
+      "Definir recepción, escalamiento, custodia y seguimiento.",
+      "Probar operatividad del mecanismo.",
+    ],
+    evidence_required: [
+      "Procedimiento de denuncia",
+      "Evidencia del canal operativo",
+      "Regla de reserva de identidad",
+      "Regla de no represalia",
+      "Registro de prueba del mecanismo",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Mecanismo Interno de Reporte y Denuncias MPI",
+    estimated_time: "2–5 h",
+    complexity: "Alta",
+    legal_basis: [basis("cl_decreto_662_2026", "Artículo 3 letra i)")],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: [
+      "mpi.lifecycle_status = adoption_formalized | implementing | implemented",
+    ],
+    reasoning_record_required: false,
+    state_effect: ["mpi.whistleblowing_status = implemented"],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "mpi.formalize_adoption",
+        scope: "same_domain",
+        type: "execution_prerequisite",
+        condition: "cuando el mecanismo se implementa como parte del MPI",
+        rationale: "La actividad implementa un componente del programa adoptado.",
+      },
+    ],
+  },
+  {
+    activity_key: "mpi.internal_disciplinary_framework",
+    human_code: "D1.06",
+    name: "Establecer régimen disciplinario interno MPI",
+    objective:
+      "Definir las sanciones administrativas internas y el procedimiento aplicable frente al incumplimiento de las reglas de protección de datos o del programa.",
+    trigger_question:
+      "¿El MPI contempla un régimen interno de consecuencias y procedimiento frente a incumplimientos?",
+    interlocutors: [
+      "Recursos Humanos",
+      "Asesoría jurídica",
+      "Compliance",
+      "DPO",
+      "Alta dirección",
+    ],
+    data_collection_methods: [
+      "Revisión documental",
+      "Entrevista",
+      "Revisión de normativa laboral interna",
+    ],
+    steps_operational: [
+      "Identificar mecanismos disciplinarios existentes.",
+      "Integrar incumplimientos de protección de datos y del MPI.",
+      "Definir procedimiento interno aplicable.",
+      "Verificar coherencia con regulación laboral y contractual aplicable.",
+      "Formalizar versión aprobada.",
+    ],
+    evidence_required: [
+      "Régimen interno de sanciones",
+      "Procedimiento disciplinario",
+      "Evidencia de aprobación",
+      "Trazabilidad con regulación interna aplicable",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Régimen Disciplinario Interno MPI",
+    estimated_time: "2–5 h",
+    complexity: "Alta",
+    legal_basis: [basis("cl_decreto_662_2026", "Artículo 3 letra h)")],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: [
+      "mpi.lifecycle_status = adoption_formalized | implementing | implemented",
+    ],
+    reasoning_record_required: false,
+    state_effect: ["mpi.disciplinary_framework_status = implemented"],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "mpi.formalize_adoption",
+        scope: "same_domain",
+        type: "execution_prerequisite",
+        condition: "cuando se implementa dentro del MPI",
+        rationale: "El régimen forma parte del programa adoptado.",
+      },
+    ],
+  },
+  {
+    activity_key: "mpi.internal_regulation_integrate",
+    human_code: "D1.07",
+    name: "Integrar regulación interna del MPI",
+    objective:
+      "Incorporar las obligaciones internas derivadas del programa en los instrumentos laborales o contractuales que correspondan.",
+    trigger_question:
+      "¿Las reglas internas del MPI están incorporadas en los instrumentos laborales y de prestación de servicios aplicables?",
+    interlocutors: [
+      "Recursos Humanos",
+      "Asesoría jurídica",
+      "Compliance",
+      "DPO",
+      "Gestión de proveedores cuando corresponda",
+    ],
+    data_collection_methods: [
+      "Revisión de contratos",
+      "Revisión de reglamento interno",
+      "Revisión documental",
+      "Muestreo",
+    ],
+    steps_operational: [
+      "Identificar trabajadores, empleados y prestadores alcanzados.",
+      "Identificar instrumentos contractuales e internos que requieren integración.",
+      "Incorporar las obligaciones del programa según corresponda.",
+      "Cuando resulte aplicable, coordinar incorporación al reglamento interno.",
+      "Verificar medidas de publicidad correspondientes.",
+    ],
+    evidence_required: [
+      "Cláusulas o anexos actualizados",
+      "Reglamento interno actualizado cuando corresponda",
+      "Evidencia de incorporación",
+      "Evidencia de publicidad cuando corresponda",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Expediente de Integración Regulatoria Interna MPI",
+    estimated_time: "2–8 h",
+    complexity: "Alta",
+    legal_basis: [basis("cl_decreto_662_2026", "Artículo 4")],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: [
+      "mpi.lifecycle_status = adoption_formalized | implementing | implemented",
+    ],
+    reasoning_record_required: false,
+    state_effect: ["mpi.internal_regulation_status = integrated"],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "mpi.formalize_adoption",
+        scope: "same_domain",
+        type: "execution_prerequisite",
+        condition: "cuando existe regulación interna derivada del programa",
+        rationale: "La integración contractual materializa obligaciones del MPI.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.designate",
+    human_code: "D1.08",
+    name: "Designar DPO",
+    objective:
+      "Formalizar una designación válida y trazable del DPO, verificando autoridad competente, modalidad de prestación e identificación de la persona natural que ejercerá la función.",
+    trigger_question:
+      "¿Corresponde designar un DPO y la designación cumple los requisitos de autoridad, modalidad e individualización?",
+    interlocutors: [
+      "Máxima autoridad directiva o administrativa",
+      "Asesoría jurídica",
+      "Recursos Humanos",
+      "Compras o contratos, si es externo",
+      "DPO designado",
+    ],
+    data_collection_methods: [
+      "Revisión documental",
+      "Entrevista",
+      "Revisión contractual",
+      "Verificación de antecedentes profesionales",
+    ],
+    steps_operational: [
+      "Confirmar autoridad competente para designar.",
+      "Determinar si el DPO será interno o externo.",
+      "Si el servicio lo presta una persona jurídica, identificar expresamente a la persona natural que actuará como DPO.",
+      "Cuando exista DPO común para grupo empresarial, verificar condiciones aplicables.",
+      "Verificar idoneidad inicial.",
+      "Formalizar designación y fecha efectiva.",
+    ],
+    evidence_required: [
+      "Acto o documento de designación",
+      "Fecha efectiva",
+      "Identificación del DPO",
+      "Contrato cuando sea externo",
+      "Identificación de persona natural cuando el prestador sea persona jurídica",
+      "Antecedentes de idoneidad",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Expediente de Designación DPO",
+    estimated_time: "1–3 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículos 49 y 50"),
+      basis("cl_decreto_662_2026", "Artículos 6, 7, 8 y 10"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: [
+      "dpo.requirement.active = true OR dpo voluntary designation decision = yes",
+    ],
+    reasoning_record_required: false,
+    state_effect: [
+      "dpo.status = designated",
+      "dpo.designation_effective_at = fecha efectiva",
+      "append dpo.designation_history",
+      "dpo.vacancy = false",
+      "dpo.replacement_required = false",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.need_assessment",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "si existe evaluación previa",
+        rationale:
+          "La evaluación informa la decisión, pero un DPO voluntario puede designarse sin recomendación previa.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.initial_governance_validation",
+    human_code: "D1.09",
+    name: "Validar gobernanza inicial del DPO",
+    objective:
+      "Comprobar al inicio que el DPO dispone de autonomía, independencia funcional, recursos, idoneidad, disponibilidad y ausencia de conflictos incompatibles con su función.",
+    trigger_question:
+      "¿El DPO designado está en condiciones reales de desempeñar sus funciones con autonomía, recursos e independencia?",
+    interlocutors: [
+      "DPO",
+      "Máxima autoridad",
+      "Recursos Humanos",
+      "Asesoría jurídica",
+      "Compliance",
+    ],
+    data_collection_methods: [
+      "Entrevista",
+      "Revisión documental",
+      "Revisión organizacional",
+      "Revisión contractual",
+    ],
+    steps_operational: [
+      "Verificar línea de rendición directa a la autoridad que designó al DPO.",
+      "Verificar autonomía respecto de la administración en materias de protección de datos.",
+      "Analizar otras funciones del DPO y posibles conflictos de interés.",
+      "Verificar recursos materiales y disponibilidad.",
+      "Verificar conocimientos, experiencia y actualización profesional.",
+      "Verificar capacidad de acceso a información y operaciones relevantes.",
+      "Documentar brechas y medidas correctivas.",
+    ],
+    evidence_required: [
+      "Ficha de validación de gobernanza",
+      "Organigrama o línea de reporte",
+      "Declaración/evaluación de conflictos",
+      "Evidencia de recursos",
+      "Evidencia de idoneidad",
+      "Medidas correctivas cuando existan",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Validación Inicial de Gobernanza DPO",
+    estimated_time: "1–3 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 50"),
+      basis("cl_decreto_662_2026", "Artículos 8, 9 y 10"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["dpo.status = designated"],
+    reasoning_record_required: true,
+    state_effect: ["dpo.governance_validation_status = valid | remediation_required"],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "assessment",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.designate",
+        scope: "same_domain",
+        type: "execution_prerequisite",
+        condition: "dpo.status = designated",
+        rationale: "La validación recae sobre la gobernanza efectiva del DPO designado.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.contact_and_agency_notification",
+    human_code: "D1.10",
+    name: "Publicar contacto e informar designación del DPO",
+    objective:
+      "Asegurar que los titulares puedan contactar directamente al DPO y que la Agencia, la organización y los encargados relevantes conozcan su identidad y medio de contacto.",
+    trigger_question:
+      "¿Los datos de contacto del DPO están publicados, actualizados y comunicados a todos los destinatarios exigidos?",
+    interlocutors: [
+      "DPO",
+      "Comunicaciones o web",
+      "Asesoría jurídica",
+      "Recursos Humanos",
+      "Gestión de proveedores",
+      "Agencia cuando corresponda",
+    ],
+    data_collection_methods: [
+      "Revisión web",
+      "Revisión documental",
+      "Verificación de comunicación",
+      "Walkthrough",
+    ],
+    steps_operational: [
+      "Definir medio directo y expedito de contacto.",
+      "Publicar datos de contacto en sitio web o medio equivalente.",
+      "Informar nombre y contacto a la Agencia.",
+      "Informar a dependientes, miembros de la organización y encargados cuando corresponda.",
+      "Mantener mecanismo para comunicar cambios posteriores.",
+    ],
+    evidence_required: [
+      "Evidencia de publicación",
+      "Evidencia de comunicación a Agencia",
+      "Evidencia de comunicación interna",
+      "Evidencia de comunicación a encargados cuando corresponda",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Expediente de Contacto y Comunicación DPO",
+    estimated_time: "0,5–2 h",
+    complexity: "Media",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 50"),
+      basis("cl_decreto_662_2026", "Artículos 11 y 13 letra k)"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["dpo.status = designated"],
+    reasoning_record_required: false,
+    state_effect: [
+      "dpo.contact_publication_status = published",
+      "dpo.agency_notification_status = notified",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.designate",
+        scope: "same_domain",
+        type: "execution_prerequisite",
+        condition: "dpo.status = designated",
+        rationale: "Solo puede comunicarse una designación efectiva.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.operating_model",
+    human_code: "D1.11",
+    name: "Establecer modelo operativo del DPO",
+    objective:
+      "Integrar al DPO en la operación mediante reglas claras de participación, acceso a información, reporte, coordinación y ejercicio de sus funciones.",
+    trigger_question:
+      "¿La organización tiene definido cómo, cuándo y con qué información participa el DPO en sus procesos?",
+    interlocutors: [
+      "DPO",
+      "Alta dirección",
+      "Asesoría jurídica",
+      "Compliance",
+      "Responsables de procesos",
+      "TI",
+      "Recursos Humanos",
+      "Compras",
+    ],
+    data_collection_methods: [
+      "Taller",
+      "Entrevista",
+      "Revisión de procesos",
+      "Revisión organizacional",
+    ],
+    steps_operational: [
+      "Definir línea de reporte y acceso a la autoridad.",
+      "Definir eventos que requieren involucramiento del DPO.",
+      "Definir acceso oportuno a información y operaciones de tratamiento.",
+      "Mapear sus funciones hacia derechos, riesgos, EIPD, capacitación, supervisión y relación con la Agencia.",
+      "Definir cadencia operativa y mecanismos de seguimiento.",
+    ],
+    evidence_required: [
+      "Carta o marco operativo DPO",
+      "Matriz de funciones",
+      "Reglas de involucramiento",
+      "Canales de acceso a información",
+      "Cadencia de reuniones o seguimiento",
+    ],
+    evidence_basis: "agency_standard",
+    deliverable: "Modelo Operativo DPO",
+    estimated_time: "2–5 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 50"),
+      basis("cl_decreto_662_2026", "Artículos 8, 9 y 13"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["dpo.status = designated"],
+    reasoning_record_required: false,
+    state_effect: ["dpo.operating_model_status = active"],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.initial_governance_validation",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "si la validación inicial está disponible",
+        rationale: "Las brechas iniciales deben informar el modelo operativo.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.confidentiality_duty",
+    human_code: "D1.12",
+    name: "Formalizar y controlar deber de confidencialidad del DPO",
+    objective:
+      "Asegurar que el DPO conozca, acepte y mantenga el deber de secreto, reserva o confidencialidad respecto de la información conocida en ejercicio de sus funciones.",
+    trigger_question:
+      "¿El deber de confidencialidad del DPO está formalizado y operacionalmente protegido?",
+    interlocutors: ["DPO", "Asesoría jurídica", "Recursos Humanos o contratos"],
+    data_collection_methods: [
+      "Revisión contractual",
+      "Revisión documental",
+      "Entrevista",
+    ],
+    steps_operational: [
+      "Verificar existencia de obligación de confidencialidad aplicable.",
+      "Formalizarla cuando corresponda en instrumento interno o contractual.",
+      "Incluir información personal y otras materias sujetas a secreto, reserva o confidencialidad.",
+      "Verificar medidas organizacionales que permitan cumplirla.",
+    ],
+    evidence_required: [
+      "Cláusula, compromiso o instrumento aplicable",
+      "Evidencia de aceptación",
+      "Controles organizacionales relacionados",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Evidencia de Deber de Confidencialidad DPO",
+    estimated_time: "0,5–1 h",
+    complexity: "Media",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 50"),
+      basis("cl_decreto_662_2026", "Artículo 12"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["dpo.status = designated"],
+    reasoning_record_required: false,
+    state_effect: ["dpo.confidentiality_status = formalized"],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.designate",
+        scope: "same_domain",
+        type: "execution_prerequisite",
+        condition: "dpo.status = designated",
+        rationale: "El deber se vincula a la persona que ejerce la función.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.annual_plan",
+    human_code: "D1.13",
+    name: "Desarrollar plan anual del DPO",
+    objective:
+      "Planificar anualmente las actividades mediante las cuales el DPO ejercerá sus funciones y supervisará las prioridades de protección de datos.",
+    trigger_question:
+      "¿Existe un plan anual vigente del DPO, alineado con riesgos, obligaciones y necesidades de la organización?",
+    interlocutors: [
+      "DPO",
+      "Autoridad a la que rinde cuenta",
+      "Responsables de procesos",
+    ],
+    data_collection_methods: [
+      "Revisión de riesgos",
+      "Revisión de hallazgos",
+      "Revisión regulatoria",
+      "Planificación",
+    ],
+    steps_operational: [
+      "Revisar riesgos, hallazgos, cambios y prioridades.",
+      "Definir objetivos y actividades del período.",
+      "Establecer responsables e hitos cuando corresponda.",
+      "Presentar el plan a la autoridad pertinente.",
+      "Difundir el plan al interior de la organización.",
+    ],
+    evidence_required: [
+      "Plan anual fechado",
+      "Evidencia de presentación",
+      "Evidencia de difusión",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Plan Anual de Trabajo DPO",
+    estimated_time: "2–5 h",
+    complexity: "Media-Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 50"),
+      basis("cl_decreto_662_2026", "Artículo 13 letra i)"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["dpo.status = designated"],
+    reasoning_record_required: false,
+    state_effect: ["dpo.annual_plan_status = current"],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.operating_model",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "si modelo operativo está disponible",
+        rationale: "El modelo operativo orienta la planificación anual.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.annual_report",
+    human_code: "D1.14",
+    name: "Rendir cuenta anual de resultados del DPO",
+    objective:
+      "Consolidar y rendir cuenta de los resultados del trabajo del DPO ante la autoridad que lo designó y difundirlos internamente.",
+    trigger_question:
+      "¿El DPO rindió cuenta de sus resultados del período y existe evidencia de dicha rendición?",
+    interlocutors: ["DPO", "Autoridad que lo designó", "Alta dirección"],
+    data_collection_methods: [
+      "Revisión de plan anual",
+      "Revisión de resultados",
+      "Consolidación documental",
+    ],
+    steps_operational: [
+      "Consolidar ejecución del plan anual.",
+      "Identificar resultados, pendientes, riesgos y principales hallazgos.",
+      "Preparar rendición ante la autoridad.",
+      "Registrar decisiones o instrucciones resultantes.",
+      "Difundir resultados al interior de la organización.",
+    ],
+    evidence_required: [
+      "Informe anual",
+      "Evidencia de presentación",
+      "Evidencia de difusión",
+      "Acuerdos o instrucciones resultantes",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Informe Anual de Resultados DPO",
+    estimated_time: "2–6 h",
+    complexity: "Media-Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 50"),
+      basis("cl_decreto_662_2026", "Artículo 13 letra i)"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["dpo.status = designated"],
+    reasoning_record_required: false,
+    state_effect: [
+      "dpo.annual_report_status = issued",
+      "dpo.last_annual_report_at = fecha de rendición",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "monitoring",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.annual_plan",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "cuando existe plan del período",
+        rationale: "El informe debe contrastar resultados con el plan correspondiente.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.infringement_escalation",
+    human_code: "D1.15",
+    name: "Escalar infracciones conocidas por el DPO",
+    objective:
+      "Asegurar que el DPO comunique directamente a la autoridad ante la cual rinde cuenta las infracciones de las que tome conocimiento.",
+    trigger_question:
+      "¿El DPO tomó conocimiento de una posible infracción que debe ser comunicada directamente a la autoridad?",
+    interlocutors: [
+      "DPO",
+      "Autoridad ante la que rinde cuenta",
+      "Asesoría jurídica",
+      "Compliance",
+    ],
+    data_collection_methods: [
+      "Revisión de antecedentes",
+      "Entrevista",
+      "Revisión de evidencia",
+    ],
+    steps_operational: [
+      "Registrar el antecedente conocido por el DPO.",
+      "Determinar hechos y norma potencialmente afectada sin cerrar anticipadamente la investigación.",
+      "Comunicar directamente a la autoridad correspondiente.",
+      "Registrar medidas organizativas, funcionales o disciplinarias definidas por la autoridad.",
+      "Derivar seguimiento al sistema de hallazgos cuando corresponda.",
+    ],
+    evidence_required: [
+      "Registro de comunicación",
+      "Antecedentes remitidos",
+      "Fecha y destinatario",
+      "Medidas adoptadas o instruidas",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Registro de Escalamiento de Infracción DPO",
+    estimated_time: "0,5–2 h",
+    complexity: "Alta",
+    legal_basis: [basis("cl_decreto_662_2026", "Artículo 13 letra e)")],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: [
+      "dpo.status = designated",
+      "dpo conoce posible infracción",
+    ],
+    reasoning_record_required: false,
+    state_effect: [
+      "create compliance_finding",
+      "dpo.escalation_required = true",
+      "dpo.last_escalation_at = fecha de comunicación",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.operating_model",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "si existe modelo operativo",
+        rationale:
+          "El modelo debe facilitar el canal directo de escalamiento, pero su ausencia no elimina el deber de comunicar.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.governance_revalidation",
+    human_code: "D1.16",
+    name: "Revalidar gobernanza del DPO",
+    objective:
+      "Verificar periódicamente y ante cambios relevantes que la autonomía, independencia, idoneidad, recursos y ausencia de conflictos del DPO se mantengan efectivas.",
+    trigger_question:
+      "¿Las condiciones de gobernanza bajo las cuales opera el DPO continúan siendo adecuadas?",
+    interlocutors: [
+      "DPO",
+      "Alta dirección",
+      "Recursos Humanos",
+      "Asesoría jurídica",
+    ],
+    data_collection_methods: [
+      "Entrevista",
+      "Revisión documental",
+      "Revisión organizacional",
+      "Muestreo",
+    ],
+    steps_operational: [
+      "Revisar cambios de cargo, funciones o estructura.",
+      "Reevaluar conflictos de interés.",
+      "Revisar suficiencia de recursos y disponibilidad.",
+      "Revisar actualización de conocimientos.",
+      "Revisar accesibilidad y línea de reporte.",
+      "Abrir remediaciones cuando corresponda.",
+    ],
+    evidence_required: [
+      "Checklist o informe de revalidación",
+      "Evidencia revisada",
+      "Hallazgos",
+      "Acciones correctivas",
+    ],
+    evidence_basis: "agency_standard",
+    deliverable: "Revalidación de Gobernanza DPO",
+    estimated_time: "1–3 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 50"),
+      basis("cl_decreto_662_2026", "Artículos 8, 9 y 10"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: ["dpo.status = designated"],
+    reasoning_record_required: true,
+    state_effect: [
+      "dpo.governance_validation_status = valid | remediation_required",
+      "dpo.last_governance_review_at = fecha de revisión",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "monitoring",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.initial_governance_validation",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "cuando existe validación inicial",
+        rationale: "La revalidación compara condiciones actuales con la línea base inicial.",
+      },
+    ],
+  },
+  {
+    activity_key: "dpo.terminate_or_replace",
+    human_code: "D1.17",
+    name: "Gestionar término o reemplazo del DPO",
+    objective:
+      "Gestionar de manera trazable el término, cambio o reemplazo del DPO preservando historia, continuidad y obligación de reemplazo cuando derive de un MPI activo.",
+    trigger_question:
+      "¿El DPO cesó, fue reemplazado o cambió la persona natural que ejerce la función?",
+    interlocutors: [
+      "Máxima autoridad",
+      "DPO saliente",
+      "DPO entrante cuando exista",
+      "Asesoría jurídica",
+      "Recursos Humanos o contratos",
+      "Agencia",
+    ],
+    data_collection_methods: [
+      "Revisión documental",
+      "Entrevista",
+      "Revisión contractual",
+    ],
+    steps_operational: [
+      "Registrar fecha y causa del término o cambio.",
+      "Preservar historial de designación.",
+      "Determinar si existe MPI activo que mantenga vigente el requerimiento de DPO.",
+      "Si el requerimiento sigue activo, marcar vacancia y necesidad de reemplazo hasta nueva designación.",
+      "Si el DPO era exclusivamente voluntario y no existe otra fuente de obligación, no crear automáticamente deber de reemplazo.",
+      "Comunicar cambios de designación o contacto a la Agencia.",
+      "Actualizar publicación y comunicaciones internas cuando corresponda.",
+    ],
+    evidence_required: [
+      "Registro de término/cambio",
+      "Fecha efectiva",
+      "Evidencia de comunicación a Agencia",
+      "Historial de designación",
+      "Estado de vacancia/reemplazo",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Expediente de Término o Reemplazo DPO",
+    estimated_time: "0,5–2 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículos 49 y 50"),
+      basis("cl_decreto_662_2026", "Artículos 6 y 11"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: [
+      "dpo.status = designated AND termination_or_change_event = true",
+    ],
+    reasoning_record_required: false,
+    state_effect: [
+      "append dpo.designation_history",
+      "dpo.status = terminated",
+      "Si mpi.lifecycle_status = adoption_formalized | implementing | implemented: dpo.requirement.active = true",
+      "Si mpi.lifecycle_status = adoption_formalized | implementing | implemented: dpo.vacancy = true",
+      "Si mpi.lifecycle_status = adoption_formalized | implementing | implemented: dpo.replacement_required = true",
+      "Si no existe fuente activa de obligación: no crear automáticamente replacement_required",
+    ],
+    relationship_effect: ["replacement_required cuando MPI activo"],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "dpo.designate",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "debe existir una designación previa",
+        rationale: "La actividad modifica el ciclo de vida de una designación existente.",
+      },
+    ],
+  },
+  {
+    activity_key: "mpi.assemble_program",
+    human_code: "D1.18",
+    name: "Consolidar e implementar el programa de cumplimiento MPI",
+    objective:
+      "Consolidar los componentes mínimos del MPI, verificar que estén operativos y determinar cuándo el programa puede considerarse implementado.",
+    trigger_question:
+      "¿El responsable ha implementado efectivamente todos los componentes mínimos de su MPI?",
+    interlocutors: [
+      "DPO",
+      "Alta dirección",
+      "Asesoría jurídica",
+      "Compliance",
+      "Recursos Humanos",
+      "Responsables de procesos",
+    ],
+    data_collection_methods: [
+      "Revisión documental",
+      "Entrevista",
+      "Walkthrough",
+      "Muestreo",
+      "Verificación cruzada",
+    ],
+    steps_operational: [
+      "Verificar individualización del responsable y representante cuando corresponda.",
+      "Verificar DPO, sus medios y facultades.",
+      "Verificar caracterización de tratamientos y titulares.",
+      "Verificar identificación de actividades y riesgos relevantes.",
+      "Verificar protocolos, reglas y procedimientos preventivos.",
+      "Verificar obligaciones internas, régimen disciplinario y canal de denuncia.",
+      "Verificar integración contractual/interna.",
+      "Verificar difusión del programa.",
+      "Consolidar evidencia y brechas pendientes.",
+      "Solo cuando los componentes exigibles estén implementados, actualizar lifecycle a implemented.",
+    ],
+    evidence_required: [
+      "Programa de cumplimiento consolidado",
+      "Índice de componentes",
+      "Evidencia de cada componente",
+      "Matriz de brechas",
+      "Evidencia de cierre de brechas obligatorias",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Programa de Cumplimiento MPI Consolidado",
+    estimated_time: "4–12 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículo 49"),
+      basis("cl_decreto_662_2026", "Artículos 3, 4, 5 y 18"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: [
+      "mpi.lifecycle_status = adoption_formalized | implementing",
+    ],
+    reasoning_record_required: false,
+    state_effect: [
+      "Mientras existan componentes obligatorios pendientes: mpi.lifecycle_status = implementing",
+      "Cuando todos los componentes obligatorios estén operativos: mpi.lifecycle_status = implemented",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "implementation",
+    activity_dependencies: [
+      {
+        target_activity_key: "mpi.formalize_adoption",
+        scope: "same_domain",
+        type: "execution_prerequisite",
+        condition: "mpi.lifecycle_status = adoption_formalized | implementing",
+        rationale: "El programa se implementa después de la decisión de adopción.",
+      },
+      {
+        target_activity_key: "mpi.internal_reporting_and_whistleblowing",
+        scope: "same_domain",
+        type: "completion_dependency",
+        condition: "MPI en implementación",
+        rationale: "El canal de denuncia es un elemento mínimo del programa.",
+      },
+      {
+        target_activity_key: "mpi.internal_disciplinary_framework",
+        scope: "same_domain",
+        type: "completion_dependency",
+        condition: "MPI en implementación",
+        rationale: "El régimen interno es un elemento mínimo del programa.",
+      },
+      {
+        target_activity_key: "mpi.internal_regulation_integrate",
+        scope: "same_domain",
+        type: "completion_dependency",
+        condition: "cuando exista regulación interna que deba integrarse",
+        rationale: "La implementación debe materializar la regulación interna exigible.",
+      },
+      {
+        target_activity_key: "dpo.designate",
+        scope: "same_domain",
+        type: "completion_dependency",
+        condition: "MPI activo",
+        rationale: "La designación del DPO es componente mínimo del MPI.",
+      },
+      {
+        target_activity_key: "treatment.inventory_create",
+        scope: "cross_domain",
+        type: "input_dependency",
+        condition: "cuando D2 haya sido importado",
+        rationale: "La caracterización de tratamientos alimenta el MPI.",
+      },
+      {
+        target_activity_key: "risk.mpi_sync",
+        scope: "cross_domain",
+        type: "input_dependency",
+        condition: "cuando D8 haya sido importado",
+        rationale: "La identificación y tratamiento de riesgos debe alimentar el programa.",
+      },
+      {
+        target_activity_key: "mpi.diffusion",
+        scope: "cross_domain",
+        type: "completion_dependency",
+        condition: "cuando D11 haya sido importado",
+        rationale: "La difusión del programa es una obligación reglamentaria.",
+      },
+    ],
+  },
+  {
+    activity_key: "mpi.certification_lifecycle",
+    human_code: "D1.19",
+    name: "Gestionar ciclo de certificación del MPI",
+    objective:
+      "Gestionar la decisión, solicitud, vigencia, renovación, término o revocación de la certificación sin confundir el estado de certificación con el ciclo de vida interno del MPI.",
+    trigger_question:
+      "¿El responsable busca certificar, renovar o gestionar un cambio en el estado de certificación de su MPI?",
+    interlocutors: ["DPO", "Alta dirección", "Asesoría jurídica", "Agencia"],
+    data_collection_methods: [
+      "Revisión documental",
+      "Revisión del programa",
+      "Seguimiento regulatorio",
+      "Revisión de comunicaciones de Agencia",
+    ],
+    steps_operational: [
+      "Confirmar que el MPI está implementado antes de preparar solicitud.",
+      "Preparar antecedentes requeridos.",
+      "Registrar solicitud y estado.",
+      "Registrar certificación y vigencia cuando sea otorgada.",
+      "Controlar renovación.",
+      "Registrar expiración, denegación, término o revocación cuando corresponda.",
+      "No modificar automáticamente el lifecycle interno del MPI por un cambio de certificación.",
+    ],
+    evidence_required: [
+      "Solicitud",
+      "Antecedentes remitidos",
+      "Certificado cuando exista",
+      "Fecha de vigencia",
+      "Resoluciones de renovación, denegación, término o revocación",
+      "Evidencia de registro",
+    ],
+    evidence_basis: "legal_requirement",
+    deliverable: "Expediente de Certificación MPI",
+    estimated_time: "Variable",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículos 51, 52 y 53"),
+      basis("cl_decreto_662_2026", "Artículos 14 a 20"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: [
+      "mpi.lifecycle_status = implemented AND certification decision exists",
+    ],
+    reasoning_record_required: false,
+    state_effect: [
+      "mpi.certification_status = not_requested | requested | certified | renewal_requested | expired | revoked | denied | terminated_other",
+      "certified certificate validity = 3 years",
+      "No cambiar automáticamente mpi.lifecycle_status por revocación, expiración o denegación",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "monitoring",
+    activity_dependencies: [
+      {
+        target_activity_key: "mpi.assemble_program",
+        scope: "same_domain",
+        type: "execution_prerequisite",
+        condition: "certification requested",
+        rationale:
+          "La certificación presupone un modelo implementado susceptible de ser evaluado.",
+      },
+    ],
+  },
+  {
+    activity_key: "mpi.lifecycle_review",
+    human_code: "D1.20",
+    name: "Revisar ciclo de vida del MPI",
+    objective:
+      "Mantener actualizado el estado real del MPI y gestionar cambios entre evaluación, adopción, implementación, operación y discontinuación.",
+    trigger_question:
+      "¿El estado registrado del MPI refleja su situación organizacional real?",
+    interlocutors: ["DPO", "Alta dirección", "Asesoría jurídica", "Compliance"],
+    data_collection_methods: [
+      "Revisión documental",
+      "Entrevista",
+      "Revisión de componentes",
+      "Revisión de decisiones internas",
+    ],
+    steps_operational: [
+      "Confirmar lifecycle actual.",
+      "Revisar cambios organizacionales o decisiones que afecten continuidad.",
+      "Determinar si el MPI sigue implementado o fue discontinuado.",
+      "Documentar decisión de discontinuación cuando corresponda.",
+      "Si se discontinúa y la única fuente de obligación del DPO era el MPI, desactivar ese requerimiento.",
+      "No terminar automáticamente una designación voluntaria de DPO.",
+      "No inferir lifecycle desde certification_status.",
+    ],
+    evidence_required: [
+      "Revisión de lifecycle",
+      "Evidencia de cambios",
+      "Decisión interna cuando corresponda",
+      "Estado actualizado",
+      "Justificación de discontinuación si aplica",
+    ],
+    evidence_basis: "agency_standard",
+    deliverable: "Revisión de Ciclo de Vida MPI",
+    estimated_time: "1–4 h",
+    complexity: "Alta",
+    legal_basis: [
+      basis("cl_ley_19628_2026", "Artículos 49 a 53"),
+      basis("cl_decreto_662_2026", "Artículo 1"),
+      basis("cl_decreto_662_2026", "Artículos 14 a 20"),
+    ],
+    applicable_role: RESPONSIBLE,
+    conditions_applicability: [
+      "mpi.lifecycle_status != not_assessed OR mpi recommendation evaluated",
+    ],
+    reasoning_record_required: true,
+    state_effect: [
+      "mpi.lifecycle_status = not_assessed | not_adopted | under_evaluation | adoption_formalized | implementing | implemented | discontinued",
+      "Si lifecycle = discontinued AND dpo.requirement.source = mpi AND no existe otra fuente activa: dpo.requirement.active = false",
+      "La designación voluntaria del DPO puede continuar",
+      "No modificar automáticamente mpi.certification_status",
+    ],
+    relationship_effect: [],
+    regulatory_status: TRANSITIONAL,
+    last_legal_review: REVIEW,
+    activity_type: "monitoring",
+    activity_dependencies: [
+      {
+        target_activity_key: "mpi.formalize_adoption",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "si el MPI llegó a adopción",
+        rationale: "La historia de adopción informa el lifecycle.",
+      },
+      {
+        target_activity_key: "mpi.assemble_program",
+        scope: "same_domain",
+        type: "input_dependency",
+        condition: "si el MPI llegó a implementación",
+        rationale: "La evidencia de implementación informa el estado real del programa.",
+      },
+    ],
+  },
+];
+
+/** Claves en orden canónico D1.01–D1.20. */
+export const D1_ACTIVITY_KEYS: string[] = D01_ACTIVITIES.map((a) => a.activity_key);
+
+/**
+ * Referencias cross-domain canónicas autorizadas como `pending import`
+ * hasta la importación progresiva de D2, D8 y D11. Lista cerrada.
+ */
+export const PENDING_CROSS_DOMAIN: string[] = [
+  "treatment.inventory_create",
+  "risk.mpi_sync",
+  "mpi.diffusion",
+];
+
+const D01_KEYS = new Set<string>(D01_ACTIVITIES.map((a) => a.activity_key));
+
+export function getActivity(activityKey: string): ActivityDefinition | undefined {
+  return D01_ACTIVITIES.find((a) => a.activity_key === activityKey);
+}
+
+export function isPendingImport(activityKey: string): boolean {
+  return PENDING_CROSS_DOMAIN.includes(activityKey);
+}
+
+export function getCanonicalActivityKeys(): Set<string> {
+  return new Set<string>(D01_KEYS);
+}
+
+/** Búsqueda sobre actividades D1: código, nombre, clave semántica, objetivo. */
+export function searchActivities(term: string): ActivityDefinition[] {
+  const q = normalizeText(term.trim());
+  if (q === "") return [];
+  return D01_ACTIVITIES.filter((a) =>
+    [a.human_code, a.name, a.activity_key, a.objective].some((field) =>
+      normalizeText(field).includes(q),
+    ),
+  );
+}

@@ -51,6 +51,11 @@ export function HomePage() {
                 {d.human_code}
               </span>
               <span>{d.name}</span>
+              {d.activity_keys.length > 0 ? (
+                <span className="domain-count">
+                  {d.activity_keys.length} actividades
+                </span>
+              ) : null}
             </Link>
           </li>
         ))}

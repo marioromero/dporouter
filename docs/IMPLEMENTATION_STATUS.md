@@ -28,7 +28,7 @@ Do not invent them.
 
 Current iteration:
 
-`Prompt 1 — Stage 1 application shell`
+`Prompt 2 — canonical D1 import`
 
 Status:
 
@@ -36,24 +36,21 @@ Status:
 
 Implemented:
 
-* application shell;
-* primary navigation;
-* Map Mode entry;
-* Guided Mode entry;
-* D1-D12 domain registry;
-* domain deep links;
-* activity deep-link infrastructure;
-* non-canonical activity demo;
-* domain search;
-* provenance presentation;
-* sources empty state;
-* desktop/tablet responsive behavior;
-* baseline automated tests.
+* canonical D01 specification;
+* D1 domain objective and description;
+* 20 canonical D1 activities;
+* D1 structured runtime definitions;
+* D1 activity deep links;
+* D1 search;
+* canonical D1 sources;
+* transitional regulatory status;
+* D1 dependency presentation;
+* progressive cross-domain pending-reference handling;
+* D1 integrity tests.
 
 Still not implemented:
 
-* D01-D12 detailed activities;
-* canonical legal sources;
+* D02-D12 detailed activities;
 * characterization questions;
 * applicability engine;
 * state-effect engine;
@@ -65,6 +62,12 @@ Still not implemented:
 * AI;
 * MCP.
 
+Pending canonical cross-domain targets:
+
+* `treatment.inventory_create`
+* `risk.mpi_sync`
+* `mpi.diffusion`
+
 Next controlled iteration:
 
-`Pending review of Prompt 1. Do not proceed without explicit instruction.`
+`Pending review of canonical D1 import. Do not proceed without explicit instruction.`

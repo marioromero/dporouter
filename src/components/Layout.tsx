@@ -21,10 +21,10 @@ function modeFor(pathname: string): { label: string; className: string } | null 
 
 function crumbsFor(pathname: string): string {
   if (pathname === "/") return "Inicio";
+  if (pathname.startsWith("/dominios/")) return `Dominios / ${pathname.split("/")[2] ?? ""}`;
+  if (pathname.startsWith("/actividad/")) return `Actividad / ${pathname.split("/")[2] ?? ""}`;
   const found = NAV.find((n) => n.to !== "/" && (pathname === n.to || pathname.startsWith(n.to + "/")));
   if (found) {
-    if (pathname.startsWith("/dominios/")) return `Dominios / ${pathname.split("/")[2] ?? ""}`;
-    if (pathname.startsWith("/actividad/")) return `Actividad / ${pathname.split("/")[2] ?? ""}`;
     return found.label;
   }
   return "Contenido";

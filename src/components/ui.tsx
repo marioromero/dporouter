@@ -1,4 +1,6 @@
 import { useState } from "react";
+import type { ActivityType } from "../types";
+import type { CanonicalSource } from "../data/sources";
 
 export type ProvenanceKind = "legal" | "method" | "pending" | "unresolved";
 
@@ -69,4 +71,39 @@ export function CopyLinkButton({ label = "Copiar enlace" }: { label?: string }) 
       </span>
     </span>
   );
+}
+
+/**
+ * Insignia de estado regulatorio transitorio: normativa promulgada/publicada
+ * con entrada en vigencia diferida. Distinta de "Pendiente de regulación".
+ * Texto + forma; color solo como apoyo.
+ */
+export function TransitionalBadge() {
+  return (
+    <span className="reg-badge transitional">
+      <i aria-hidden="true">◷</i>
+      Vigencia diferida
+    </span>
+  );
+}
+
+const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
+  assessment: "Evaluación",
+  implementation: "Implementación",
+  monitoring: "Monitoreo",
+};
+
+/** Etiqueta visible en español para `activity_type` (identidad intacta). */
+export function activityTypeLabel(type: ActivityType): string {
+  return ACTIVITY_TYPE_LABELS[type];
+}
+
+const SOURCE_KIND_LABELS: Record<CanonicalSource["kind"], string> = {
+  law: "Ley",
+  regulation: "Reglamento",
+};
+
+/** Etiqueta visible en español para el tipo de fuente. */
+export function sourceKindLabel(kind: CanonicalSource["kind"]): string {
+  return SOURCE_KIND_LABELS[kind];
 }

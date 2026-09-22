@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { CopyLinkButton } from "./ui";
+import { CopyLinkButton, ProvenanceBadge, TransitionalBadge } from "./ui";
 import type { ActivityViewModel } from "../activityViewModel";
 
 /**
@@ -25,7 +25,19 @@ export function ActivitySheet({
       ) : null}
 
       <p className="breadcrumb">
-        <Link to="/mapa">Mapa</Link> / Actividad
+        {view.context ? (
+          <>
+            <Link to="/dominios">Dominios</Link> /{" "}
+            <Link to={`/dominios/${view.context.domainKey}`}>
+              {view.context.domainCode}
+            </Link>{" "}
+            / {view.humanCode}
+          </>
+        ) : (
+          <>
+            <Link to="/mapa">Mapa</Link> / Actividad
+          </>
+        )}
       </p>
 
       <div className="activity-head">
@@ -45,7 +57,13 @@ export function ActivitySheet({
 
       <section className="activity-section" aria-label="Cuándo aplica">
         <h2>Cuándo aplica</h2>
-        <p>{view.appliesWhen}</p>
+        <ul className="fact-list">
+          {view.appliesWhen.map((s) => (
+            <li key={s}>
+              <code>{s}</code>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="activity-section" aria-label="Pregunta gatillo">
@@ -87,6 +105,15 @@ export function ActivitySheet({
 
       <section className="activity-section" aria-label="Evidencia requerida">
         <h2>Evidencia requerida</h2>
+        {view.evidenceBasis === "legal_requirement" ? (
+          <p>
+            <ProvenanceBadge kind="legal" />
+          </p>
+        ) : view.evidenceBasis === "agency_standard" ? (
+          <p>
+            <ProvenanceBadge kind="method" />
+          </p>
+        ) : null}
         <ul>
           {view.evidence.map((s) => (
             <li key={s}>{s}</li>
@@ -116,21 +143,72 @@ export function ActivitySheet({
 
       <section className="activity-section" aria-label="Dependencias">
         <h2>Dependencias</h2>
-        <ul>
-          {view.dependencies.map((s) => (
-            <li key={s}>{s}</li>
-          ))}
-        </ul>
+        {view.dependencies.length === 0 ? (
+          <p>{view.dependenciesNote ?? "Sin dependencias registradas."}</p>
+        ) : (
+          <ul className="dep-list">
+            {view.dependencies.map((d) => (
+              <li key={d.targetKey} className="dep-item">
+                {d.resolution === "resolved" ? (
+                  <Link to={`/actividad/${d.targetKey}`}>
+                    <code>{d.targetKey}</code>
+                  </Link>
+                ) : (
+                  <code>{d.targetKey}</code>
+                )}{" "}
+                <span className="dep-type">{d.typeLabel}</span>
+                <span className="dep-scope"> · {d.scopeLabel}</span>
+                {d.resolution === "pending-import" ? (
+                  <span className="dep-pending">
+                    {" "}
+                    · Referencia canónica pendiente de importar
+                  </span>
+                ) : null}
+                {d.resolution === "unresolved" ? (
+                  <span className="dep-pending"> · Referencia no resuelta</span>
+                ) : null}
+                {d.condition.trim() !== "" ? (
+                  <span className="dep-detail"> — {d.condition}</span>
+                ) : null}
+                {d.rationale.trim() !== "" ? (
+                  <span className="dep-detail"> · {d.rationale}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="activity-section" aria-label="Resultado o efecto esperado">
         <h2>Resultado o efecto esperado</h2>
-        <p>{view.expectedResult}</p>
+        <p>
+          <code>{view.expectedResult}</code>
+        </p>
+      </section>
+
+      <section className="activity-section" aria-label="Efectos de relación">
+        <h2>Efectos de relación</h2>
+        <ul>
+          {view.relationshipEffects.map((s) => (
+            <li key={s}>
+              <code>{s}</code>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="activity-section" aria-label="Estado regulatorio">
         <h2>Estado regulatorio</h2>
-        <p>{view.regulatoryStatus}</p>
+        {view.regulatoryStatus === "transitional" ? (
+          <>
+            <p>
+              <TransitionalBadge />
+            </p>
+            <p>Nuevo régimen con vigencia desde 01-12-2026</p>
+          </>
+        ) : (
+          <p>{view.regulatoryStatus}</p>
+        )}
       </section>
 
       <section className="activity-section" aria-label="Última revisión legal">

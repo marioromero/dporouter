@@ -62,12 +62,13 @@ test("mapa abre Map Mode y guiado abre Diagnóstico", async ({ page }) => {
 
 test("buscar encuentra dominios y maneja estados vacíos", async ({ page }) => {
   await page.goto("/buscar");
-  await expect(page.getByText("Escribe un término para comenzar.")).toBeVisible();
+  await expect(page.getByText("Escribe un término para comenzar.").first()).toBeVisible();
   await page.getByLabel("Buscar").fill("riesgo");
   await expect(page.getByText("Privacy by design, riesgo y EIPD")).toBeVisible();
-  await expect(page.getByText("La búsqueda de actividades se habilitará al importar las definiciones canónicas D1–D12.")).toBeVisible();
+  await page.getByLabel("Buscar").fill("DPO");
+  await expect(page.getByText("Designar DPO")).toBeVisible();
   await page.getByLabel("Buscar").fill("zzz-sin-coincidencia");
-  await expect(page.getByText("No encontramos coincidencias.")).toBeVisible();
+  await expect(page.getByText("No encontramos coincidencias.")).toHaveCount(2);
 });
 
 test("sin overflow horizontal accidental en vistas principales", async ({ page }) => {

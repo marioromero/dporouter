@@ -12,10 +12,14 @@ import {
   buildOutcomeFactors,
   evaluateCondition,
   evaluateProtocol,
+  firstProducerNodeKey,
+  getFactState,
   getMissingDecisionFacts,
+  getMissingRequiredFacts,
+  resolveDecisionNode,
 } from "../src/guidance/engine";
 import type { ExecutionProtocol, FactMap } from "../content/protocols/types";
-import { ProtocolOutcomeView } from "../src/components/ProtocolView";
+import { ProtocolNodeView, ProtocolOutcomeView } from "../src/components/ProtocolView";
 import {
   ALL_ACTIVITIES,
   getCanonicalActivity,
@@ -421,5 +425,336 @@ describe("regresión del motor (hallazgos de revisión)", () => {
     expect(
       screen.getByRole("link", { name: "Resolver siguiente antecedente" }),
     ).toBeTruthy();
+  });
+});
+
+const MINI_YES_NO = (fact: string) => [
+  {
+    value: "yes",
+    label: "Sí",
+    fact_effect: { fact_key: fact, value: "yes" },
+  },
+  {
+    value: "no",
+    label: "No",
+    fact_effect: { fact_key: fact, value: "no" },
+  },
+  {
+    value: "unknown",
+    label: "Desconocido",
+    fact_effect: { fact_key: fact, value: "unknown" },
+  },
+];
+
+function miniOutcome(key: string) {
+  return {
+    outcome_key: key,
+    label: key,
+    classification: "agency_standard" as const,
+    explanation: "e",
+    provenance: "agency_standard" as const,
+    next_actions: [{ kind: "restart" as const, label: "R" }],
+  };
+}
+
+const MINI_CHAIN: ExecutionProtocol = {
+  protocol_key: "test.chain.v1",
+  activity_key: "test.chain_activity",
+  version: 1,
+  mode: "decision",
+  title: "Mini cadena",
+  description: "Protocolo sintético con decisión hacia nodo.",
+  entry_node_key: "q1",
+  decision_fact_keys: ["test.f1", "test.f2"],
+  last_review: "2026-09-22",
+  provenance: "agency_standard",
+  nodes: [
+    {
+      node_key: "q1",
+      node_type: "question",
+      title: "Q1 productora",
+      fact_key: "test.f1",
+      answer_type: "yes_no_unknown",
+      options: MINI_YES_NO("test.f1"),
+      required_facts: [],
+      default_next_node_key: "dec1",
+    },
+    {
+      node_key: "dec1",
+      node_type: "decision",
+      title: "Decisión ramificada",
+      answer_type: "none",
+      transitions: [
+        {
+          rule_id: "to-q2",
+          description: "d",
+          when: { op: "fact_equals", fact_key: "test.f1", value: "yes" },
+          goto_node_key: "q2",
+          explanation: "continúa en q2",
+        },
+        {
+          rule_id: "to-early",
+          description: "d",
+          when: { op: "all", conditions: [] },
+          goto_outcome_key: "out-early",
+          explanation: "e",
+        },
+      ],
+    },
+    {
+      node_key: "q2",
+      node_type: "question",
+      title: "Q2 dependiente",
+      fact_key: "test.f2",
+      answer_type: "yes_no_unknown",
+      options: MINI_YES_NO("test.f2"),
+      required_facts: ["test.f1"],
+      default_next_node_key: "dec2",
+    },
+    {
+      node_key: "dec2",
+      node_type: "decision",
+      title: "Decisión final",
+      answer_type: "none",
+      transitions: [
+        {
+          rule_id: "yes-end",
+          description: "d",
+          when: { op: "fact_equals", fact_key: "test.f2", value: "yes" },
+          goto_outcome_key: "out-yes",
+          explanation: "e",
+        },
+        {
+          rule_id: "fallback",
+          description: "d",
+          when: { op: "all", conditions: [] },
+          goto_outcome_key: "out-no",
+          explanation: "e",
+        },
+      ],
+    },
+  ],
+  outcomes: [miniOutcome("out-early"), miniOutcome("out-yes"), miniOutcome("out-no")],
+};
+
+describe("protocolos no lineales (refactor)", () => {
+  it("1. decision → node navega preservando hechos", () => {
+    expect(validateProtocolStructure(MINI_CHAIN)).toEqual([]);
+    const dec1 = MINI_CHAIN.nodes.find((n) => n.node_key === "dec1");
+    if (!dec1) throw new Error("nodo ausente");
+    const r = resolveDecisionNode(dec1, { "test.f1": "yes" });
+    expect(r).toEqual({ kind: "node", node_key: "q2" });
+    // El walk completo atraviesa el nodo intermedio.
+    const e = evaluateProtocol(MINI_CHAIN, { "test.f1": "yes", "test.f2": "yes" });
+    expect(e.status).toBe("outcome");
+    if (e.status === "outcome") expect(e.outcome_key).toBe("out-yes");
+  });
+
+  it("2. decision → outcome sigue funcionando", () => {
+    const dec1 = MINI_CHAIN.nodes.find((n) => n.node_key === "dec1");
+    if (!dec1) throw new Error("nodo ausente");
+    const r = resolveDecisionNode(dec1, { "test.f1": "no" });
+    expect(r.kind).toBe("outcome");
+    const e = evaluateProtocol(MINI_CHAIN, { "test.f1": "no", "test.f2": "no" });
+    expect(e.status).toBe("outcome");
+    if (e.status === "outcome") expect(e.outcome_key).toBe("out-early");
+  });
+
+  it("3. deep link con required facts inyectados abre sin aviso", () => {
+    const q2 = MINI_CHAIN.nodes.find((n) => n.node_key === "q2");
+    if (!q2 || q2.node_type !== "question") throw new Error("nodo ausente");
+    render(
+      <MemoryRouter>
+        <ProtocolNodeView
+          protocol={MINI_CHAIN}
+          activity={{ activityKey: "test.chain_activity", humanCode: "T-01", name: "x" }}
+          session={{
+            facts: { "test.f1": "yes", "test.f2": "no" },
+            started: true,
+            answer: () => {},
+            reset: () => {},
+            isProvided: (f) => f === "test.f2",
+          }}
+          node={q2}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByTestId("guia-prerequisites")).toBeNull();
+    expect(screen.getByTestId("guia-provided")).toBeTruthy();
+    expect(screen.getByTestId("guia-option-no").getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+  });
+
+  it("4. deep link con fact faltante lista productor y ofrece nodo", () => {
+    const q2 = MINI_CHAIN.nodes.find((n) => n.node_key === "q2");
+    if (!q2 || q2.node_type !== "question") throw new Error("nodo ausente");
+    const missing = getMissingRequiredFacts(MINI_CHAIN, q2, {});
+    expect(missing).toHaveLength(1);
+    expect(missing[0].fact_key).toBe("test.f1");
+    expect(missing[0].state).toBe("absent");
+    expect(missing[0].producer?.node_key).toBe("q1");
+    expect(firstProducerNodeKey(MINI_CHAIN, ["test.f1"])).toBe("q1");
+    render(
+      <MemoryRouter>
+        <ProtocolNodeView
+          protocol={MINI_CHAIN}
+          activity={{ activityKey: "test.chain_activity", humanCode: "T-01", name: "x" }}
+          session={{
+            facts: {},
+            started: false,
+            answer: () => {},
+            reset: () => {},
+            isProvided: () => false,
+          }}
+          node={q2}
+        />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByText("Para resolver este punto faltan antecedentes previos."),
+    ).toBeTruthy();
+    expect(screen.getByText("Q1 productora")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("link", { name: /Ir al nodo que produce/ })
+        .getAttribute("href"),
+    ).toContain("/q1");
+  });
+
+  it("5. fact unknown se distingue de ausente y de resuelto", () => {
+    expect(getFactState({}, "test.f1")).toBe("absent");
+    expect(getFactState({ "test.f1": "unknown" }, "test.f1")).toBe("unknown");
+    expect(getFactState({ "test.f1": "yes" }, "test.f1")).toBe("resolved");
+    const q2 = MINI_CHAIN.nodes.find((n) => n.node_key === "q2");
+    if (!q2 || q2.node_type !== "question") throw new Error("nodo ausente");
+    const missing = getMissingRequiredFacts(MINI_CHAIN, q2, { "test.f1": "unknown" });
+    expect(missing).toHaveLength(1);
+    expect(missing[0].state).toBe("unknown");
+    // unknown no se convierte en false: la decisión no concluye por esa vía.
+    const dec1 = MINI_CHAIN.nodes.find((n) => n.node_key === "dec1");
+    if (!dec1) throw new Error("nodo ausente");
+    const r = resolveDecisionNode(dec1, { "test.f1": "unknown" });
+    expect(r.kind).toBe("outcome");
+    if (r.kind === "outcome") expect(r.rule.rule_id).toBe("to-early");
+  });
+
+  it("6. nodo posterior accesible sin responder no-dependencias", () => {
+    const q1 = MINI_CHAIN.nodes.find((n) => n.node_key === "q1");
+    if (!q1 || q1.node_type !== "question") throw new Error("nodo ausente");
+    expect(getMissingRequiredFacts(MINI_CHAIN, q1, {})).toEqual([]);
+    render(
+      <MemoryRouter>
+        <ProtocolNodeView
+          protocol={MINI_CHAIN}
+          activity={{ activityKey: "test.chain_activity", humanCode: "T-01", name: "x" }}
+          session={{
+            facts: {},
+            started: false,
+            answer: () => {},
+            reset: () => {},
+            isProvided: () => false,
+          }}
+          node={q1}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByTestId("guia-prerequisites")).toBeNull();
+    expect(screen.getByTestId("guia-option-yes")).toBeTruthy();
+  });
+
+  it("7. referencias inválidas y ciclos se detectan en validación", () => {
+    const ghost = MINI_CHAIN.nodes.map((n) =>
+      n.node_key === "dec1"
+        ? {
+            ...n,
+            transitions: [
+              {
+                rule_id: "x",
+                description: "d",
+                when: { op: "all" as const, conditions: [] },
+                goto_node_key: "fantasma",
+                explanation: "e",
+              },
+            ],
+          }
+        : n,
+    );
+    expect(
+      validateProtocolStructure({ ...MINI_CHAIN, nodes: ghost }).some((m) =>
+        m.includes("fantasma"),
+      ),
+    ).toBe(true);
+    const badFact = MINI_CHAIN.nodes.map((n) =>
+      n.node_key === "q2" ? { ...n, required_facts: ["test.fantasma"] } : n,
+    );
+    expect(
+      validateProtocolStructure({ ...MINI_CHAIN, nodes: badFact }).some((m) =>
+        m.includes("test.fantasma"),
+      ),
+    ).toBe(true);
+    const loop = MINI_CHAIN.nodes.map((n) =>
+      n.node_key === "q1" ? { ...n, default_next_node_key: "q1" } : n,
+    );
+    expect(
+      validateProtocolStructure({ ...MINI_CHAIN, nodes: loop }).some((m) =>
+        m.includes("ciclo"),
+      ),
+    ).toBe(true);
+    // Facts externos declarados son válidos.
+    const external = MINI_CHAIN.nodes.map((n) =>
+      n.node_key === "q2" ? { ...n, required_facts: ["ext.f"] } : n,
+    );
+    expect(
+      validateProtocolStructure({
+        ...MINI_CHAIN,
+        nodes: external,
+        external_fact_keys: ["ext.f"],
+      }).filter((m) => m.includes("ext.f")),
+    ).toEqual([]);
+  });
+
+  it("regla coincidente sin destino se reporta misconfigured", () => {
+    const bad = {
+      node_key: "dec-bad",
+      node_type: "decision" as const,
+      title: "Bad",
+      answer_type: "none" as const,
+      transitions: [
+        {
+          rule_id: "x",
+          description: "d",
+          when: { op: "all" as const, conditions: [] },
+          explanation: "e",
+        },
+      ],
+    };
+    expect(resolveDecisionNode(bad, {})).toEqual({
+      kind: "misconfigured",
+      detail: "regla x sin destino",
+    });
+  });
+
+  it("D1.02 declara required_facts sin cambiar reglas ni outcomes", () => {
+    for (const n of PROTOCOL.nodes) {
+      expect(Array.isArray(n.required_facts), n.node_key).toBe(true);
+    }
+    const final = PROTOCOL.nodes.find((n) => n.node_key === "final-decision");
+    expect(final?.required_facts).toHaveLength(8);
+    expect(validateProtocolStructure(PROTOCOL)).toEqual([]);
+    // Los 5 outcomes se siguen produciendo idénticos.
+    expect(mustOutcome(facts({ [MPI]: "implementing" })).outcome_key).toBe(
+      "required_by_mpi",
+    );
+    expect(
+      mustOutcome(facts({ [HIGH]: "yes", [LARGE]: "yes" })).outcome_key,
+    ).toBe("strongly_recommended");
+    expect(
+      mustOutcome(facts({ [HIGH]: "yes", [TRANSFERS]: "yes" })).outcome_key,
+    ).toBe("recommended");
+    expect(mustOutcome(facts()).outcome_key).toBe("not_priority");
+    expect(
+      mustOutcome(facts({ [LARGE]: "unknown" })).outcome_key,
+    ).toBe("assessment_incomplete");
   });
 });

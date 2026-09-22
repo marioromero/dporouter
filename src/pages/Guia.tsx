@@ -1,7 +1,12 @@
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { getProtocolForActivity, getProtocolNode } from "../../content/protocols/registry";
 import { getCanonicalActivity, getDomainForActivity } from "../../content/registry";
-import { evaluateProtocol } from "../guidance/engine";
+import {
+  evaluateProtocol,
+  firstProducerNodeKey,
+  getMissingRequiredFacts,
+  resolveDecisionNode,
+} from "../guidance/engine";
 import { useGuidanceProtocol } from "../guidance/session";
 import {
   ProtocolChrome,
@@ -113,10 +118,56 @@ function GuiaContent({
   }
 
   if (node.node_type === "decision") {
-    // El nodo decisión no pide respuestas: evalúa el protocolo completo con
-    // los hechos de sesión. Sin hechos suficientes no se inventa conclusión:
-    // se conduce al primer antecedente requerido.
+    // El nodo decisión no pide respuestas. Primero se resuelven SOLO sus
+    // transiciones. goto_node_key navega al nodo (deep link, sesión
+    // preservada), pero un short-circuit previo del recorrido completo
+    // (p. ej. obligación MPI) siempre tiene prioridad y se rendea como
+    // resultado: ninguna navegación puede ocultar una conclusión anterior.
+    const resolution = resolveDecisionNode(node, session.facts);
+    if (resolution.kind === "misconfigured") {
+      return (
+        <ProtocolMisconfigured
+          protocol={protocol}
+          activity={activity}
+          session={session}
+          crumbTail={node.title}
+          detail={resolution.detail}
+        />
+      );
+    }
     const evaluation = evaluateProtocol(protocol, session.facts);
+    if (resolution.kind === "node") {
+      if (evaluation.status === "outcome") {
+        return (
+          <ProtocolOutcomeView
+            protocol={protocol}
+            activity={activity}
+            session={session}
+            outcome={evaluation.outcome}
+            ruleId={evaluation.rule_id}
+            explanation={evaluation.explanation}
+          />
+        );
+      }
+      const target = getProtocolNode(protocol, resolution.node_key);
+      if (!target) {
+        return (
+          <ProtocolMisconfigured
+            protocol={protocol}
+            activity={activity}
+            session={session}
+            crumbTail={node.title}
+            detail={resolution.node_key}
+          />
+        );
+      }
+      return (
+        <Navigate
+          to={`/actividad/${activityKey}/guia/${resolution.node_key}`}
+          replace
+        />
+      );
+    }
     if (evaluation.status === "outcome") {
       return (
         <ProtocolOutcomeView
@@ -130,35 +181,37 @@ function GuiaContent({
       );
     }
     if (evaluation.status === "awaiting_facts") {
+      const producerKey =
+        resolution.kind === "awaiting"
+          ? firstProducerNodeKey(protocol, resolution.missing_fact_keys)
+          : null;
+      // Si el nodo declara required_facts, el conteo los refleja; si no,
+      // se usa el del recorrido.
+      const declaredMissing = getMissingRequiredFacts(protocol, node, session.facts);
+      const missingCount =
+        (node.required_facts?.length ?? 0) > 0
+          ? declaredMissing.length
+          : resolution.kind === "awaiting"
+            ? resolution.missing_fact_keys.length
+            : evaluation.missing_fact_keys.length;
       return (
         <ProtocolPendingView
           protocol={protocol}
           activity={activity}
           session={session}
-          currentNodeKey={evaluation.current_node_key}
-          missingCount={evaluation.missing_fact_keys.length}
+          currentNodeKey={producerKey ?? evaluation.current_node_key}
+          missingCount={missingCount}
         />
       );
     }
     return (
-      <>
-        <ProtocolChrome
-          protocol={protocol}
-          activity={activity}
-          session={session}
-          crumbTail={node.title}
-        />
-        <section className="activity-section" aria-label="Error de configuración" data-testid="guia-misconfigured">
-          <h2>Error de configuración del protocolo</h2>
-          <p>
-            <code>{evaluation.detail}</code>
-          </p>
-          <p>
-            Esta es una falla de configuración canónica, no un resultado
-            profesional. Repórtala como issue de especificación.
-          </p>
-        </section>
-      </>
+      <ProtocolMisconfigured
+        protocol={protocol}
+        activity={activity}
+        session={session}
+        crumbTail={node.title}
+        detail={evaluation.detail}
+      />
     );
   }
 
@@ -169,5 +222,52 @@ function GuiaContent({
       session={session}
       node={node}
     />
+  );
+}
+
+function ProtocolMisconfigured({
+  protocol,
+  activity,
+  session,
+  crumbTail,
+  detail,
+}: {
+  protocol: NonNullable<ReturnType<typeof getProtocolForActivity>>;
+  activity: {
+    activityKey: string;
+    humanCode: string;
+    name: string;
+    domainKey?: string;
+    domainCode?: string;
+  };
+  session: {
+    facts: Record<string, string>;
+    started: boolean;
+    answer: (factKey: string, value: string) => void;
+    reset: () => void;
+    isProvided: (factKey: string) => boolean;
+  };
+  crumbTail: string;
+  detail: string;
+}) {
+  return (
+    <>
+      <ProtocolChrome
+        protocol={protocol}
+        activity={activity}
+        session={session}
+        crumbTail={crumbTail}
+      />
+      <section className="activity-section" aria-label="Error de configuración" data-testid="guia-misconfigured">
+        <h2>Error de configuración del protocolo</h2>
+        <p>
+          <code>{detail}</code>
+        </p>
+        <p>
+          Esta es una falla de configuración canónica, no un resultado
+          profesional. Repórtala como issue de especificación.
+        </p>
+      </section>
+    </>
   );
 }

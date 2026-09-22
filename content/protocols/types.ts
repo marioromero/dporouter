@@ -76,6 +76,14 @@ export interface GuidanceNode {
   options?: AnswerOption[];
   evidence_to_review?: string[];
   help_text?: string[];
+  /**
+   * Prerrequisitos semánticos: semantic fact keys que deben estar
+   * resueltos para trabajar este nodo. El orden del array de nodos NO
+   * define dependencias; solo presentación o recorrido sugerido. Un fact
+   * puede provenir del protocolo actual, de `initialFacts`, de
+   * Diagnóstico, de otro protocolo o de futura información persistida.
+   */
+  required_facts?: string[];
   /** Destino cuando ninguna transición ni opción directa aplica. */
   default_next_node_key?: string;
   /** Reglas evaluadas en orden; la primera coincidencia gana. */
@@ -119,6 +127,13 @@ export interface ExecutionProtocol {
   outcomes: ProtocolOutcome[];
   /** Hechos que deben estar resueltos antes de una conclusión definitiva. */
   decision_fact_keys: string[];
+  /**
+   * Facts externos/injectables: keys válidas que ningún nodo del
+   * protocolo produce (Diagnóstico, otro protocolo, `initialFacts`,
+   * futura persistencia). Permite validar `required_facts` que
+   * referencian hechos de fuera del protocolo.
+   */
+  external_fact_keys?: string[];
   last_review: string;
   provenance: ProtocolProvenance;
 }

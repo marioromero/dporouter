@@ -375,6 +375,8 @@ Protocols live as canonical structured content and are not hardcoded inside UI c
 
 Map Mode, Guided Mode and future Stage 2 workflows may reuse the same protocol definitions.
 
+Precisión (2026-09-22): node prerequisites are semantic (`required_facts[]`), never positional — array order is presentation or suggested traversal only, and facts may originate outside the current protocol. Decision rules may route either to another node or to an outcome.
+
 ---
 
 ## ADR-043 — Decision support must be deterministic and explainable

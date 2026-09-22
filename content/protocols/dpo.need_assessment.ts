@@ -132,6 +132,7 @@ export const DPO_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "programa MPI existente",
         "evidencia de implementación",
       ],
+      required_facts: [],
       default_next_node_key: "high-impact-data",
       transitions: [
         {
@@ -203,6 +204,7 @@ export const DPO_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "Considera como factor positivo si existe al menos una de estas categorías: datos sensibles; datos de salud; perfil biológico; datos biométricos; datos de menores de 14 años; datos económicos, financieros, bancarios o comerciales comprendidos en el Título III.",
         "Este factor no convierte por sí solo al DPO en obligatorio. Se utiliza como criterio metodológico de recomendación.",
       ],
+      required_facts: [],
       default_next_node_key: "large-scale",
       provenance: "agency_standard",
     },
@@ -246,6 +248,7 @@ export const DPO_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       help_text: [
         "No existe en esta metodología un umbral legal numérico inventado. Utiliza la clasificación ya documentada cuando exista. Si la escala no puede determinarse con respaldo, responde Desconocido.",
       ],
+      required_facts: [],
       default_next_node_key: "automated-significant-effects",
       provenance: "agency_standard",
     },
@@ -297,6 +300,7 @@ export const DPO_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "decisiones laborales",
         "acceso a productos o servicios",
       ],
+      required_facts: [],
       default_next_node_key: "systematic-public-monitoring",
       provenance: "agency_standard",
     },
@@ -344,6 +348,7 @@ export const DPO_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "analítica asociada",
         "tecnologías equivalentes",
       ],
+      required_facts: [],
       default_next_node_key: "international-transfers",
       provenance: "agency_standard",
     },
@@ -392,6 +397,7 @@ export const DPO_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "encargados extranjeros",
         "almacenamiento o acceso desde otro país",
       ],
+      required_facts: [],
       default_next_node_key: "processor-complexity",
       provenance: "agency_standard",
     },
@@ -443,6 +449,7 @@ export const DPO_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "Para esta metodología de agencia responde Sí cuando ocurra cualquiera: existen dos o más encargados activos relevantes; o existe al menos una cadena de subencargamiento.",
         "Este criterio cuantitativo es un estándar metodológico interno y no un umbral legal.",
       ],
+      required_facts: [],
       default_next_node_key: "privacy-maturity",
       provenance: "agency_standard",
     },
@@ -488,6 +495,7 @@ export const DPO_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "Para este protocolo se considera baja madurez cuando al menos 3 de estas 7 áreas están inexistente o informal: inventario; política; atención de derechos; contratos con encargados; gestión de incidentes; capacitación; EIPD.",
         "La regla 3 de 7 es un estándar metodológico de la agencia y no una clasificación establecida por la ley.",
       ],
+      required_facts: [],
       default_next_node_key: "final-decision",
       provenance: "agency_standard",
     },
@@ -497,6 +505,9 @@ export const DPO_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       title: "Determinación del resultado",
       prompt: "El sistema aplica las reglas determinísticas sobre los hechos resueltos.",
       answer_type: "none",
+      // Requisitos semánticos explícitos: estado MPI + 7 factores.
+      // El orden del array no define dependencias.
+      required_facts: ["mpi.lifecycle_status", ...DECISION_FACTS],
       transitions: [
         {
           rule_id: "incomplete",

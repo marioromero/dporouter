@@ -15,8 +15,9 @@ import {
   buildOutcomeFactors,
   evaluateCondition,
   evaluateProtocol,
+  firstProducerNodeKey,
+  getMissingRequiredFacts,
   getProtocolProgress,
-  getUnresolvedPrerequisites,
   isFactResolved,
   resolveNodeWithFacts,
 } from "../guidance/engine";
@@ -256,11 +257,16 @@ export function ProtocolNodeView({
   node: GuidanceNode;
 }) {
   const navigate = useNavigate();
-  const prerequisites = getUnresolvedPrerequisites(
+  // Prerrequisitos semánticos declarados; la posición en el array no
+  // define dependencias. Un fact puede venir de initialFacts.
+  const missingRequired = getMissingRequiredFacts(protocol, node, session.facts);
+  const nextProducerKey = firstProducerNodeKey(
     protocol,
-    node.node_key,
-    session.facts,
+    missingRequired.map((m) => m.fact_key),
   );
+  const nextProducer = nextProducerKey
+    ? protocol.nodes.find((n) => n.node_key === nextProducerKey)
+    : undefined;
   const currentValue = node.fact_key ? session.facts[node.fact_key] : undefined;
   const provided = node.fact_key ? session.isProvided(node.fact_key) : false;
   const selectedOption = node.options?.find((o) => o.value === currentValue);
@@ -297,18 +303,27 @@ export function ProtocolNodeView({
       />
       <section className="activity-section" aria-label={node.title} data-testid="guia-node">
         <h2>{node.title}</h2>
-        {prerequisites.length > 0 ? (
+        {missingRequired.length > 0 ? (
           <div className="notice" role="alert" data-testid="guia-prerequisites">
             <strong>
-              Este punto requiere antecedentes previos que todavía no están resueltos.
+              Para resolver este punto faltan antecedentes previos.
             </strong>
-            <p>
-              <Link
-                to={nodeHref(activity.activityKey, prerequisites[0].node_key)}
-              >
-                Ir al primer antecedente requerido: {prerequisites[0].title}
-              </Link>
-            </p>
+            <ul>
+              {missingRequired.map((m) => (
+                <li key={m.fact_key}>
+                  {m.producer ? m.producer.title : <code>{m.fact_key}</code>}
+                  {m.state === "unknown" ? " (registrado como desconocido)" : ""}
+                </li>
+              ))}
+            </ul>
+            {nextProducer ? (
+              <p>
+                <Link to={nodeHref(activity.activityKey, nextProducer.node_key)}>
+                  Ir al nodo que produce el siguiente antecedente:{" "}
+                  {nextProducer.title}
+                </Link>
+              </p>
+            ) : null}
           </div>
         ) : null}
         {node.prompt ? <p>{node.prompt}</p> : null}

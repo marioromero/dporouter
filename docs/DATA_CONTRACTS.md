@@ -697,6 +697,7 @@ entry_node_key
 nodes[]
 outcomes[]
 decision_fact_keys[]
+external_fact_keys[]
 last_review
 provenance
 ```
@@ -716,6 +717,9 @@ Rules:
 * Protocols live as canonical structured content, never hardcoded in UI.
 * The relation resolves via the protocol registry (`activity_key →
   ExecutionProtocol`); `ActivityDefinition` carries no protocol fields.
+* `external_fact_keys[]` declares valid facts produced outside the
+  protocol (Diagnóstico, another protocol, injected context, future
+  persistence) so `required_facts` referencing them still validates.
 
 ## 34. GuidanceNode
 
@@ -732,6 +736,7 @@ answer_type
 options[]
 evidence_to_review[]
 help_text[]
+required_facts[]
 default_next_node_key
 transitions[]
 related_activity_keys[]
@@ -760,6 +765,13 @@ Rules:
 * Every `node_key` has a stable deep link.
 * Opening a node without prior session state must work and must not invent
   prior answers.
+* `required_facts[]` holds semantic fact keys that must be resolved to work
+  the node. Array position defines presentation or suggested traversal only;
+  it never defines semantic prerequisites. A fact key is valid when some
+  protocol node produces it or when it is declared in
+  `external_fact_keys[]`; facts may originate outside the current protocol.
+* A decision rule may route either to another node (`goto_node_key`) or to
+  an outcome (`goto_outcome_key`).
 
 ## 35. AnswerOption
 

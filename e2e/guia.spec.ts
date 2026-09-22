@@ -143,15 +143,22 @@ test("siguiente paso D1.08 navega correctamente", async ({ page }) => {
   expect(page.url()).toContain("/actividad/dpo.designate");
 });
 
-test("nodo abre por deep link sin sesión e indica antecedentes previos", async ({ page }) => {
+test("nodo posterior abre directo sin exigir nodos previos no dependientes", async ({ page }) => {
   await page.goto(`${GUIA}/large-scale`);
   await expect(page.getByText("¿Existe tratamiento masivo o a gran escala?")).toBeVisible();
-  await expect(page.getByTestId("guia-prerequisites")).toContainText(
-    "Este punto requiere antecedentes previos que todavía no están resueltos.",
-  );
-  await page
-    .getByRole("link", { name: /Ir al primer antecedente requerido/ })
-    .click();
+  // Sin dependencias semánticas: accesible, sin aviso de prerrequisitos.
+  await expect(page.getByTestId("guia-prerequisites")).toHaveCount(0);
+  // Responder crea sesión transitoria y permite continuar.
+  await page.getByTestId("guia-option-no").click();
+  await page.getByTestId("guia-continue").click();
+  await expect(page).toHaveURL(new RegExp("/guia/automated-significant-effects$"));
+});
+
+test("final-decision directo sin sesión no inventa conclusión", async ({ page }) => {
+  await page.goto(`${GUIA}/final-decision`);
+  await expect(page.getByTestId("guia-pending")).toContainText("Evaluación en curso");
+  await expect(page.getByTestId("guia-outcome")).toHaveCount(0);
+  await page.getByRole("link", { name: /Continuar/ }).click();
   await expect(page).toHaveURL(new RegExp("/guia/mpi-status$"));
 });
 

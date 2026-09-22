@@ -228,22 +228,132 @@ export function evaluateProtocol(
   };
 }
 
-/** Nodos pregunta previos al nodo indicado con hecho sin resolver. */
-export function getUnresolvedPrerequisites(
+/** Estado de un fact: ausente, presente con unknown, o resuelto. */
+export type FactState = "absent" | "unknown" | "resolved";
+
+export function getFactState(facts: FactMap, factKey: string): FactState {
+  const v = facts[factKey];
+  if (v === undefined) return "absent";
+  if (v === "unknown") return "unknown";
+  return "resolved";
+}
+
+/** Facts referenciados por una condición (para awaits genéricos). */
+export function collectConditionFacts(condition: FactCondition): string[] {
+  switch (condition.op) {
+    case "all":
+    case "any":
+      return condition.conditions.flatMap(collectConditionFacts);
+    case "not":
+      return collectConditionFacts(condition.condition);
+    case "fact_equals":
+    case "fact_unresolved":
+      return [condition.fact_key];
+    case "fact_in":
+      return [condition.fact_key];
+    case "count_true":
+      return [...condition.facts];
+  }
+}
+
+/** Nodo pregunta que produce un fact, si existe dentro del protocolo. */
+export function findProducerNode(
   protocol: ExecutionProtocol,
-  nodeKey: string,
+  factKey: string,
+): GuidanceNode | undefined {
+  return protocol.nodes.find(
+    (n) => n.node_type === "question" && n.fact_key === factKey,
+  );
+}
+
+export interface MissingRequiredFact {
+  fact_key: string;
+  state: "absent" | "unknown";
+  producer?: GuidanceNode;
+}
+
+/**
+ * Prerrequisitos semánticos sin resolver de un nodo, en orden de
+ * declaración. Solo evalúa `required_facts[]`; la posición del nodo en
+ * el array nunca define dependencias.
+ */
+export function getMissingRequiredFacts(
+  protocol: ExecutionProtocol,
+  node: GuidanceNode,
   facts: FactMap,
-): GuidanceNode[] {
-  const idx = protocol.nodes.findIndex((n) => n.node_key === nodeKey);
-  if (idx < 0) return [];
-  return protocol.nodes
-    .slice(0, idx)
-    .filter(
-      (n) =>
-        n.node_type === "question" &&
-        n.fact_key &&
-        !isFactResolved(facts[n.fact_key]),
-    );
+): MissingRequiredFact[] {
+  const out: MissingRequiredFact[] = [];
+  for (const f of node.required_facts ?? []) {
+    if (!isFactResolved(facts[f])) {
+      out.push({
+        fact_key: f,
+        state: facts[f] === undefined ? "absent" : "unknown",
+        producer: findProducerNode(protocol, f),
+      });
+    }
+  }
+  return out;
+}
+
+/** Primer nodo capaz de producir alguno de los facts indicados. */
+export function firstProducerNodeKey(
+  protocol: ExecutionProtocol,
+  factKeys: string[],
+): string | null {
+  for (const f of factKeys) {
+    const producer = findProducerNode(protocol, f);
+    if (producer) return producer.node_key;
+  }
+  return null;
+}
+
+export type DecisionResolution =
+  | { kind: "node"; node_key: string }
+  | { kind: "outcome"; outcome_key: string; rule: DecisionRule }
+  | { kind: "awaiting"; missing_fact_keys: string[] }
+  | { kind: "misconfigured"; detail: string };
+
+/**
+ * Resuelve UN nodo de decisión con los hechos dados: primera transición
+ * coincidente (a nodo o a outcome). Sin coincidencia no se inventa
+ * conclusión: queda a la espera con los facts referenciados sin resolver.
+ * Una regla coincidente sin destino es configuración inválida y se
+ * reporta como tal (nunca se silencia).
+ */
+export function resolveDecisionNode(
+  node: GuidanceNode,
+  facts: FactMap,
+): DecisionResolution {
+  for (const t of node.transitions ?? []) {
+    if (!evaluateCondition(t.when, facts)) continue;
+    if (!t.goto_outcome_key && !t.goto_node_key) {
+      return { kind: "misconfigured", detail: `regla ${t.rule_id} sin destino` };
+    }
+    if (t.goto_outcome_key) {
+      return { kind: "outcome", outcome_key: t.goto_outcome_key, rule: t };
+    }
+    if (t.goto_node_key) {
+      return { kind: "node", node_key: t.goto_node_key };
+    }
+  }
+  for (const t of node.transitions ?? []) {
+    if (!evaluateCondition(t.when, facts)) continue;
+    if (t.goto_outcome_key) {
+      return { kind: "outcome", outcome_key: t.goto_outcome_key, rule: t };
+    }
+    if (t.goto_node_key) {
+      return { kind: "node", node_key: t.goto_node_key };
+    }
+  }
+  const referenced = (node.transitions ?? []).flatMap((t) =>
+    collectConditionFacts(t.when),
+  );
+  return {
+    kind: "awaiting",
+    missing_fact_keys: [...new Set(referenced)].filter(
+      (f) => !isFactResolved(facts[f]),
+    ),
+  };
 }
 
 /** Fila explicable de factores para la pantalla de resultado. */

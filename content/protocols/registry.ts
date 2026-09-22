@@ -168,5 +168,73 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
       );
     }
   }
+  // Prerrequisitos semánticos: cada required fact debe ser producido por
+  // un nodo del protocolo o estar declarado como externo/injectable.
+  const producedFacts = new Set(
+    protocol.nodes
+      .filter((n) => n.node_type === "question" && n.fact_key)
+      .map((n) => n.fact_key as string),
+  );
+  const externalFacts = new Set(protocol.external_fact_keys ?? []);
+  for (const n of protocol.nodes) {
+    for (const f of n.required_facts ?? []) {
+      if (!producedFacts.has(f) && !externalFacts.has(f)) {
+        errors.push(
+          `${protocol.protocol_key}: nodo ${n.node_key} requiere fact desconocido ${f}`,
+        );
+      }
+    }
+  }
+  // Navegación acíclica: el grafo de destinos (opciones, defecto,
+  // goto_node) no debe contener ciclos infinitos.
+  errors.push(...detectNavigationCycles(protocol, nodeKeys));
+  return errors;
+}
+
+/** Aristas de navegación salientes de un nodo. */
+function outgoingEdges(
+  protocol: ExecutionProtocol,
+  nodeKey: string,
+): string[] {
+  const node = protocol.nodes.find((n) => n.node_key === nodeKey);
+  if (!node) return [];
+  const edges = new Set<string>();
+  for (const o of node.options ?? []) {
+    if (o.next_node_key) edges.add(o.next_node_key);
+  }
+  if (node.default_next_node_key) edges.add(node.default_next_node_key);
+  for (const t of node.transitions ?? []) {
+    if (t.goto_node_key) edges.add(t.goto_node_key);
+  }
+  return [...edges];
+}
+
+function detectNavigationCycles(
+  protocol: ExecutionProtocol,
+  nodeKeys: Set<string>,
+): string[] {
+  const errors: string[] = [];
+  const visited = new Set<string>();
+  const stack: string[] = [];
+  function visit(key: string): void {
+    if (stack.includes(key)) {
+      errors.push(
+        `${protocol.protocol_key}: ciclo de navegación ${[...stack, key].join(" → ")}`,
+      );
+      return;
+    }
+    if (visited.has(key)) return;
+    visited.add(key);
+    stack.push(key);
+    for (const next of outgoingEdges(protocol, key)) {
+      if (nodeKeys.has(next)) visit(next);
+    }
+    stack.pop();
+  }
+  visit(protocol.entry_node_key);
+  // Nodos no alcanzables desde la entrada también se revisan.
+  for (const k of nodeKeys) {
+    if (!visited.has(k)) visit(k);
+  }
   return errors;
 }

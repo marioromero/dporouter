@@ -59,6 +59,15 @@ D1.02 sigue siendo el único protocolo completo por ahora.
 
 D3 continúa pendiente.
 
+Post-UX-Reset fix (explicit fact conflicts):
+
+* `fact_conflict` como estado distinguible (nunca unknown ni false);
+* resolución explícita del profesional con alternativas y momento;
+* conflicto en fact requerido bloquea conclusión definitiva;
+* nueva contradicción reabre el conflicto;
+* IDs técnicos fuera de la UI normal (resultado sin `rule_id`);
+* motor, D1/D2 y reglas D1.02 intactos.
+
 Implemented:
 
 * canonical D01 specification;

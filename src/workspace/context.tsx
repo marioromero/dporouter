@@ -41,6 +41,7 @@ interface WorkspaceContextValue {
   clearProtocolFact: (protocolKey: string, factKey: string) => void;
   setDiagnosticFact: (factKey: string, value: string) => void;
   clearDiagnosticFact: (factKey: string) => void;
+  resolveFactConflict: (factKey: string, value: string) => void;
   setLastLocation: (path: string) => void;
   exportCompany: (id: string) => string | null;
   importCompany: (json: string) => { ok: true } | { ok: false; error: string };
@@ -50,6 +51,22 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
 function touchCompany(company: CompanyState): CompanyState {
   return { ...company, updatedAt: nowIso() };
+}
+
+/** Elimina resoluciones cuyos hechos ya no tienen observaciones. */
+function pruneResolutions(c: CompanyState): CompanyState {
+  const alive = new Set<string>([
+    ...Object.keys(c.diagnosticFacts),
+    ...Object.values(c.protocolAnswers).flatMap((a) => Object.keys(a)),
+  ]);
+  const kept: CompanyState["factResolutions"] = {};
+  for (const [k, r] of Object.entries(c.factResolutions)) {
+    if (alive.has(k)) kept[k] = r;
+  }
+  if (Object.keys(kept).length === Object.keys(c.factResolutions).length) {
+    return c;
+  }
+  return { ...c, factResolutions: kept };
 }
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
@@ -172,7 +189,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         if (!(protocolKey in c.protocolAnswers)) return c;
         const next = { ...c.protocolAnswers };
         delete next[protocolKey];
-        return { ...c, protocolAnswers: next };
+        return pruneResolutions({ ...c, protocolAnswers: next });
       });
     },
     [company, updateCompany],
@@ -186,10 +203,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         if (!answers || !(factKey in answers)) return c;
         const nextAnswers = { ...answers };
         delete nextAnswers[factKey];
-        return {
+        return pruneResolutions({
           ...c,
           protocolAnswers: { ...c.protocolAnswers, [protocolKey]: nextAnswers },
-        };
+        });
       });
     },
     [company, updateCompany],
@@ -215,7 +232,47 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         if (!(factKey in c.diagnosticFacts)) return c;
         const next = { ...c.diagnosticFacts };
         delete next[factKey];
-        return { ...c, diagnosticFacts: next };
+        return pruneResolutions({ ...c, diagnosticFacts: next });
+      });
+    },
+    [company, updateCompany],
+  );
+
+  /**
+   * Resolución explícita de un conflicto: el profesional elige qué valor
+   * refleja actualmente a la empresa. Guarda valor, momento, alternativas
+   * y elección explícita sin borrar las observaciones originales. Una
+   * nueva observación contradictoria posterior reabre el conflicto.
+   */
+  const resolveFactConflict = useCallback(
+    (factKey: string, value: string) => {
+      if (!company) return;
+      updateCompany(company.id, (c) => {
+        // Alternativas = última observación por fuente (sin duplicar).
+        const alternatives: Array<{
+          value: string;
+          source: string;
+          updatedAt: string;
+        }> = [];
+        const diag = c.diagnosticFacts[factKey];
+        if (diag) alternatives.push({ ...diag });
+        for (const answers of Object.values(c.protocolAnswers)) {
+          const r = answers[factKey];
+          if (r) alternatives.push({ ...r });
+        }
+        return {
+          ...c,
+          factResolutions: {
+            ...c.factResolutions,
+            [factKey]: {
+              factKey,
+              value,
+              resolvedAt: nowIso(),
+              decidedBy: "professional" as const,
+              alternatives,
+            },
+          },
+        };
       });
     },
     [company, updateCompany],
@@ -298,6 +355,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       clearProtocolFact,
       setDiagnosticFact,
       clearDiagnosticFact,
+      resolveFactConflict,
       setLastLocation,
       exportCompany,
       importCompany,
@@ -305,7 +363,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     [
       data, profile, company, createProfile, selectProfile, createCompany,
       selectCompany, setActivityStatus, saveProtocolAnswer, clearProtocolAnswers,
-      clearProtocolFact, setDiagnosticFact, clearDiagnosticFact, setLastLocation,
+      clearProtocolFact, setDiagnosticFact, clearDiagnosticFact, resolveFactConflict,
+      setLastLocation,
       exportCompany, importCompany,
     ],
   );

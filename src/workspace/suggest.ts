@@ -4,6 +4,7 @@ import { statusOf } from "./store";
 import { listProtocols } from "../../content/protocols/registry";
 import { evaluateCondition, evaluateProtocol } from "../guidance/engine";
 import type { FactCondition, FactMap } from "../../content/protocols/types";
+import { blockingConflicts } from "./facts";
 
 /**
  * Lógica pura de progreso y sugerencia (sin React).
@@ -96,6 +97,9 @@ export function suggestNextReview(
   }
   const facts = companyFacts(company);
   for (const p of listProtocols()) {
+    // Un conflicto en un fact necesario invalida la conclusión: equivale
+    // a información pendiente para sugerencias (nunca se usa el outcome).
+    if (blockingConflicts(p, company).length > 0) continue;
     const evaluation = evaluateProtocol(p, facts);
     if (evaluation.status !== "outcome") continue;
     for (const action of evaluation.outcome.next_actions) {

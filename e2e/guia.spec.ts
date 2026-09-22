@@ -60,7 +60,7 @@ test("caso MPI activo termina en DPO requerido", async ({ page }) => {
   await expect(page).toHaveURL(new RegExp("/guia/resultado$"));
   await expect(page.getByTestId("guia-outcome-label")).toContainText("DPO requerido por MPI");
   await expect(page.getByText("Exigido por norma").first()).toBeVisible();
-  await expect(page.getByTestId("guia-outcome-rule")).toContainText("mpi-active");
+  await expect(page.getByTestId("guia-outcome-rule")).toContainText("formalmente adoptado");
 });
 
 test("caso strongly recommended funciona y explica reglas y factores", async ({ page }) => {
@@ -71,7 +71,7 @@ test("caso strongly recommended funciona y explica reglas y factores", async ({ 
   await expect(page).toHaveURL(new RegExp("/guia/final-decision$"));
   await expect(page.getByTestId("guia-outcome-label")).toContainText("DPO fuertemente recomendado");
   await expect(page.getByText("Criterio interno recomendado").first()).toBeVisible();
-  await expect(page.getByTestId("guia-outcome-rule")).toContainText("strong-A");
+  await expect(page.getByTestId("guia-outcome-rule")).toContainText("Regla A");
   const factors = page.getByTestId("guia-factors");
   await expect(factors.getByText("Datos de impacto especial")).toBeVisible();
   await expect(factors.getByText("Factor positivo").first()).toBeVisible();
@@ -85,7 +85,7 @@ test("caso recommended funciona", async ({ page }) => {
     "international-transfers": "yes",
   });
   await expect(page.getByTestId("guia-outcome-label")).toContainText("DPO recomendado");
-  await expect(page.getByTestId("guia-outcome-rule")).toContainText("recommended-two");
+  await expect(page.getByTestId("guia-outcome-rule")).toContainText("Al menos dos factores");
 });
 
 test("caso not priority funciona sin decir DPO no necesario", async ({ page }) => {
@@ -103,7 +103,7 @@ test("unknown genera evaluación incompleta con siguiente antecedente", async ({
   await answerAndContinue(page, "not_adopted");
   await answerProfessional(page, { "large-scale": "unknown" });
   await expect(page.getByTestId("guia-outcome-label")).toContainText("Evaluación incompleta");
-  await expect(page.getByTestId("guia-outcome-rule")).toContainText("incomplete");
+  await expect(page.getByTestId("guia-outcome-rule")).toContainText("desconocido o sin responder");
   await expect(page.getByText("Antecedentes pendientes (1)")).toBeVisible();
   await page.getByRole("link", { name: "Resolver siguiente antecedente" }).click();
   await expect(page).toHaveURL(new RegExp("/guia/large-scale$"));

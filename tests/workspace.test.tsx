@@ -14,8 +14,16 @@ import {
 } from "../src/workspace/types";
 import { validateCompanyState } from "../src/workspace/store";
 import { companyFacts, suggestNextReview, summarizeDomain } from "../src/workspace/suggest";
-import { factHasConflict, mergedFactRecords } from "../src/workspace/facts";
+import {
+  blockingConflicts,
+  factHasConflict,
+  getFactStatus,
+  humanSourceName,
+  mergedFactRecords,
+} from "../src/workspace/facts";
 import { ActivityWorkView } from "../src/components/ActivityWorkView";
+import { ProtocolOutcomeView } from "../src/components/ProtocolView";
+import { DPO_NEED_ASSESSMENT_PROTOCOL as PROTOCOL } from "../content/protocols/dpo.need_assessment";
 import type { CompanyState } from "../src/workspace/types";
 
 function companyWith(over: Partial<CompanyState>): CompanyState {
@@ -167,6 +175,201 @@ describe("workspace local Stage 1", () => {
   });
 });
 
+describe("conflictos explícitos entre fuentes", () => {
+  const T0 = "2026-01-01T00:00:00.000Z";
+  const T1 = "2026-06-01T00:00:00.000Z";
+  const T2 = "2026-09-01T00:00:00.000Z";
+
+  function conflictCompany() {
+    return companyWith({
+      diagnosticFacts: {
+        "dpo_assessment.international_transfers": {
+          value: "no",
+          source: "diagnostico",
+          updatedAt: T0,
+        },
+      },
+      protocolAnswers: {
+        "dpo.need_assessment.v1": {
+          "dpo_assessment.international_transfers": {
+            value: "yes",
+            source: "dpo.need_assessment.v1",
+            updatedAt: T1,
+          },
+        },
+      },
+    });
+  }
+
+  it("misma fuente + actualización → última observación válida", () => {
+    const c = companyWith({
+      diagnosticFacts: {
+        "mpi.lifecycle_status": { value: "no", source: "diagnostico", updatedAt: T0 },
+      },
+    });
+    const c2: CompanyState = {
+      ...c,
+      diagnosticFacts: {
+        "mpi.lifecycle_status": { value: "yes", source: "diagnostico", updatedAt: T1 },
+      },
+    };
+    const st = getFactStatus(c2, "mpi.lifecycle_status");
+    expect(st.state).toBe("resolved");
+    if (st.state === "resolved") expect(st.value).toBe("yes");
+  });
+
+  it("fuentes distintas + mismo valor → resolved con ambas", () => {
+    const c = companyWith({
+      diagnosticFacts: {
+        "mpi.lifecycle_status": { value: "yes", source: "diagnostico", updatedAt: T0 },
+      },
+      protocolAnswers: {
+        p1: {
+          "mpi.lifecycle_status": { value: "yes", source: "p1", updatedAt: T1 },
+        },
+      },
+    });
+    const st = getFactStatus(c, "mpi.lifecycle_status");
+    expect(st.state).toBe("resolved");
+    if (st.state === "resolved") {
+      expect(st.value).toBe("yes");
+      expect(st.sources).toContain("diagnostico");
+      expect(st.sources).toContain("p1");
+    }
+  });
+
+  it("fuentes distintas + valores distintos → conflict", () => {
+    const c = conflictCompany();
+    const st = getFactStatus(c, "dpo_assessment.international_transfers");
+    expect(st.state).toBe("conflict");
+    expect(factHasConflict(c, "dpo_assessment.international_transfers")).toBe(true);
+  });
+
+  it("conflict no es unknown ni false", () => {
+    const c = conflictCompany();
+    const st = getFactStatus(c, "dpo_assessment.international_transfers");
+    expect(st.state).not.toBe("unresolved");
+    if (st.state === "conflict") {
+      expect(st.alternatives.map((r) => r.value).sort()).toEqual(["no", "yes"]);
+    }
+    // Aunque el último valor sea "no", sigue en conflicto (no resuelto-no).
+    const inverted = companyWith({
+      diagnosticFacts: {
+        "test.f": { value: "yes", source: "diagnostico", updatedAt: T0 },
+      },
+      protocolAnswers: {
+        p1: { "test.f": { value: "no", source: "p1", updatedAt: T1 } },
+      },
+    });
+    expect(getFactStatus(inverted, "test.f").state).toBe("conflict");
+  });
+
+  it("fact en conflicto requerido bloquea conclusión definitiva", () => {
+    const protocol = getProtocolForActivity("dpo.need_assessment");
+    if (!protocol) throw new Error("protocolo ausente");
+    expect(blockingConflicts(protocol, conflictCompany())).toContain(
+      "dpo_assessment.international_transfers",
+    );
+    expect(blockingConflicts(protocol, companyWith({}))).toEqual([]);
+  });
+
+  it("resolución explícita permite continuar", () => {
+    const base = conflictCompany();
+    const resolved: CompanyState = {
+      ...base,
+      factResolutions: {
+        "dpo_assessment.international_transfers": {
+          factKey: "dpo_assessment.international_transfers",
+          value: "yes",
+          resolvedAt: T2,
+          decidedBy: "professional",
+          alternatives: [
+            { value: "no", source: "diagnostico", updatedAt: T0 },
+            { value: "yes", source: "dpo.need_assessment.v1", updatedAt: T1 },
+          ],
+        },
+      },
+    };
+    const st = getFactStatus(resolved, "dpo_assessment.international_transfers");
+    expect(st.state).toBe("resolved");
+    if (st.state === "resolved") {
+      expect(st.value).toBe("yes");
+      expect(st.sources).toContain("resolucion_profesional");
+    }
+    const protocol = getProtocolForActivity("dpo.need_assessment");
+    if (!protocol) throw new Error("protocolo ausente");
+    expect(blockingConflicts(protocol, resolved)).toEqual([]);
+  });
+
+  it("nueva contradicción posterior reabre el conflicto", () => {
+    const base = conflictCompany();
+    const resolved: CompanyState = {
+      ...base,
+      factResolutions: {
+        "dpo_assessment.international_transfers": {
+          factKey: "dpo_assessment.international_transfers",
+          value: "yes",
+          resolvedAt: T1,
+          decidedBy: "professional",
+          alternatives: [],
+        },
+      },
+      diagnosticFacts: {
+        "dpo_assessment.international_transfers": {
+          value: "no",
+          source: "diagnostico",
+          updatedAt: T2,
+        },
+      },
+    };
+    expect(
+      getFactStatus(resolved, "dpo_assessment.international_transfers").state,
+    ).toBe("conflict");
+  });
+
+  it("cambiar de empresa aísla conflictos y resoluciones", () => {
+    const a = conflictCompany();
+    const b = companyWith({});
+    expect(factHasConflict(a, "dpo_assessment.international_transfers")).toBe(true);
+    expect(factHasConflict(b, "dpo_assessment.international_transfers")).toBe(false);
+    expect(getFactStatus(b, "dpo_assessment.international_transfers").state).toBe(
+      "unresolved",
+    );
+  });
+
+  it("export/import conserva resoluciones (validación incluida)", () => {
+    const c = conflictCompany();
+    const withResolution: CompanyState = {
+      ...c,
+      factResolutions: {
+        "dpo_assessment.international_transfers": {
+          factKey: "dpo_assessment.international_transfers",
+          value: "no",
+          resolvedAt: T2,
+          decidedBy: "professional",
+          alternatives: [],
+        },
+      },
+    };
+    const roundTrip = validateCompanyState(JSON.parse(JSON.stringify(withResolution)));
+    expect(roundTrip.ok).toBe(true);
+    if (roundTrip.ok) {
+      expect(
+        getFactStatus(roundTrip.value, "dpo_assessment.international_transfers").state,
+      ).toBe("resolved");
+    }
+    const bad = { ...withResolution, factResolutions: { k: { value: "x" } } };
+    expect(validateCompanyState(bad).ok).toBe(false);
+  });
+
+  it("fuentes usan nombres humanos, nunca IDs", () => {
+    expect(humanSourceName("diagnostico")).toBe("Diagnóstico");
+    expect(humanSourceName("resolucion_profesional")).toBe("Resolución del profesional");
+    expect(humanSourceName("dpo.need_assessment.v1")).toBe("Evaluación guiada");
+    expect(humanSourceName("contexto inicial")).toBe("Contexto inicial");
+  });
+});
+
 describe("aplicabilidad en lenguaje humano", () => {
   it("todas las condiciones D1-D2 tienen traducción fiable", () => {
     const all = [...D01_ACTIVITIES, ...D02_ACTIVITIES];
@@ -240,5 +443,38 @@ describe("Activity View V2", () => {
     expect((details as HTMLDetailsElement).open).toBe(false);
     // Ni siquiera en el DOM hasta expandir: nada técnico por defecto.
     expect(details.textContent ?? "").not.toContain("client.roles_present");
+  });
+
+  it("resultado explicable sin rule_id ni fact_key en UI", () => {
+    const outcome = PROTOCOL.outcomes.find((o) => o.outcome_key === "strongly_recommended");
+    if (!outcome) throw new Error("outcome ausente");
+    render(
+      <MemoryRouter>
+        <WorkspaceProvider>
+          <GuidanceSessionProvider>
+            <ProtocolOutcomeView
+              protocol={PROTOCOL}
+              activity={{ activityKey: "dpo.need_assessment", humanCode: "D1.02", name: "x" }}
+              session={{
+                facts: {},
+                started: false,
+                answer: () => {},
+                reset: () => {},
+                isProvided: () => false,
+                providedSource: () => null,
+              }}
+              outcome={outcome}
+              ruleDescription="Datos de impacto especial y tratamiento a gran escala."
+              explanation="Explicación humana."
+            />
+          </GuidanceSessionProvider>
+        </WorkspaceProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Por qué obtuvimos este resultado")).toBeTruthy();
+    expect(document.querySelectorAll("code").length).toBe(0);
+    const body = document.body.textContent ?? "";
+    expect(body).not.toContain("strong-A");
+    expect(body).not.toContain("dpo_assessment.");
   });
 });

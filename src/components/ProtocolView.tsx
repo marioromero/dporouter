@@ -22,6 +22,10 @@ import {
   resolveNodeWithFacts,
 } from "../guidance/engine";
 import { CopyLinkButton, ProvenanceBadge, provenanceHuman } from "./ui";
+import { ConflictResolver } from "./ConflictResolver";
+import { useWorkspace } from "../workspace/context";
+import { getFactStatus, blockingConflicts } from "../workspace/facts";
+import { describeFactKey } from "../workspace/factLabels";
 
 /**
  * Vistas genéricas de ejecución guiada (Stage 1).
@@ -99,7 +103,14 @@ export function ProtocolChrome({
   session: ProtocolSession;
   crumbTail: string;
 }) {
-  const progress = getProtocolProgress(protocol, session.facts);
+  const { company } = useWorkspace();
+  const conflicted = company
+    ? protocol.nodes
+        .filter((n) => n.node_type === "question" && n.fact_key)
+        .map((n) => n.fact_key as string)
+        .filter((f) => getFactStatus(company, f).state === "conflict")
+    : [];
+  const progress = getProtocolProgress(protocol, session.facts, conflicted);
   return (
     <>
       <p className="breadcrumb">
@@ -169,7 +180,19 @@ export function ProtocolEntryView({
   session: ProtocolSession;
 }) {
   const evaluation = evaluateProtocol(protocol, session.facts);
-  const progress = getProtocolProgress(protocol, session.facts);
+  const { company } = useWorkspace();
+  const blocked =
+    company != null ? blockingConflicts(protocol, company) : [];
+  const progress = getProtocolProgress(
+    protocol,
+    session.facts,
+    company
+      ? protocol.nodes
+          .filter((n) => n.node_type === "question" && n.fact_key)
+          .map((n) => n.fact_key as string)
+          .filter((f) => getFactStatus(company, f).state === "conflict")
+      : [],
+  );
   const complete = evaluation.status === "outcome";
   const targetNode =
     evaluation.status === "awaiting_facts"
@@ -187,12 +210,19 @@ export function ProtocolEntryView({
         <h2>Evaluación guiada</h2>
         <p>{protocol.description}</p>
         <div className="actions">
-          {complete ? (
+          {complete && blocked.length === 0 ? (
             <Link
               className="btn"
               to={`${guideBase(activity.activityKey)}/resultado`}
             >
               Ver resultado
+            </Link>
+          ) : blocked.length > 0 ? (
+            <Link
+              className="btn"
+              to={`${guideBase(activity.activityKey)}/resultado`}
+            >
+              Resolver datos en conflicto
             </Link>
           ) : session.started ? (
             <Link className="btn" to={nodeHref(activity.activityKey, targetNode)}>
@@ -225,13 +255,19 @@ export function ProtocolEntryView({
             .filter((n) => n.node_type === "question" && n.fact_key)
             .map((n) => {
               const value = n.fact_key ? session.facts[n.fact_key] : undefined;
+              const inConflict =
+                company != null &&
+                n.fact_key != null &&
+                getFactStatus(company, n.fact_key).state === "conflict";
               return (
                 <li key={n.node_key}>
                   <Link to={nodeHref(activity.activityKey, n.node_key)}>
                     {n.title}
                   </Link>{" "}
                   ·{" "}
-                  {isFactResolved(value) ? (
+                  {inConflict ? (
+                    "En conflicto"
+                  ) : isFactResolved(value) ? (
                     <>
                       {answerLabel(n, value)}
                       {n.fact_key && session.isProvided(n.fact_key) ? (
@@ -298,6 +334,11 @@ export function ProtocolNodeView({
     route?.kind === "node"
       ? protocol.nodes.find((n) => n.node_key === route.node_key)
       : undefined;
+  const { company } = useWorkspace();
+  const ownConflict =
+    company != null &&
+    node.fact_key != null &&
+    getFactStatus(company, node.fact_key).state === "conflict";
 
   return (
     <>
@@ -309,6 +350,17 @@ export function ProtocolNodeView({
       />
       <section className="activity-section" aria-label={node.title} data-testid="guia-node">
         <h2>{node.title}</h2>
+        {ownConflict && node.fact_key ? (
+          <div className="notice" role="alert" data-testid="guia-conflict">
+            <strong>Dato en conflicto</strong>
+            <p>
+              Existen antecedentes distintos para este dato. Revisa cuál
+              refleja actualmente la situación de la empresa antes de
+              continuar.
+            </p>
+            <ConflictResolver factKey={node.fact_key} />
+          </div>
+        ) : null}
         {missingRequired.length > 0 ? (
           <div className="notice" role="alert" data-testid="guia-prerequisites">
             <strong>
@@ -317,7 +369,9 @@ export function ProtocolNodeView({
             <ul>
               {missingRequired.map((m) => (
                 <li key={m.fact_key}>
-                  {m.producer ? m.producer.title : <code>{m.fact_key}</code>}
+                  {m.producer
+                    ? m.producer.title
+                    : "No pudimos relacionar automáticamente este antecedente."}
                   {m.state === "unknown" ? " (registrado como desconocido)" : ""}
                 </li>
               ))}
@@ -437,6 +491,7 @@ function AnsweredFactsPanel({
   session: ProtocolSession;
   exceptNodeKey?: string;
 }) {
+  const { company } = useWorkspace();
   const answered = protocol.nodes.filter(
     (n) =>
       n.node_type === "question" &&
@@ -449,15 +504,24 @@ function AnsweredFactsPanel({
     <section className="activity-section" aria-label="Antecedentes ya respondidos">
       <h2>Antecedentes ya respondidos</h2>
       <ul>
-        {answered.map((n) => (
-          <li key={n.node_key}>
-            <Link to={nodeHref(activity.activityKey, n.node_key)}>{n.title}</Link>{" "}
-            · {answerLabel(n, n.fact_key ? session.facts[n.fact_key] : undefined)}
-            {n.fact_key && session.isProvided(n.fact_key) ? (
-              <> · Dato ya disponible</>
-            ) : null}
-          </li>
-        ))}
+        {answered.map((n) => {
+          const inConflict =
+            company != null &&
+            n.fact_key != null &&
+            getFactStatus(company, n.fact_key).state === "conflict";
+          return (
+            <li key={n.node_key}>
+              <Link to={nodeHref(activity.activityKey, n.node_key)}>{n.title}</Link>{" "}
+              ·{" "}
+              {inConflict
+                ? "En conflicto"
+                : answerLabel(n, n.fact_key ? session.facts[n.fact_key] : undefined)}
+              {!inConflict && n.fact_key && session.isProvided(n.fact_key) ? (
+                <> · Dato ya disponible</>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -469,14 +533,14 @@ export function ProtocolOutcomeView({
   activity,
   session,
   outcome,
-  ruleId,
+  ruleDescription,
   explanation,
 }: {
   protocol: ExecutionProtocol;
   activity: ProtocolActivityRef;
   session: ProtocolSession;
   outcome: ProtocolOutcome;
-  ruleId: string;
+  ruleDescription: string;
   explanation: string;
 }) {
   const factors = buildOutcomeFactors(protocol, session.facts);
@@ -519,10 +583,10 @@ export function ProtocolOutcomeView({
           )}{" "}
           {nature}
         </p>
-        <h3>Por qué</h3>
+        <h3>Por qué obtuvimos este resultado</h3>
         <ul>
           <li data-testid="guia-outcome-rule">
-            <code>{ruleId}</code> — {explanation}
+            {ruleDescription} — {explanation}
           </li>
         </ul>
         <p>{outcome.explanation}</p>
@@ -642,8 +706,7 @@ function NextActionView({
 }
 
 /** Evaluación en curso: sin resultado definitivo todavía. */
-export function ProtocolPendingView({
-  protocol,
+export function ProtocolPendingView({  protocol,
   activity,
   session,
   currentNodeKey,
@@ -678,6 +741,55 @@ export function ProtocolPendingView({
             Continuar: {current?.title ?? "siguiente antecedente"}
           </Link>
         </div>
+      </section>
+    </>
+  );
+}
+
+/**
+ * Bloqueo por conflicto: un fact necesario tiene antecedentes distintos
+ * según la fuente. No equivale a pendiente ni a desconocido: exige
+ * resolución humana explícita antes de cualquier conclusión definitiva.
+ */
+export function ProtocolConflictView({
+  protocol,
+  activity,
+  session,
+  conflictedFacts,
+}: {
+  protocol: ExecutionProtocol;
+  activity: ProtocolActivityRef;
+  session: ProtocolSession;
+  conflictedFacts: string[];
+}) {
+  return (
+    <>
+      <ProtocolChrome
+        protocol={protocol}
+        activity={activity}
+        session={session}
+        crumbTail="Resultado"
+      />
+      <section
+        className="activity-section"
+        aria-label="Dato en conflicto"
+        data-testid="guia-conflict-block"
+      >
+        <h2>Dato en conflicto</h2>
+        <p>
+          Debes resolver un dato en conflicto antes de obtener una
+          conclusión definitiva.
+        </p>
+        <p>
+          Existen antecedentes distintos para este dato. Revisa cuál refleja
+          actualmente la situación de la empresa antes de continuar.
+        </p>
+        {conflictedFacts.map((f) => (
+          <div key={f}>
+            <h3>{describeFactKey(f)}</h3>
+            <ConflictResolver factKey={f} />
+          </div>
+        ))}
       </section>
     </>
   );

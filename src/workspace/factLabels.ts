@@ -13,7 +13,7 @@ export function describeFactKey(factKey: string): string {
     );
     if (node) return node.title;
   }
-  return factKey;
+  return "Antecedente registrado";
 }
 
 export function describeFactValue(factKey: string, value: string): string {

@@ -3,6 +3,7 @@ import type {
   ActivityWorkStatus,
   CompanyState,
   FactRecord,
+  FactResolution,
   WorkspaceData,
 } from "./types";
 import { ACTIVITY_WORK_STATUSES, emptyWorkspace } from "./types";
@@ -32,6 +33,17 @@ function checkFactRecord(v: unknown): v is FactRecord {
   );
 }
 
+function checkFactResolution(v: unknown): v is FactResolution {
+  return (
+    isRecord(v) &&
+    typeof v.factKey === "string" &&
+    typeof v.value === "string" &&
+    isIsoDate(v.resolvedAt) &&
+    v.decidedBy === "professional" &&
+    Array.isArray(v.alternatives) &&
+    v.alternatives.every(checkFactRecord)
+  );
+}
 function checkActivityState(v: unknown): v is ActivityWorkState {
   return (
     isRecord(v) &&
@@ -74,6 +86,9 @@ export function validateCompanyState(
   if (!checkStringMap(data.diagnosticFacts ?? {}, checkFactRecord)) {
     return { ok: false, error: "diagnosticFacts contiene hechos inválidos." };
   }
+  if (!checkStringMap(data.factResolutions ?? {}, checkFactResolution)) {
+    return { ok: false, error: "factResolutions contiene resoluciones inválidas." };
+  }
   if (data.lastLocation !== undefined && typeof data.lastLocation !== "string") {
     return { ok: false, error: "lastLocation inválida." };
   }
@@ -85,6 +100,7 @@ export function validateCompanyState(
     activityStates: (data.activityStates ?? {}) as CompanyState["activityStates"],
     protocolAnswers: (data.protocolAnswers ?? {}) as CompanyState["protocolAnswers"],
     diagnosticFacts: (data.diagnosticFacts ?? {}) as CompanyState["diagnosticFacts"],
+    factResolutions: (data.factResolutions ?? {}) as CompanyState["factResolutions"],
     ...(typeof data.lastLocation === "string" ? { lastLocation: data.lastLocation } : {}),
   };
   return { ok: true, value };

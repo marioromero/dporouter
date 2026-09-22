@@ -19,6 +19,7 @@ import {
   resolveDecisionNode,
 } from "../src/guidance/engine";
 import type { ExecutionProtocol, FactMap } from "../content/protocols/types";
+import { WorkspaceProvider } from "../src/workspace/context";
 import { ProtocolNodeView, ProtocolOutcomeView } from "../src/components/ProtocolView";
 import {
   ALL_ACTIVITIES,
@@ -378,7 +379,8 @@ describe("regresión del motor (hallazgos de revisión)", () => {
     if (!outcome) throw new Error("outcome ausente");
     render(
       <MemoryRouter>
-        <ProtocolOutcomeView
+        <WorkspaceProvider>
+          <ProtocolOutcomeView
           protocol={PROTOCOL}
           activity={{ activityKey: "dpo.need_assessment", humanCode: "D1.02", name: "x" }}
           session={{
@@ -390,9 +392,10 @@ describe("regresión del motor (hallazgos de revisión)", () => {
             providedSource: () => null,
           }}
           outcome={outcome}
-          ruleId="mpi-active"
+          ruleDescription="Regla de prueba"
           explanation="e"
-        />
+          />
+        </WorkspaceProvider>
       </MemoryRouter>,
     );
     expect(screen.queryByText(/Antecedentes pendientes/)).toBeNull();
@@ -406,7 +409,8 @@ describe("regresión del motor (hallazgos de revisión)", () => {
     if (!outcome) throw new Error("outcome ausente");
     render(
       <MemoryRouter>
-        <ProtocolOutcomeView
+        <WorkspaceProvider>
+          <ProtocolOutcomeView
           protocol={PROTOCOL}
           activity={{ activityKey: "dpo.need_assessment", humanCode: "D1.02", name: "x" }}
           session={{
@@ -418,9 +422,10 @@ describe("regresión del motor (hallazgos de revisión)", () => {
             providedSource: () => null,
           }}
           outcome={outcome}
-          ruleId="incomplete"
+          ruleDescription="Regla de prueba"
           explanation="e"
-        />
+          />
+        </WorkspaceProvider>
       </MemoryRouter>,
     );
     expect(screen.getByText("Antecedentes pendientes (1)")).toBeTruthy();
@@ -567,7 +572,8 @@ describe("protocolos no lineales (refactor)", () => {
     if (!q2 || q2.node_type !== "question") throw new Error("nodo ausente");
     render(
       <MemoryRouter>
-        <ProtocolNodeView
+        <WorkspaceProvider>
+          <ProtocolNodeView
           protocol={MINI_CHAIN}
           activity={{ activityKey: "test.chain_activity", humanCode: "T-01", name: "x" }}
           session={{
@@ -579,7 +585,8 @@ describe("protocolos no lineales (refactor)", () => {
             providedSource: (f) => (f === "test.f2" ? "Diagnóstico" : null),
           }}
           node={q2}
-        />
+          />
+        </WorkspaceProvider>
       </MemoryRouter>,
     );
     expect(screen.queryByTestId("guia-prerequisites")).toBeNull();
@@ -600,7 +607,8 @@ describe("protocolos no lineales (refactor)", () => {
     expect(firstProducerNodeKey(MINI_CHAIN, ["test.f1"])).toBe("q1");
     render(
       <MemoryRouter>
-        <ProtocolNodeView
+        <WorkspaceProvider>
+          <ProtocolNodeView
           protocol={MINI_CHAIN}
           activity={{ activityKey: "test.chain_activity", humanCode: "T-01", name: "x" }}
           session={{
@@ -612,7 +620,8 @@ describe("protocolos no lineales (refactor)", () => {
             providedSource: () => null,
           }}
           node={q2}
-        />
+          />
+        </WorkspaceProvider>
       </MemoryRouter>,
     );
     expect(
@@ -649,7 +658,8 @@ describe("protocolos no lineales (refactor)", () => {
     expect(getMissingRequiredFacts(MINI_CHAIN, q1, {})).toEqual([]);
     render(
       <MemoryRouter>
-        <ProtocolNodeView
+        <WorkspaceProvider>
+          <ProtocolNodeView
           protocol={MINI_CHAIN}
           activity={{ activityKey: "test.chain_activity", humanCode: "T-01", name: "x" }}
           session={{
@@ -661,7 +671,8 @@ describe("protocolos no lineales (refactor)", () => {
             providedSource: () => null,
           }}
           node={q1}
-        />
+          />
+        </WorkspaceProvider>
       </MemoryRouter>,
     );
     expect(screen.queryByTestId("guia-prerequisites")).toBeNull();

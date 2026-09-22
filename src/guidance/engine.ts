@@ -102,6 +102,7 @@ export type ProtocolEvaluation =
       outcome_key: string;
       outcome: ProtocolOutcome;
       rule_id: string;
+      rule_description: string;
       explanation: string;
     }
   | { status: "misconfigured"; detail: string };
@@ -152,6 +153,7 @@ export function evaluateProtocol(
               outcome_key: outcome.outcome_key,
               outcome,
               rule_id: t.rule_id,
+              rule_description: t.description,
               explanation: t.explanation,
             };
           }
@@ -214,6 +216,7 @@ export function evaluateProtocol(
         outcome_key: outcome.outcome_key,
         outcome,
         rule_id: route.rule.rule_id,
+        rule_description: route.rule.description,
         explanation: route.rule.explanation,
       };
     }
@@ -409,17 +412,26 @@ export function buildOutcomeFactors(
     });
 }
 
-/** Progreso de antecedentes: resueltos / totales (nodos pregunta). */
+/**
+ * Progreso de antecedentes: resueltos / totales (nodos pregunta).
+ * `excludeFacts` resta hechos en conflicto del conteo de resueltos sin
+ * alterar el total: pendiente, desconocido y en conflicto quedan
+ * distinguibles. Parámetro opcional; sin él el comportamiento es idéntico.
+ */
 export function getProtocolProgress(
   protocol: ExecutionProtocol,
   facts: FactMap,
+  excludeFacts: string[] = [],
 ): { resolved: number; total: number } {
   const questions = protocol.nodes.filter(
     (n) => n.node_type === "question" && n.fact_key,
   );
+  const excluded = new Set(excludeFacts);
   return {
-    resolved: questions.filter((n) =>
-      isFactResolved(facts[n.fact_key as string]),
+    resolved: questions.filter(
+      (n) =>
+        !excluded.has(n.fact_key as string) &&
+        isFactResolved(facts[n.fact_key as string]),
     ).length,
     total: questions.length,
   };

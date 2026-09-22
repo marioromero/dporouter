@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { getProtocolForActivity, getProtocolNode } from "../../content/protocols/registry";
 import { getCanonicalActivity, getDomainForActivity } from "../../content/registry";
@@ -8,9 +9,12 @@ import {
   resolveDecisionNode,
 } from "../guidance/engine";
 import { useGuidanceProtocol } from "../guidance/session";
+import { useWorkspace } from "../workspace/context";
+import { blockingConflicts } from "../workspace/facts";
 import { ContextNav } from "../components/ContextNav";
 import {
   ProtocolChrome,
+  ProtocolConflictView,
   ProtocolEntryView,
   ProtocolNodeView,
   ProtocolOutcomeView,
@@ -59,6 +63,7 @@ function GuiaContent({
   const def = getCanonicalActivity(activityKey);
   const domain = getDomainForActivity(activityKey);
   const session = useGuidanceProtocol(protocol?.protocol_key ?? "");
+  const { company } = useWorkspace();
   if (!protocol || !def) {
     return <NotFoundPage />;
   }
@@ -69,6 +74,9 @@ function GuiaContent({
     domainKey: domain?.domainKey,
     domainCode: domain?.domainCode,
   };
+  // Un fact necesario en conflicto bloquea cualquier conclusión definitiva
+  // (no equivale a pendiente ni a desconocido).
+  const blocks = blockingConflicts(protocol, company);
 
   if (!nodeKey) {
     return (
@@ -77,6 +85,16 @@ function GuiaContent({
   }
 
   if (nodeKey === "resultado") {
+    if (blocks.length > 0) {
+      return (
+        <ProtocolConflictView
+          protocol={protocol}
+          activity={activity}
+          session={session}
+          conflictedFacts={blocks}
+        />
+      );
+    }
     const evaluation = evaluateProtocol(protocol, session.facts);
     if (evaluation.status === "outcome") {
       return (
@@ -85,7 +103,7 @@ function GuiaContent({
           activity={activity}
           session={session}
           outcome={evaluation.outcome}
-          ruleId={evaluation.rule_id}
+          ruleDescription={evaluation.rule_description}
           explanation={evaluation.explanation}
         />
       );
@@ -102,24 +120,14 @@ function GuiaContent({
       );
     }
     return (
-      <>
-        <ProtocolChrome
-          protocol={protocol}
-          activity={activity}
-          session={session}
-          crumbTail="Resultado"
-        />
-        <section className="activity-section" aria-label="Error de configuración" data-testid="guia-misconfigured">
-          <h2>Error de configuración del protocolo</h2>
-          <p>
-            <code>{evaluation.detail}</code>
-          </p>
-          <p>
-            Esta es una falla de configuración canónica, no un resultado
-            profesional. Repórtala como issue de especificación.
-          </p>
-        </section>
-      </>
+      <ProtocolMisconfigured
+        protocol={protocol}
+        activity={activity}
+        session={session}
+        crumbTail="Resultado"
+        detail={evaluation.detail}
+        activityKey={activityKey}
+      />
     );
   }
 
@@ -129,6 +137,16 @@ function GuiaContent({
   }
 
   if (node.node_type === "decision") {
+    if (blocks.length > 0) {
+      return (
+        <ProtocolConflictView
+          protocol={protocol}
+          activity={activity}
+          session={session}
+          conflictedFacts={blocks}
+        />
+      );
+    }
     // El nodo decisión no pide respuestas. Primero se resuelven SOLO sus
     // transiciones. goto_node_key navega al nodo (deep link, sesión
     // preservada), pero un short-circuit previo del recorrido completo
@@ -156,7 +174,7 @@ function GuiaContent({
             activity={activity}
             session={session}
             outcome={evaluation.outcome}
-            ruleId={evaluation.rule_id}
+            ruleDescription={evaluation.rule_description}
             explanation={evaluation.explanation}
           />
         );
@@ -188,7 +206,7 @@ function GuiaContent({
           activity={activity}
           session={session}
           outcome={evaluation.outcome}
-          ruleId={evaluation.rule_id}
+          ruleDescription={evaluation.rule_description}
           explanation={evaluation.explanation}
         />
       );
@@ -267,6 +285,10 @@ function ProtocolMisconfigured({
   detail: string;
   activityKey: string;
 }) {
+  // Detalle técnico solo en logs de desarrollo, nunca en UI de usuario.
+  useEffect(() => {
+    console.error(`[guia] protocolo mal configurado: ${detail}`);
+  }, [detail]);
   return (
     <>
       <ProtocolChrome
@@ -278,7 +300,8 @@ function ProtocolMisconfigured({
       <section className="activity-section" aria-label="Error de configuración" data-testid="guia-misconfigured">
         <h2>Error de configuración del protocolo</h2>
         <p>
-          <code>{detail}</code>
+          No pudimos preparar esta guía por un problema de configuración
+          interna.
         </p>
         <p>
           Esta es una falla de configuración canónica, no un resultado

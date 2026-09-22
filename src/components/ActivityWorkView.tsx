@@ -9,6 +9,7 @@ import {
 import { evaluateCondition, evaluateProtocol } from "../guidance/engine";
 import { useGuidanceProtocol } from "../guidance/session";
 import { useWorkspace } from "../workspace/context";
+import { blockingConflicts } from "../workspace/facts";
 import { statusOf } from "../workspace/store";
 import {
   ACTIVITY_WORK_STATUSES,
@@ -51,8 +52,12 @@ export function ActivityWorkView({
   const session = useGuidanceProtocol(protocol?.protocol_key ?? "");
   const status = company ? statusOf(company, def.activity_key) : null;
   const evaluation = protocol ? evaluateProtocol(protocol, session.facts) : null;
+  const blocked =
+    protocol && company ? blockingConflicts(protocol, company) : [];
   const outcome =
-    evaluation?.status === "outcome" ? evaluation.outcome : null;
+    evaluation?.status === "outcome" && blocked.length === 0
+      ? evaluation.outcome
+      : null;
   const appliesWhen = humanApplicability(def.conditions_applicability);
   const grounds =
     def.legal_basis.length > 0
@@ -196,6 +201,21 @@ export function ActivityWorkView({
           </p>
         ) : null}
       </section>
+
+      {blocked.length > 0 ? (
+        <section className="activity-section" aria-label="Dato en conflicto" data-testid="actividad-conflicto">
+          <h2>Dato en conflicto</h2>
+          <p>
+            Debes resolver un dato en conflicto antes de obtener una
+            conclusión definitiva.
+          </p>
+          <div className="actions">
+            <Link className="btn" to={guideBase}>
+              Resolver en la guía
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       {outcome ? (
         <section className="activity-section" aria-label="Resultado actual" data-testid="actividad-resultado">

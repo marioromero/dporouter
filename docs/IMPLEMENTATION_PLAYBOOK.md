@@ -13,6 +13,8 @@ order; do not skip steps.
 4. Implement only the requested scope. Do not import extra domains, invent
    legal content, add dependencies, or redesign outside the scope.
 5. Run the relevant tests (unit/content; build when UI or content changed).
+   Cover fact-conflict cases (agreement, conflict, explicit resolution,
+   reopening) for guide-related work.
 6. Run `integrity-check` for canonical, cross-domain or engine-adjacent work.
 7. Run `ui-quality` for any visual change.
 8. Run the read-only reviewer for substantial changes.

@@ -7,7 +7,7 @@ import {
 } from "react";
 import type { FactMap } from "../../content/protocols/types";
 import { useWorkspace } from "../workspace/context";
-import { mergedFactRecords } from "../workspace/facts";
+import { humanSourceName, mergedFactRecords } from "../workspace/facts";
 
 /**
  * Sesión de evaluación guiada (Stage 1).
@@ -135,7 +135,7 @@ export function GuidanceSessionProvider({
       if (!company) return null;
       const rec = mergedFactRecords(company, protocolKey)[factKey];
       if (!rec) return null;
-      return rec.source === "diagnostico" ? "Diagnóstico" : `Guía ${rec.source}`;
+      return humanSourceName(rec.source);
     },
     [company, initialFacts, isProvided],
   );

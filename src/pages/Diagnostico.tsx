@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useWorkspace } from "../workspace/context";
-import { factHasConflict, mergedFactRecords } from "../workspace/facts";
+import { factHasConflict, factSources, humanSourceName, mergedFactRecords } from "../workspace/facts";
 import {
   describeFactKey,
   describeFactValue,
@@ -38,7 +38,7 @@ export function DiagnosticoPage() {
   const knownFacts: Array<{
     factKey: string;
     value: string;
-    source: string;
+    sources: string[];
     conflict: boolean;
     remove: () => void;
   }> = [];
@@ -48,7 +48,7 @@ export function DiagnosticoPage() {
       knownFacts.push({
         factKey: k,
         value: r.value,
-        source: r.source,
+        sources: factSources(company, k),
         conflict: factHasConflict(company, k),
         remove: () => {
           clearDiagnosticFact(k);
@@ -157,21 +157,20 @@ export function DiagnosticoPage() {
                     <tr key={f.factKey}>
                       <td>{describeFactKey(f.factKey)}</td>
                       <td>
-                        {describeFactValue(f.factKey, f.value)}
                         {f.conflict ? (
                           <>
-                            {" "}
+                            En conflicto{" "}
                             <span className="dep-pending">
-                              · valores distintos según origen; vigente el más
-                              reciente
+                              · valores distintos según origen, sin resolución
+                              vigente
                             </span>
                           </>
-                        ) : null}
+                        ) : (
+                          describeFactValue(f.factKey, f.value)
+                        )}
                       </td>
                       <td>
-                        {f.source === "diagnostico"
-                          ? "Diagnóstico"
-                          : `Guía ${f.source}`}
+                        {f.sources.map(humanSourceName).join(" + ")}
                       </td>
                       <td>
                         <button

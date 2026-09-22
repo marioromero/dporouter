@@ -77,3 +77,28 @@ every persisted fact records where it came from.
 Any protocol result leads to a next step when one exists: next activity,
 next node, pending antecedent, or explicit continuity action. Dead ends
 are not acceptable UX.
+
+## 10. Fact conflicts are explicit
+
+Facts from different sources are never silently reconciled:
+
+* same source + later update → the source's latest observation wins;
+* different sources + same value → agreement, fact resolved;
+* different sources + different values → `fact_conflict` state.
+
+Pending, unknown and conflicted are three different, distinguishable
+states. Conflict is never converted into unknown or into false.
+
+A conflict in a required fact blocks any definitive conclusion
+(functionally equivalent to missing information, but visibly distinct).
+Resolution requires an explicit human decision recording fact, chosen
+value, moment and the alternatives that existed. A newer contradicting
+observation reopens the conflict automatically.
+
+## 11. No technical metadata in normal UI
+
+Raw `rule_id`, `fact_key`, `node_key`, `activity_key` and internal enums
+never appear in normal user views. Use the available human label; when
+no reliable human translation exists, use a generic message. Technical
+identifiers live in code, tests, development logs and non-visible
+technical inspectors.

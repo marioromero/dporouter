@@ -46,6 +46,21 @@ export interface ActivityWorkState {
   updatedAt: string;
 }
 
+/**
+ * Resolución explícita Stage 1 de un fact en conflicto.
+ * Decisión humana registrada con lo mínimo auditable: fact, valor
+ * elegido, cuándo, qué alternativas existían y elección explícita.
+ * No es historial Stage 2. Las observaciones originales no se borran;
+ * una nueva observación contradictoria posterior reabre el conflicto.
+ */
+export interface FactResolution {
+  factKey: string;
+  value: string;
+  resolvedAt: string;
+  decidedBy: "professional";
+  alternatives: FactRecord[];
+}
+
 export interface CompanyState {
   id: string;
   name: string;
@@ -54,6 +69,7 @@ export interface CompanyState {
   activityStates: Record<string, ActivityWorkState>;
   protocolAnswers: Record<string, Record<string, FactRecord>>;
   diagnosticFacts: Record<string, FactRecord>;
+  factResolutions: Record<string, FactResolution>;
   lastLocation?: string;
 }
 
@@ -98,6 +114,7 @@ export function newCompany(name: string): CompanyState {
     activityStates: {},
     protocolAnswers: {},
     diagnosticFacts: {},
+    factResolutions: {},
   };
 }
 

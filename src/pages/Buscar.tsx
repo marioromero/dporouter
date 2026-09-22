@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { searchDomains } from "../data/domains";
-import { searchActivities } from "../data/d01";
+import { searchActivities } from "../../content/domains/d01";
 import { activityTypeLabel } from "../components/ui";
 
 export function BuscarPage() {

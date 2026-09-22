@@ -68,6 +68,12 @@ Pending canonical cross-domain targets:
 * `risk.mpi_sync`
 * `mpi.diffusion`
 
+Canonical content architecture:
+
+* `/content/domains` — structured single source of truth
+* `/docs/domains` — generated human-readable projections
+* `/content/sources.ts` — canonical legal-source registry
+
 Next controlled iteration:
 
 `Pending review of canonical D1 import. Do not proceed without explicit instruction.`

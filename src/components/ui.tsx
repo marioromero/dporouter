@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ActivityType } from "../types";
-import type { CanonicalSource } from "../data/sources";
+import type { CanonicalSource } from "../../content/sources";
 
 export type ProvenanceKind = "legal" | "method" | "pending" | "unresolved";
 

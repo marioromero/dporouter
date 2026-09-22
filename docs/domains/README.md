@@ -1,8 +1,19 @@
 # Domain Specifications
 
-This directory will contain the approved detailed operational specifications for D01-D12.
+Approved structured operational content lives under `/content/domains`
+(`Dxx.ts` files are the executable canonical source of truth).
 
-Expected future filenames:
+The application consumes that structured source; it must not maintain
+independent copies of canonical definitions.
+
+`docs/domains/Dxx.md` files are generated human-readable projections of
+the same source (regenerate with `npm run content:docs`).
+
+Do not edit generated domain Markdown directly to change obligations:
+receive explicit authorization, edit the canonical structured definition,
+regenerate its documentation, and run content and integrity validation.
+
+Expected filenames:
 
 ```text
 D01.md

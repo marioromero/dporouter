@@ -5,7 +5,7 @@ import {
   PENDING_CROSS_DOMAIN,
   getActivity,
   getCanonicalActivityKeys,
-} from "../data/d01";
+} from "../../content/domains/d01";
 import { ActivitySheet } from "../components/ActivitySheet";
 import { NotFoundPage } from "./NotFound";
 

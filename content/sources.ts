@@ -1,4 +1,11 @@
-import type { LegalBasis, RegulatoryStatus } from "../types";
+import type { LegalBasis, RegulatoryStatus } from "../src/types";
+
+/**
+ * CANONICAL SOURCE OF TRUTH — registro jurídico estructurado.
+ * Este archivo es la única fuente canónica del registro de fuentes.
+ * `docs/domains/Dxx.md` son proyecciones humanas generadas.
+ * No duplicar este contenido en archivos de implementación.
+ */
 
 /**
  * Registro estructurado de fuentes jurídicas canónicas para D1.

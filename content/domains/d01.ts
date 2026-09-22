@@ -1,12 +1,14 @@
-import type { ActivityDefinition } from "../types";
-import { basis } from "./sources";
-import { normalizeText } from "./domains";
+import type { ActivityDefinition } from "../../src/types";
+import { basis } from "../sources";
+import { normalizeText } from "../text";
 
 /**
- * Definiciones estructuradas canónicas D1 (20 actividades).
- * Contenido aprobado textualmente por la iteración vigente; no inventar,
- * completar ni reinterpretar. La especificación humana vive en
- * `docs/domains/D01.md` (generada desde esta representación).
+ * CANONICAL SOURCE OF TRUTH — D1 Gobernanza, accountability, DPO y MPI.
+ * Única fuente estructurada de las 20 actividades D1. Contenido aprobado
+ * textualmente por la iteración vigente; no inventar, completar ni
+ * reinterpretar. `docs/domains/D01.md` es una proyección humana generada
+ * desde esta representación (ver `npm run content:docs`).
+ * La aplicación consume estas definiciones; no las duplica.
  */
 
 const REVIEW = "2026-09-21";

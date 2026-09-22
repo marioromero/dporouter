@@ -298,6 +298,25 @@ They may only be changed when the current task explicitly instructs you to updat
 
 `docs/IMPLEMENTATION_STATUS.md` is expected to be updated when an iteration explicitly requests it.
 
+## Canonical Domain Content
+
+Approved D01-D12 operational content lives under `/content/domains`.
+
+These structured definitions are the executable canonical source of truth.
+
+`docs/domains/Dxx.md` files are generated human-readable projections.
+
+Do not edit generated domain Markdown to change legal or operational content.
+
+To modify approved domain content:
+
+receive explicit authorization;
+edit the canonical structured definition;
+regenerate its human-readable documentation;
+run content and integrity validation.
+
+Application code under `/src` must consume canonical definitions rather than maintain independent copies.
+
 ## Dependency Integrity
 
 Every eventual `target_activity_key` must resolve to exactly one defined activity.

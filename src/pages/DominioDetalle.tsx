@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getDomain, normalizeText } from "../data/domains";
-import { getActivity } from "../data/d01";
+import { getActivity } from "../../content/domains/d01";
 import {
   CopyLinkButton,
   ProvenanceBadge,

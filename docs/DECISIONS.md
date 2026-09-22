@@ -342,3 +342,21 @@ Unresolved references are errors, not optional warnings to ignore.
 Status: ACCEPTED
 
 Ordinary implementation work must not silently rewrite architecture or governance documents.
+
+---
+
+## ADR-041 — Structured canonical content is the single source of truth
+
+Status: ACCEPTED
+
+Approved D01-D12 operational definitions live under `/content/domains`.
+
+The application consumes these structured canonical definitions.
+
+`docs/domains/Dxx.md` files are deterministic human-readable projections generated from the same source.
+
+Canonical legal or operational content must not be independently duplicated inside application implementation files.
+
+A content change is made once in the canonical structured source, followed by regeneration and integrity validation.
+
+Runtime behavior must not parse domain Markdown.

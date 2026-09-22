@@ -1,4 +1,4 @@
-import { SOURCES } from "../data/sources";
+import { SOURCES } from "../../content/sources";
 import {
   ProvenanceCard,
   TransitionalBadge,
@@ -10,8 +10,8 @@ export function FuentesPage() {
     <>
       <h1>Fuentes y estado normativo</h1>
       <p className="lede">
-        Consulta cómo se distingue el origen de cada requisito y, posteriormente,
-        las fuentes jurídicas vinculadas a las actividades.
+        Consulta el origen de los requisitos, las fuentes jurídicas ya
+        incorporadas y su estado normativo.
       </p>
 
       <h2>Tipos de procedencia</h2>

@@ -7,8 +7,8 @@ import {
   getActivity,
   isPendingImport,
   searchActivities,
-} from "../src/data/d01";
-import { SOURCES } from "../src/data/sources";
+} from "../content/domains/d01";
+import { SOURCES } from "../content/sources";
 import { DEMO_ACTIVITY_KEY } from "../src/data/demoActivity";
 import { fromActivityDefinition } from "../src/activityViewModel";
 

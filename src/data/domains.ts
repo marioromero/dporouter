@@ -1,10 +1,15 @@
 import type { DomainDefinition } from "../types";
+import { D1_ACTIVITY_KEYS } from "../../content/domains/d01";
+import { normalizeText } from "../../content/text";
+
+/** Normalización textual única de la capa canónica (reexportada). */
+export { normalizeText };
 
 /**
- * Registro canónico de dominios D1-D12.
+ * Registro de aplicación D1-D12 (navegación, búsqueda, rutas).
+ * Consume definiciones canónicas de /content; no duplica contenido.
  * Códigos, claves y nombres exactos según la iteración vigente.
- * D1 importado (D01); D2-D12 permanecen sin actividades hasta su
- * importación controlada.
+ * D2-D12 permanecen sin actividades hasta su importación controlada.
  */
 export const DOMAINS: DomainDefinition[] = [
   {
@@ -15,28 +20,7 @@ export const DOMAINS: DomainDefinition[] = [
       "Establecer y mantener el marco de gobernanza, prevención, DPO y Modelo de Prevención de Infracciones del responsable, asegurando que las decisiones, designaciones, facultades, recursos, estados y mecanismos de supervisión permanezcan formalizados, trazables y operativos.",
     description:
       "Este dominio gobierna la prevención general de infracciones, la evaluación y ciclo de vida del DPO, la decisión de adoptar un Modelo de Prevención de Infracciones, sus componentes organizativos y su eventual certificación. Coordina actividades especializadas de otros dominios sin duplicarlas.",
-    activity_keys: [
-      "governance.preventive_framework",
-      "dpo.need_assessment",
-      "mpi.need_assessment",
-      "mpi.formalize_adoption",
-      "mpi.internal_reporting_and_whistleblowing",
-      "mpi.internal_disciplinary_framework",
-      "mpi.internal_regulation_integrate",
-      "dpo.designate",
-      "dpo.initial_governance_validation",
-      "dpo.contact_and_agency_notification",
-      "dpo.operating_model",
-      "dpo.confidentiality_duty",
-      "dpo.annual_plan",
-      "dpo.annual_report",
-      "dpo.infringement_escalation",
-      "dpo.governance_revalidation",
-      "dpo.terminate_or_replace",
-      "mpi.assemble_program",
-      "mpi.certification_lifecycle",
-      "mpi.lifecycle_review",
-    ],
+    activity_keys: [...D1_ACTIVITY_KEYS],
     related_domain_keys: [],
   },
   {
@@ -142,13 +126,6 @@ export const DOMAINS: DomainDefinition[] = [
 
 export function getDomain(domainKey: string): DomainDefinition | undefined {
   return DOMAINS.find((d) => d.domain_key === domainKey);
-}
-
-export function normalizeText(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
 }
 
 /** Búsqueda real sobre D1-D12 por código, nombre o clave semántica. */

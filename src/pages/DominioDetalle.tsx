@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getDomain, normalizeText } from "../data/domains";
-import { getActivity } from "../../content/domains/d01";
+import { getCanonicalActivity } from "../../content/registry";
 import {
   CopyLinkButton,
   ProvenanceBadge,
@@ -18,7 +18,7 @@ export function DominioDetallePage() {
   const activities = useMemo(() => {
     if (!domain) return [];
     return domain.activity_keys
-      .map((k) => getActivity(k))
+      .map((k) => getCanonicalActivity(k))
       .filter((a) => a !== undefined);
   }, [domain]);
 

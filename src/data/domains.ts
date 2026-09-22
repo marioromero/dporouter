@@ -1,5 +1,6 @@
 import type { DomainDefinition } from "../types";
 import { D1_ACTIVITY_KEYS } from "../../content/domains/d01";
+import { D2_ACTIVITY_KEYS } from "../../content/domains/d02";
 import { normalizeText } from "../../content/text";
 
 /** Normalización textual única de la capa canónica (reexportada). */
@@ -27,9 +28,11 @@ export const DOMAINS: DomainDefinition[] = [
     domain_key: "d2",
     human_code: "D2",
     name: "Inventario, licitud y ciclo de vida",
-    objective: "",
-    description: "",
-    activity_keys: [],
+    objective:
+      "Mantener trazabilidad de las operaciones de tratamiento y asegurar que sus roles, finalidades, fuentes, bases de licitud, datos tratados, plazos de conservación y condiciones de calidad permanezcan definidos, justificables y actualizados durante todo su ciclo de vida.",
+    description:
+      "Este dominio estructura el conocimiento básico de cada tratamiento y controla su legitimidad durante el tiempo. La licitud se determina por finalidad, no de manera global para toda una base de datos. El inventario interno utilizado por la agencia es un estándar metodológico de trazabilidad y no debe presentarse como un registro universal expresamente exigido por la ley.",
+    activity_keys: [...D2_ACTIVITY_KEYS],
     related_domain_keys: [],
   },
   {

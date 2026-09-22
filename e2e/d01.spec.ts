@@ -124,15 +124,13 @@ test("una dependencia intra-D1 es navegable", async ({ page }) => {
   expect(page.url()).toContain("/actividad/dpo.designate");
 });
 
-test("una dependencia cross-domain pendiente no produce enlace roto", async ({
-  page,
-}) => {
+test("D1.18 conserva pendientes sin enlaces rotos", async ({ page }) => {
   await page.goto("/actividad/mpi.assemble_program");
   await expect(
     page.getByText("Referencia canónica pendiente de importar").first(),
   ).toBeVisible();
-  const broken = page.locator('a[href*="treatment.inventory_create"]');
-  await expect(broken).toHaveCount(0);
+  await expect(page.locator('a[href*="risk.mpi_sync"]')).toHaveCount(0);
+  await expect(page.locator('a[href*="mpi.diffusion"]')).toHaveCount(0);
 });
 
 test("D1 sin overflow en desktop y tablet", async ({ page }) => {

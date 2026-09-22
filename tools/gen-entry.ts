@@ -1,14 +1,37 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { renderD01 } from "./domain-doc";
-import { D01_ACTIVITIES, PENDING_CROSS_DOMAIN } from "../content/domains/d01";
+import { renderD01, renderD02 } from "./domain-doc";
+import { D01_ACTIVITIES } from "../content/domains/d01";
+import {
+  D02_ACTIVITIES,
+  D02_PROVENANCE_NOTES,
+} from "../content/domains/d02";
 import { SOURCES } from "../content/sources";
+import { getDomainPendingReferences } from "../content/registry";
 
 /**
  * Punto de entrada de `npm run content:docs`.
  * Se ejecuta bundelizado (ver tools/generate-docs.mjs).
+ * Genera todas las proyecciones humanas de dominios importados.
  */
 const root = process.env.DPOROUTER_ROOT ?? join(__dirname, "..");
-const out = join(root, "docs", "domains", "D01.md");
-writeFileSync(out, renderD01(D01_ACTIVITIES, SOURCES, PENDING_CROSS_DOMAIN), "utf-8");
-console.log(`D01.md regenerado (${D01_ACTIVITIES.length} actividades)`);
+const outDir = process.env.DPOROUTER_OUTDIR ?? join(root, "docs", "domains");
+
+const d01 = renderD01(
+  D01_ACTIVITIES,
+  SOURCES,
+  getDomainPendingReferences(D01_ACTIVITIES),
+);
+writeFileSync(join(outDir, "D01.md"), d01, "utf-8");
+
+const d02 = renderD02(
+  D02_ACTIVITIES,
+  SOURCES,
+  getDomainPendingReferences(D02_ACTIVITIES),
+  D02_PROVENANCE_NOTES,
+);
+writeFileSync(join(outDir, "D02.md"), d02, "utf-8");
+
+console.log(
+  `Documentación regenerada: D01 (${D01_ACTIVITIES.length} actividades), D02 (${D02_ACTIVITIES.length} actividades)`,
+);

@@ -28,7 +28,7 @@ Do not invent them.
 
 Current iteration:
 
-`Prompt 2 — canonical D1 import`
+`Prompt 3 — canonical D2 import`
 
 Status:
 
@@ -48,9 +48,39 @@ Implemented:
 * progressive cross-domain pending-reference handling;
 * D1 integrity tests.
 
+Implemented adicionalmente:
+
+* canonical D02 specification;
+* 12 canonical D2 activities;
+* treatment inventory;
+* actor/role assessment;
+* purpose definition;
+* source traceability;
+* lawful basis per purpose;
+* legitimate-interest reasoning;
+* minimization;
+* retention;
+* data quality;
+* precontractual cleanup;
+* treatment change review;
+* inventory revalidation;
+* D1 → D2 dependency resolution.
+
+Canonical activity count:
+
+`32`
+
+Pending canonical cross-domain targets:
+
+* `risk.mpi_sync`
+* `mpi.diffusion`
+* `consent.mechanism_design`
+* `sensitive.lawfulness_assess`
+* `financial.titleIII_scope`
+
 Still not implemented:
 
-* D02-D12 detailed activities;
+* D03-D12 detailed activities;
 * characterization questions;
 * applicability engine;
 * state-effect engine;
@@ -62,12 +92,6 @@ Still not implemented:
 * AI;
 * MCP.
 
-Pending canonical cross-domain targets:
-
-* `treatment.inventory_create`
-* `risk.mpi_sync`
-* `mpi.diffusion`
-
 Canonical content architecture:
 
 * `/content/domains` — structured single source of truth
@@ -76,4 +100,4 @@ Canonical content architecture:
 
 Next controlled iteration:
 
-`Pending review of canonical D1 import. Do not proceed without explicit instruction.`
+`Pending review of canonical D2 import. Do not proceed without explicit instruction.`

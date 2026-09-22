@@ -1,13 +1,21 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { renderD01 } from "../tools/domain-doc";
+import { renderD01, renderD02 } from "../tools/domain-doc";
 import {
   D01_ACTIVITIES,
   D1_ACTIVITY_KEYS,
-  PENDING_CROSS_DOMAIN,
 } from "../content/domains/d01";
+import {
+  D02_ACTIVITIES,
+  D02_PROVENANCE_NOTES,
+} from "../content/domains/d02";
 import { SOURCES } from "../content/sources";
+import {
+  ALL_ACTIVITIES,
+  getDomainPendingReferences,
+  getUnresolvedReferences,
+} from "../content/registry";
 import { getDomain } from "../src/data/domains";
 import { DEMO_ACTIVITY_KEY } from "../src/data/demoActivity";
 
@@ -29,19 +37,50 @@ function readSrcFiles(dir: string): string[] {
 describe("single source of truth del contenido canónico", () => {
   it("D01.md está sincronizado con content/domains/d01.ts", () => {
     const actual = readFileSync(join(root, "docs/domains/D01.md"), "utf-8");
-    expect(actual).toBe(renderD01(D01_ACTIVITIES, SOURCES, PENDING_CROSS_DOMAIN));
+    expect(actual).toBe(
+      renderD01(D01_ACTIVITIES, SOURCES, getDomainPendingReferences(D01_ACTIVITIES)),
+    );
+  });
+
+  it("D02.md está sincronizado con content/domains/d02.ts", () => {
+    const actual = readFileSync(join(root, "docs/domains/D02.md"), "utf-8");
+    expect(actual).toBe(
+      renderD02(
+        D02_ACTIVITIES,
+        SOURCES,
+        getDomainPendingReferences(D02_ACTIVITIES),
+        D02_PROVENANCE_NOTES,
+      ),
+    );
   });
 
   it("la generación documental es determinística", () => {
-    expect(renderD01(D01_ACTIVITIES, SOURCES, PENDING_CROSS_DOMAIN)).toBe(
-      renderD01(D01_ACTIVITIES, SOURCES, PENDING_CROSS_DOMAIN),
+    expect(
+      renderD01(D01_ACTIVITIES, SOURCES, getDomainPendingReferences(D01_ACTIVITIES)),
+    ).toBe(
+      renderD01(D01_ACTIVITIES, SOURCES, getDomainPendingReferences(D01_ACTIVITIES)),
+    );
+    expect(
+      renderD02(
+        D02_ACTIVITIES,
+        SOURCES,
+        getDomainPendingReferences(D02_ACTIVITIES),
+        D02_PROVENANCE_NOTES,
+      ),
+    ).toBe(
+      renderD02(
+        D02_ACTIVITIES,
+        SOURCES,
+        getDomainPendingReferences(D02_ACTIVITIES),
+        D02_PROVENANCE_NOTES,
+      ),
     );
   });
 
   it("no existe una segunda copia independiente de D1 dentro de src", () => {
     expect(existsSync(join(root, "src/data/d01.ts"))).toBe(false);
     expect(existsSync(join(root, "src/data/sources.ts"))).toBe(false);
-    const keys = D01_ACTIVITIES.map((a) => a.activity_key);
+    const keys = ALL_ACTIVITIES.map((a) => a.activity_key);
     for (const file of readSrcFiles(join(root, "src"))) {
       const content = readFileSync(file, "utf-8");
       // Los adapters acceden a campos del contrato (def.steps_operational…);
@@ -64,26 +103,26 @@ describe("single source of truth del contenido canónico", () => {
   });
 
   it("el fixture DEMO permanece fuera de /content/domains", () => {
-    expect(readdirSync(join(root, "content/domains"))).toEqual(["d01.ts"]);
+    expect(readdirSync(join(root, "content/domains"))).toEqual(["d01.ts", "d02.ts"]);
     expect(
       D01_ACTIVITIES.some((a) => a.activity_key === DEMO_ACTIVITY_KEY),
     ).toBe(false);
   });
 
-  it("sin cambio semántico en D1 tras el traslado", () => {
+  it("sin cambio semántico tras los traslados", () => {
     expect(D01_ACTIVITIES.map((a) => a.activity_key)).toEqual(D1_ACTIVITY_KEYS);
-    expect(D01_ACTIVITIES.map((a) => a.human_code)).toEqual(
-      D1_ACTIVITY_KEYS.map((_, i) => `D1.${String(i + 1).padStart(2, "0")}`),
-    );
-    for (const a of D01_ACTIVITIES) {
+    expect(D02_ACTIVITIES).toHaveLength(12);
+    for (const a of ALL_ACTIVITIES) {
       expect(a.regulatory_status).toBe("transitional");
       expect(a.last_legal_review).toBe("2026-09-21");
       expect(a.legal_basis.length).toBeGreaterThanOrEqual(1);
     }
-    expect(PENDING_CROSS_DOMAIN).toEqual([
-      "treatment.inventory_create",
-      "risk.mpi_sync",
+    expect(getUnresolvedReferences()).toEqual([
+      "consent.mechanism_design",
+      "financial.titleIII_scope",
       "mpi.diffusion",
+      "risk.mpi_sync",
+      "sensitive.lawfulness_assess",
     ]);
   });
 });

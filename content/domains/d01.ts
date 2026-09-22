@@ -1,6 +1,5 @@
 import type { ActivityDefinition } from "../../src/types";
 import { basis } from "../sources";
-import { normalizeText } from "../text";
 
 /**
  * CANONICAL SOURCE OF TRUTH — D1 Gobernanza, accountability, DPO y MPI.
@@ -1308,38 +1307,3 @@ export const D01_ACTIVITIES: ActivityDefinition[] = [
 
 /** Claves en orden canónico D1.01–D1.20. */
 export const D1_ACTIVITY_KEYS: string[] = D01_ACTIVITIES.map((a) => a.activity_key);
-
-/**
- * Referencias cross-domain canónicas autorizadas como `pending import`
- * hasta la importación progresiva de D2, D8 y D11. Lista cerrada.
- */
-export const PENDING_CROSS_DOMAIN: string[] = [
-  "treatment.inventory_create",
-  "risk.mpi_sync",
-  "mpi.diffusion",
-];
-
-const D01_KEYS = new Set<string>(D01_ACTIVITIES.map((a) => a.activity_key));
-
-export function getActivity(activityKey: string): ActivityDefinition | undefined {
-  return D01_ACTIVITIES.find((a) => a.activity_key === activityKey);
-}
-
-export function isPendingImport(activityKey: string): boolean {
-  return PENDING_CROSS_DOMAIN.includes(activityKey);
-}
-
-export function getCanonicalActivityKeys(): Set<string> {
-  return new Set<string>(D01_KEYS);
-}
-
-/** Búsqueda sobre actividades D1: código, nombre, clave semántica, objetivo. */
-export function searchActivities(term: string): ActivityDefinition[] {
-  const q = normalizeText(term.trim());
-  if (q === "") return [];
-  return D01_ACTIVITIES.filter((a) =>
-    [a.human_code, a.name, a.activity_key, a.objective].some((field) =>
-      normalizeText(field).includes(q),
-    ),
-  );
-}

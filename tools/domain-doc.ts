@@ -2,52 +2,59 @@ import type { ActivityDefinition } from "../src/types";
 import type { CanonicalSource } from "../content/sources";
 
 /**
- * Render determinista de la proyección humana de un dominio canónico.
+ * Render determinista de proyecciones humanas de dominios canónicos.
  * Salida byte a byte estable: misma entrada, mismo documento.
- * Usado por `npm run content:docs` y por el test de sincronización.
+ * Usado por `npm run content:docs` y por los tests de sincronización.
  */
-export function renderD01(
-  activities: ActivityDefinition[],
-  sources: CanonicalSource[],
-  pendingCrossDomain: string[],
-): string {
+export interface DomainDocInput {
+  sourceFile: string;
+  title: string;
+  domainKey: string;
+  humanCode: string;
+  name: string;
+  objective: string;
+  description: string;
+  review: string;
+  normativeNote: string;
+  activities: ActivityDefinition[];
+  sources: CanonicalSource[];
+  pendingRefs: string[];
+  provenanceNotes?: Record<string, string>;
+  freezeNote: string;
+}
+
+export function renderDomainDoc(input: DomainDocInput): string {
   const L: string[] = [];
-  L.push("<!-- GENERATED — do not edit directly. Canonical source: content/domains/d01.ts. Regenerate: npm run content:docs -->");
-  L.push("# D01 — Gobernanza, accountability, DPO y MPI");
+  L.push(`<!-- GENERATED — do not edit directly. Canonical source: ${input.sourceFile}. Regenerate: npm run content:docs -->`);
+  L.push(input.title);
   L.push("");
   L.push("Estado: CANÓNICO CONGELADO");
   L.push("Baseline: Functional v1.0");
-  L.push("Última revisión legal: 2026-09-21");
+  L.push(`Última revisión legal: ${input.review}`);
   L.push("");
   L.push("## Dominio");
   L.push("");
-  L.push("`domain_key`: `d1`");
-  L.push("`human_code`: `D1`");
-  L.push("`name`: Gobernanza, accountability, DPO y MPI");
+  L.push(`\`domain_key\`: \`${input.domainKey}\``);
+  L.push(`\`human_code\`: \`${input.humanCode}\``);
+  L.push(`\`name\`: ${input.name}`);
   L.push("");
   L.push("### Objetivo");
   L.push("");
-  L.push(
-    "Establecer y mantener el marco de gobernanza, prevención, DPO y Modelo de Prevención de Infracciones del responsable, asegurando que las decisiones, designaciones, facultades, recursos, estados y mecanismos de supervisión permanezcan formalizados, trazables y operativos.",
-  );
+  L.push(input.objective);
   L.push("");
   L.push("### Descripción");
   L.push("");
-  L.push(
-    "Este dominio gobierna la prevención general de infracciones, la evaluación y ciclo de vida del DPO, la decisión de adoptar un Modelo de Prevención de Infracciones, sus componentes organizativos y su eventual certificación. Coordina actividades especializadas de otros dominios sin duplicarlas.",
-  );
+  L.push(input.description);
   L.push("");
   L.push("`related_domain_keys`: `[]`");
   L.push("");
   L.push("## Estado temporal de la normativa");
   L.push("");
-  L.push(
-    "La Ley N° 21.719 está promulgada con entrada en vigencia diferida al 2026-12-01. El Decreto N° 662 está publicado (2026-09-09). Las actividades de este dominio conservan `regulatory_status = transitional` hasta una futura actualización controlada.",
-  );
+  L.push(input.normativeNote);
   L.push("");
   L.push("## Fuentes canónicas");
   L.push("");
-  for (const s of sources) {
+  for (const s of input.sources) {
     L.push(`### ${s.source_id}`);
     L.push("");
     L.push(`Nombre: ${s.name}`);
@@ -60,9 +67,9 @@ export function renderD01(
     for (const p of s.provisions_used) L.push(`* ${p}`);
     L.push("");
   }
-  L.push("## Actividades (20)");
+  L.push(`## Actividades (${input.activities.length})`);
   L.push("");
-  for (const a of activities) {
+  for (const a of input.activities) {
     L.push(`### ${a.human_code} — ${a.name}`);
     L.push("");
     L.push(`activity_key: \`${a.activity_key}\``);
@@ -108,18 +115,79 @@ export function renderD01(
       L.push(`  condition: ${d.condition}`);
       L.push(`  rationale: ${d.rationale}`);
     }
+    const note = input.provenanceNotes?.[a.activity_key];
+    if (note) {
+      L.push("Nota de procedencia:");
+      L.push("");
+      L.push(note);
+    }
     L.push("");
   }
   L.push("## Dependencias cross-domain pendientes de importar");
   L.push("");
-  for (const k of pendingCrossDomain)
+  for (const k of input.pendingRefs)
     L.push(`* \`${k}\` — Referencia canónica pendiente de importar`);
   L.push("");
   L.push("## Nota de congelamiento");
   L.push("");
-  L.push(
-    "D1 está congelado salvo revisión controlada. No inventar, completar ni reinterpretar su contenido jurídico. La aplicación consume la representación estructurada; este documento es la especificación humana canónica.",
-  );
+  L.push(input.freezeNote);
   L.push("");
   return L.join("\n");
+}
+
+const NORMATIVE_NOTE =
+  "La Ley N° 21.719 está promulgada con entrada en vigencia diferida al 2026-12-01. El Decreto N° 662 está publicado (2026-09-09). Las actividades de este dominio conservan `regulatory_status = transitional` hasta una futura actualización controlada.";
+
+/** Proyección D01 (firma estable para el test de sincronización). */
+export function renderD01(
+  activities: ActivityDefinition[],
+  sources: CanonicalSource[],
+  pendingRefs: string[],
+): string {
+  return renderDomainDoc({
+    sourceFile: "content/domains/d01.ts",
+    title: "# D01 — Gobernanza, accountability, DPO y MPI",
+    domainKey: "d1",
+    humanCode: "D1",
+    name: "Gobernanza, accountability, DPO y MPI",
+    objective:
+      "Establecer y mantener el marco de gobernanza, prevención, DPO y Modelo de Prevención de Infracciones del responsable, asegurando que las decisiones, designaciones, facultades, recursos, estados y mecanismos de supervisión permanezcan formalizados, trazables y operativos.",
+    description:
+      "Este dominio gobierna la prevención general de infracciones, la evaluación y ciclo de vida del DPO, la decisión de adoptar un Modelo de Prevención de Infracciones, sus componentes organizativos y su eventual certificación. Coordina actividades especializadas de otros dominios sin duplicarlas.",
+    review: "2026-09-21",
+    normativeNote: NORMATIVE_NOTE,
+    activities,
+    sources,
+    pendingRefs,
+    freezeNote:
+      "D1 está congelado salvo revisión controlada. No inventar, completar ni reinterpretar su contenido jurídico. La aplicación consume la representación estructurada; este documento es la especificación humana canónica.",
+  });
+}
+
+/** Proyección D02. */
+export function renderD02(
+  activities: ActivityDefinition[],
+  sources: CanonicalSource[],
+  pendingRefs: string[],
+  provenanceNotes: Record<string, string>,
+): string {
+  return renderDomainDoc({
+    sourceFile: "content/domains/d02.ts",
+    title: "# D02 — Inventario, licitud y ciclo de vida",
+    domainKey: "d2",
+    humanCode: "D2",
+    name: "Inventario, licitud y ciclo de vida",
+    objective:
+      "Mantener trazabilidad de las operaciones de tratamiento y asegurar que sus roles, finalidades, fuentes, bases de licitud, datos tratados, plazos de conservación y condiciones de calidad permanezcan definidos, justificables y actualizados durante todo su ciclo de vida.",
+    description:
+      "Este dominio estructura el conocimiento básico de cada tratamiento y controla su legitimidad durante el tiempo. La licitud se determina por finalidad, no de manera global para toda una base de datos. El inventario interno utilizado por la agencia es un estándar metodológico de trazabilidad y no debe presentarse como un registro universal expresamente exigido por la ley.",
+    review: "2026-09-21",
+    normativeNote: NORMATIVE_NOTE,
+    activities,
+    sources,
+    pendingRefs,
+    provenanceNotes,
+    freezeNote:
+      "D2 está congelado salvo revisión controlada. No inventar, completar ni reinterpretar su contenido jurídico. La aplicación consume la representación estructurada; este documento es la especificación humana canónica.",
+  });
 }

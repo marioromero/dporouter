@@ -3,11 +3,13 @@ import { DOMAINS, getDomain, searchDomains } from "../src/data/domains";
 import {
   D01_ACTIVITIES,
   D1_ACTIVITY_KEYS,
-  PENDING_CROSS_DOMAIN,
-  getActivity,
-  isPendingImport,
-  searchActivities,
 } from "../content/domains/d01";
+import {
+  getCanonicalActivity,
+  getDomainPendingReferences,
+  getUnresolvedReferences,
+  searchCanonicalActivities,
+} from "../content/registry";
 import { SOURCES } from "../content/sources";
 import { DEMO_ACTIVITY_KEY } from "../src/data/demoActivity";
 import { fromActivityDefinition } from "../src/activityViewModel";
@@ -170,8 +172,8 @@ describe("contenido canónico D1", () => {
     expect(D01_ACTIVITIES.some((a) => a.activity_key === DEMO_ACTIVITY_KEY)).toBe(
       false,
     );
-    expect(getActivity(DEMO_ACTIVITY_KEY)).toBeUndefined();
-    expect(searchActivities("demo")).toEqual([]);
+    expect(getCanonicalActivity(DEMO_ACTIVITY_KEY)).toBeUndefined();
+    expect(searchCanonicalActivities("demo")).toEqual([]);
   });
 
   it("11. el registro global canónico contiene exactamente 20 actividades", () => {
@@ -179,10 +181,13 @@ describe("contenido canónico D1", () => {
     expect(new Set(D01_ACTIVITIES.map((a) => a.activity_key)).size).toBe(20);
   });
 
-  it("12. D2-D12 continúan con cero actividades", () => {
+  it("12. D2 tiene 12 actividades; D3-D12 continúan con cero", () => {
+    expect(getDomain("d2")?.activity_keys).toHaveLength(12);
     for (const d of DOMAINS) {
       if (d.domain_key === "d1") {
         expect(d.activity_keys).toHaveLength(20);
+      } else if (d.domain_key === "d2") {
+        expect(d.activity_keys).toHaveLength(12);
       } else {
         expect(d.activity_keys, d.domain_key).toEqual([]);
       }
@@ -203,27 +208,31 @@ describe("contenido canónico D1", () => {
     }
   });
 
-  it("14. solo las tres referencias cross-domain autorizadas quedan pendientes", () => {
-    expect([...PENDING_CROSS_DOMAIN].sort()).toEqual(
-      ["mpi.diffusion", "risk.mpi_sync", "treatment.inventory_create"].sort(),
-    );
-    for (const k of PENDING_CROSS_DOMAIN) {
-      expect(isPendingImport(k)).toBe(true);
-      expect(getActivity(k)).toBeUndefined();
-    }
+  it("14. referencias D1-originadas pendientes: solo risk.mpi_sync y mpi.diffusion", () => {
+    expect(getDomainPendingReferences(D01_ACTIVITIES)).toEqual([
+      "mpi.diffusion",
+      "risk.mpi_sync",
+    ]);
+    // treatment.inventory_create ya resuelve (D2 importado).
+    expect(
+      getCanonicalActivity("treatment.inventory_create")?.human_code,
+    ).toBe("D2.01");
   });
 
-  it("15. ninguna otra referencia queda sin resolver", () => {
-    const keys = new Set(D01_ACTIVITIES.map((a) => a.activity_key));
-    const unresolved = new Set<string>();
+  it("15. dependencias D1 resuelven globalmente o son pending autorizadas", () => {
+    const authorized = new Set(getUnresolvedReferences());
+    const unexpected = new Set<string>();
     for (const a of D01_ACTIVITIES) {
       for (const d of a.activity_dependencies) {
-        if (!keys.has(d.target_activity_key) && !isPendingImport(d.target_activity_key)) {
-          unresolved.add(`${a.activity_key} → ${d.target_activity_key}`);
+        if (
+          !getCanonicalActivity(d.target_activity_key) &&
+          !authorized.has(d.target_activity_key)
+        ) {
+          unexpected.add(`${a.activity_key} → ${d.target_activity_key}`);
         }
       }
     }
-    expect([...unresolved]).toEqual([]);
+    expect([...unexpected]).toEqual([]);
   });
 
   it("16. conditions_applicability y activity_dependencies permanecen separados", () => {
@@ -242,7 +251,7 @@ describe("contenido canónico D1", () => {
   });
 
   it("17. D1.04 conserva evidence_basis = agency_standard", () => {
-    expect(getActivity("mpi.formalize_adoption")?.evidence_basis).toBe(
+    expect(getCanonicalActivity("mpi.formalize_adoption")?.evidence_basis).toBe(
       "agency_standard",
     );
   });
@@ -254,12 +263,12 @@ describe("contenido canónico D1", () => {
       "mpi.internal_regulation_integrate",
       "dpo.confidentiality_duty",
     ]) {
-      expect(getActivity(k)?.evidence_basis, k).toBe("legal_requirement");
+      expect(getCanonicalActivity(k)?.evidence_basis, k).toBe("legal_requirement");
     }
   });
 
   it("19. D1.19 no acopla certification status con lifecycle", () => {
-    const a = getActivity("mpi.certification_lifecycle");
+    const a = getCanonicalActivity("mpi.certification_lifecycle");
     expect(a).toBeDefined();
     expect(
       a?.state_effect.some((e) => e.includes("mpi.lifecycle_status = ")),
@@ -270,7 +279,7 @@ describe("contenido canónico D1", () => {
   });
 
   it("20. D1.17 preserva vacancia/reemplazo con MPI activo", () => {
-    const a = getActivity("dpo.terminate_or_replace");
+    const a = getCanonicalActivity("dpo.terminate_or_replace");
     expect(a).toBeDefined();
     const joined = (a?.state_effect ?? []).join("\n");
     expect(joined).toContain("dpo.vacancy = true");

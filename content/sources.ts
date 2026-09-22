@@ -33,6 +33,12 @@ export const SOURCES: CanonicalSource[] = [
     last_review: "2026-09-21",
     note: "Texto legal promulgado con vigencia del nuevo régimen desde el 1 de diciembre de 2026.",
     provisions_used: [
+      "Artículo 2",
+      "Artículo 3",
+      "Artículo 12",
+      "Artículo 13",
+      "Artículo 14",
+      "Artículo 14 ter",
       "Artículo 48",
       "Artículo 49",
       "Artículo 50",

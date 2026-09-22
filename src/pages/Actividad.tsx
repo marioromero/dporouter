@@ -2,10 +2,11 @@ import { useParams } from "react-router-dom";
 import { getDemoActivity } from "../data/demoActivity";
 import { fromActivityDefinition, fromDemoActivity } from "../activityViewModel";
 import {
-  PENDING_CROSS_DOMAIN,
-  getActivity,
-  getCanonicalActivityKeys,
-} from "../../content/domains/d01";
+  getCanonicalActivity,
+  getCanonicalKeys,
+  getDomainForActivity,
+  getUnresolvedReferences,
+} from "../../content/registry";
 import { ActivitySheet } from "../components/ActivitySheet";
 import { NotFoundPage } from "./NotFound";
 
@@ -22,17 +23,18 @@ export function ActividadPage() {
     );
   }
 
-  const def = activityKey ? getActivity(activityKey) : undefined;
-  if (!def) {
+  const def = activityKey ? getCanonicalActivity(activityKey) : undefined;
+  if (!def || !activityKey) {
     return <NotFoundPage />;
   }
+  const domain = getDomainForActivity(activityKey);
 
   return (
     <ActivitySheet
       view={fromActivityDefinition(def, {
-        knownActivityKeys: getCanonicalActivityKeys(),
-        pendingImportKeys: PENDING_CROSS_DOMAIN,
-        domain: { domainKey: "d1", domainCode: "D1" },
+        knownActivityKeys: getCanonicalKeys(),
+        pendingImportKeys: getUnresolvedReferences(),
+        domain,
       })}
     />
   );

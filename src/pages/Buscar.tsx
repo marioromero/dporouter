@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { searchDomains } from "../data/domains";
-import { searchActivities } from "../../content/domains/d01";
+import {
+  getDomainForActivity,
+  searchCanonicalActivities,
+} from "../../content/registry";
 import { activityTypeLabel } from "../components/ui";
 
 export function BuscarPage() {
   const [term, setTerm] = useState("");
   const trimmed = term.trim();
   const domains = useMemo(() => searchDomains(trimmed), [trimmed]);
-  const activities = useMemo(() => searchActivities(trimmed), [trimmed]);
+  const activities = useMemo(() => searchCanonicalActivities(trimmed), [trimmed]);
 
   return (
     <>
@@ -78,7 +81,7 @@ export function BuscarPage() {
                 <span className="activity-row-main">
                   <span className="activity-row-name">{a.name}</span>
                   <span className="activity-row-meta">
-                    <span>D1</span>
+                    <span>{getDomainForActivity(a.activity_key)?.domainCode ?? ""}</span>
                     <span>{activityTypeLabel(a.activity_type)}</span>
                     <span>
                       <code>{a.activity_key}</code>

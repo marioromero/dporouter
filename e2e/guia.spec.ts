@@ -28,16 +28,13 @@ async function answerProfessional(
   }
 }
 
-test("D1.02 muestra Evaluación guiada con Iniciar evaluación", async ({ page }) => {
+test("D1.02 ofrece guía como acción principal", async ({ page }) => {
   await page.goto(ACTIVITY);
-  await expect(page.getByTestId("actividad-guia")).toBeVisible();
-  await expect(page.getByText("Evaluación guiada").first()).toBeVisible();
-  await expect(
-    page.getByText(
-      "Responde los factores relevantes y el sistema determinará si existe obligación derivada del MPI o el nivel de recomendación profesional aplicable.",
-    ),
-  ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Iniciar evaluación" })).toBeVisible();
+  await expect(page.getByTestId("actividad-accion")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Evaluar necesidad y recomendación de DPO" })).toBeVisible();
+  await page.getByRole("link", { name: "Iniciar evaluación" }).click();
+  await expect(page).toHaveURL(new RegExp("/guia$"));
+  await expect(page.getByTestId("guia-entry")).toBeVisible();
 });
 
 test("otras actividades no muestran Evaluación guiada", async ({ page }) => {
@@ -62,7 +59,7 @@ test("caso MPI activo termina en DPO requerido", async ({ page }) => {
   await page.getByTestId("guia-continue").click();
   await expect(page).toHaveURL(new RegExp("/guia/resultado$"));
   await expect(page.getByTestId("guia-outcome-label")).toContainText("DPO requerido por MPI");
-  await expect(page.getByText("Obligación legal").first()).toBeVisible();
+  await expect(page.getByText("Exigido por norma").first()).toBeVisible();
   await expect(page.getByTestId("guia-outcome-rule")).toContainText("mpi-active");
 });
 
@@ -73,7 +70,7 @@ test("caso strongly recommended funciona y explica reglas y factores", async ({ 
   // La última continuación aterriza en el nodo decisión, que rendea el resultado.
   await expect(page).toHaveURL(new RegExp("/guia/final-decision$"));
   await expect(page.getByTestId("guia-outcome-label")).toContainText("DPO fuertemente recomendado");
-  await expect(page.getByText("Estándar metodológico").first()).toBeVisible();
+  await expect(page.getByText("Criterio interno recomendado").first()).toBeVisible();
   await expect(page.getByTestId("guia-outcome-rule")).toContainText("strong-A");
   const factors = page.getByTestId("guia-factors");
   await expect(factors.getByText("Datos de impacto especial")).toBeVisible();

@@ -1,4 +1,4 @@
-import { Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { getProtocolForActivity, getProtocolNode } from "../../content/protocols/registry";
 import { getCanonicalActivity, getDomainForActivity } from "../../content/registry";
 import {
@@ -8,6 +8,7 @@ import {
   resolveDecisionNode,
 } from "../guidance/engine";
 import { useGuidanceProtocol } from "../guidance/session";
+import { ContextNav } from "../components/ContextNav";
 import {
   ProtocolChrome,
   ProtocolEntryView,
@@ -34,7 +35,17 @@ export function GuiaPage() {
   if (!protocol || !def || !activityKey) {
     return <NotFoundPage />;
   }
-  return <GuiaContent activityKey={activityKey} nodeKey={nodeKey} />;
+  const domain = getDomainForActivity(activityKey);
+  return (
+    <>
+      <ContextNav
+        domainKey={domain?.domainKey}
+        activityKey={activityKey}
+        guide={{ protocolKey: protocol.protocol_key, currentNodeKey: nodeKey }}
+      />
+      <GuiaContent activityKey={activityKey} nodeKey={nodeKey} />
+    </>
+  );
 }
 
 function GuiaContent({
@@ -132,6 +143,7 @@ function GuiaContent({
           session={session}
           crumbTail={node.title}
           detail={resolution.detail}
+          activityKey={activityKey}
         />
       );
     }
@@ -158,6 +170,7 @@ function GuiaContent({
             session={session}
             crumbTail={node.title}
             detail={resolution.node_key}
+            activityKey={activityKey}
           />
         );
       }
@@ -211,6 +224,7 @@ function GuiaContent({
         session={session}
         crumbTail={node.title}
         detail={evaluation.detail}
+        activityKey={activityKey}
       />
     );
   }
@@ -231,6 +245,7 @@ function ProtocolMisconfigured({
   session,
   crumbTail,
   detail,
+  activityKey,
 }: {
   protocol: NonNullable<ReturnType<typeof getProtocolForActivity>>;
   activity: {
@@ -246,9 +261,11 @@ function ProtocolMisconfigured({
     answer: (factKey: string, value: string) => void;
     reset: () => void;
     isProvided: (factKey: string) => boolean;
+    providedSource: (factKey: string) => string | null;
   };
   crumbTail: string;
   detail: string;
+  activityKey: string;
 }) {
   return (
     <>
@@ -267,6 +284,9 @@ function ProtocolMisconfigured({
           Esta es una falla de configuración canónica, no un resultado
           profesional. Repórtala como issue de especificación.
         </p>
+        <div className="actions">
+          <Link to={`/actividad/${activityKey}`}>Volver a actividad</Link>
+        </div>
       </section>
     </>
   );

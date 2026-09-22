@@ -47,7 +47,7 @@ export function BuscarPage() {
         <ul className="domain-rows">
           {domains.map((d) => (
             <li key={d.domain_key}>
-              <Link className="domain-row" to={`/dominios/${d.domain_key}`}>
+              <Link className="domain-row" to={`/trabajo/${d.domain_key}`}>
                 <span className="domain-code" aria-hidden="true">
                   {d.human_code}
                 </span>
@@ -83,9 +83,6 @@ export function BuscarPage() {
                   <span className="activity-row-meta">
                     <span>{getDomainForActivity(a.activity_key)?.domainCode ?? ""}</span>
                     <span>{activityTypeLabel(a.activity_type)}</span>
-                    <span>
-                      <code>{a.activity_key}</code>
-                    </span>
                   </span>
                 </span>
                 <span className="domain-go" aria-hidden="true">

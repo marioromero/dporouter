@@ -5,10 +5,10 @@ import {
   sourceKindLabel,
 } from "../components/ui";
 
-export function FuentesPage() {
+export function ReferenciasPage() {
   return (
     <>
-      <h1>Fuentes y estado normativo</h1>
+      <h1>Referencias</h1>
       <p className="lede">
         Consulta el origen de los requisitos, las fuentes jurídicas ya
         incorporadas y su estado normativo.

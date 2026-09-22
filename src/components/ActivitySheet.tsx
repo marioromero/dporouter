@@ -30,15 +30,15 @@ export function ActivitySheet({
       <p className="breadcrumb">
         {view.context ? (
           <>
-            <Link to="/dominios">Dominios</Link> /{" "}
-            <Link to={`/dominios/${view.context.domainKey}`}>
+            <Link to="/trabajo">Trabajo</Link> /{" "}
+            <Link to={`/trabajo/${view.context.domainKey}`}>
               {view.context.domainCode}
             </Link>{" "}
             / {view.humanCode}
           </>
         ) : (
           <>
-            <Link to="/mapa">Mapa</Link> / Actividad
+            <Link to="/trabajo">Trabajo</Link> / Actividad
           </>
         )}
       </p>

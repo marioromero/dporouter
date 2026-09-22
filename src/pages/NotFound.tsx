@@ -12,8 +12,8 @@ export function NotFoundPage() {
         <Link className="btn" to="/">
           Ir al inicio
         </Link>
-        <Link className="btn secondary" to="/dominios">
-          Explorar dominios
+        <Link className="btn secondary" to="/trabajo">
+          Explorar trabajo
         </Link>
       </div>
     </div>

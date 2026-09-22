@@ -6,36 +6,45 @@ import {
   useState,
 } from "react";
 import type { FactMap } from "../../content/protocols/types";
+import { useWorkspace } from "../workspace/context";
+import { mergedFactRecords } from "../workspace/facts";
 
 /**
- * Sesión transitoria de evaluación guiada (Stage 1).
+ * Sesión de evaluación guiada (Stage 1).
  *
- * Las respuestas viven en memoria mientras dura la sesión de navegación.
- * No hay persistencia por cliente, no hay base de datos, no hay
- * localStorage: un reload crea una sesión nueva sin inventar respuestas.
+ * Con empresa activa, las respuestas se persisten separadamente por
+ * empresa en almacenamiento local y los facts de Diagnóstico más las
+ * respuestas de otros protocolos ingresan como contexto inyectado
+ * (`initialFacts` o equivalente). Sin empresa activa, la sesión es
+ * transitoria en memoria y así se indica.
  *
- * Reutilización futura de hechos: el proveedor acepta `initialFacts`
- * (hechos ya conocidos, p. ej. desde Diagnóstico en una iteración posterior)
- * separados de las respuestas de sesión. Un hecho proveniente de
- * `initialFacts` se muestra como "Dato ya disponible" y no se exige
- * responderlo nuevamente. En Stage 1 `initialFacts` está vacío y todo se
- * resuelve por respuestas de la sesión, pero el protocolo no debe
- * reescribirse cuando llegue la inyección.
+ * Origen nunca mezclado en silencio: cada hecho persistido registra su
+ * fuente (`diagnostico` o la `protocol_key` que lo respondió). Cambiar
+ * de empresa cambia el contexto completo de facts y respuestas.
+ *
+ * El motor determinístico no cambia: esta capa solo provee hechos.
  */
 
 interface GuidanceSessionState {
-  /** Respuestas de la sesión por protocolo. */
   sessions: Record<string, FactMap>;
-  /** Hechos conocidos inyectados (futura integración con Diagnóstico). */
   initialFacts: Record<string, FactMap>;
   answer: (protocolKey: string, factKey: string, value: string) => void;
   resetProtocol: (protocolKey: string) => void;
   answersFor: (protocolKey: string) => FactMap;
   isProvided: (protocolKey: string, factKey: string) => boolean;
+  providedSource: (protocolKey: string, factKey: string) => string | null;
 }
 
 const GuidanceSessionContext =
   createContext<GuidanceSessionState | null>(null);
+
+function recordsToFacts(
+  records: Record<string, { value: string }>,
+): FactMap {
+  const out: FactMap = {};
+  for (const [k, r] of Object.entries(records)) out[k] = r.value;
+  return out;
+}
 
 export function GuidanceSessionProvider({
   children,
@@ -44,46 +53,107 @@ export function GuidanceSessionProvider({
   children: React.ReactNode;
   initialFacts?: Record<string, FactMap>;
 }) {
-  const [sessions, setSessions] = useState<Record<string, FactMap>>({});
+  const { company, saveProtocolAnswer, clearProtocolAnswers } = useWorkspace();
+  const [memory, setMemory] = useState<Record<string, FactMap>>({});
+
+  const ownAnswers = useCallback(
+    (protocolKey: string): FactMap => {
+      if (company) {
+        return recordsToFacts(company.protocolAnswers[protocolKey] ?? {});
+      }
+      return memory[protocolKey] ?? {};
+    },
+    [company, memory],
+  );
+
+  const injectedFacts = useCallback(
+    (protocolKey: string): FactMap => {
+      const merged: FactMap = { ...(initialFacts[protocolKey] ?? {}) };
+      if (company) {
+        for (const [k, r] of Object.entries(
+          mergedFactRecords(company, protocolKey),
+        )) {
+          merged[k] = r.value;
+        }
+      }
+      return merged;
+    },
+    [company, initialFacts],
+  );
 
   const answer = useCallback(
     (protocolKey: string, factKey: string, value: string) => {
-      setSessions((prev) => ({
+      if (company) {
+        saveProtocolAnswer(protocolKey, factKey, value, protocolKey);
+        return;
+      }
+      setMemory((prev) => ({
         ...prev,
         [protocolKey]: { ...(prev[protocolKey] ?? {}), [factKey]: value },
       }));
     },
-    [],
+    [company, saveProtocolAnswer],
   );
 
-  const resetProtocol = useCallback((protocolKey: string) => {
-    setSessions((prev) => {
-      if (!(protocolKey in prev)) return prev;
-      const next = { ...prev };
-      delete next[protocolKey];
-      return next;
-    });
-  }, []);
+  const resetProtocol = useCallback(
+    (protocolKey: string) => {
+      if (company) {
+        clearProtocolAnswers(protocolKey);
+        return;
+      }
+      setMemory((prev) => {
+        if (!(protocolKey in prev)) return prev;
+        const next = { ...prev };
+        delete next[protocolKey];
+        return next;
+      });
+    },
+    [company, clearProtocolAnswers],
+  );
 
   const answersFor = useCallback(
     (protocolKey: string): FactMap => ({
-      ...(initialFacts[protocolKey] ?? {}),
-      ...(sessions[protocolKey] ?? {}),
+      ...injectedFacts(protocolKey),
+      ...ownAnswers(protocolKey),
     }),
-    [initialFacts, sessions],
+    [injectedFacts, ownAnswers],
   );
 
   const isProvided = useCallback(
-    (protocolKey: string, factKey: string): boolean =>
-      initialFacts[protocolKey] !== undefined &&
-      factKey in initialFacts[protocolKey] &&
-      !(factKey in (sessions[protocolKey] ?? {})),
-    [initialFacts, sessions],
+    (protocolKey: string, factKey: string): boolean => {
+      const injected = injectedFacts(protocolKey);
+      const own = ownAnswers(protocolKey);
+      return factKey in injected && !(factKey in own);
+    },
+    [injectedFacts, ownAnswers],
   );
 
+  const providedSource = useCallback(
+    (protocolKey: string, factKey: string): string | null => {
+      if (!isProvided(protocolKey, factKey)) return null;
+      if (factKey in (initialFacts[protocolKey] ?? {})) return "contexto inicial";
+      if (!company) return null;
+      const rec = mergedFactRecords(company, protocolKey)[factKey];
+      if (!rec) return null;
+      return rec.source === "diagnostico" ? "Diagnóstico" : `Guía ${rec.source}`;
+    },
+    [company, initialFacts, isProvided],
+  );
+
+  const sessions = useMemo(() => {
+    if (company) {
+      const out: Record<string, FactMap> = {};
+      for (const [pk, answers] of Object.entries(company.protocolAnswers)) {
+        out[pk] = recordsToFacts(answers);
+      }
+      return out;
+    }
+    return memory;
+  }, [company, memory]);
+
   const value = useMemo(
-    () => ({ sessions, initialFacts, answer, resetProtocol, answersFor, isProvided }),
-    [sessions, initialFacts, answer, resetProtocol, answersFor, isProvided],
+    () => ({ sessions, initialFacts, answer, resetProtocol, answersFor, isProvided, providedSource }),
+    [sessions, initialFacts, answer, resetProtocol, answersFor, isProvided, providedSource],
   );
 
   return (
@@ -101,13 +171,14 @@ function useGuidanceSessionContext(): GuidanceSessionState {
   return ctx;
 }
 
-/** Estado transitorio de un protocolo: hechos, respuesta y reinicio. */
+/** Estado de un protocolo: hechos, respuesta y reinicio. */
 export function useGuidanceProtocol(protocolKey: string): {
   facts: FactMap;
   started: boolean;
   answer: (factKey: string, value: string) => void;
   reset: () => void;
   isProvided: (factKey: string) => boolean;
+  providedSource: (factKey: string) => string | null;
 } {
   const ctx = useGuidanceSessionContext();
   const facts = ctx.answersFor(protocolKey);
@@ -117,5 +188,6 @@ export function useGuidanceProtocol(protocolKey: string): {
     answer: (factKey, value) => ctx.answer(protocolKey, factKey, value),
     reset: () => ctx.resetProtocol(protocolKey),
     isProvided: (factKey) => ctx.isProvided(protocolKey, factKey),
+    providedSource: (factKey) => ctx.providedSource(protocolKey, factKey),
   };
 }

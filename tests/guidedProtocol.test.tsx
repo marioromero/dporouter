@@ -387,6 +387,7 @@ describe("regresión del motor (hallazgos de revisión)", () => {
             answer: () => {},
             reset: () => {},
             isProvided: () => false,
+            providedSource: () => null,
           }}
           outcome={outcome}
           ruleId="mpi-active"
@@ -414,6 +415,7 @@ describe("regresión del motor (hallazgos de revisión)", () => {
             answer: () => {},
             reset: () => {},
             isProvided: () => false,
+            providedSource: () => null,
           }}
           outcome={outcome}
           ruleId="incomplete"
@@ -574,6 +576,7 @@ describe("protocolos no lineales (refactor)", () => {
             answer: () => {},
             reset: () => {},
             isProvided: (f) => f === "test.f2",
+            providedSource: (f) => (f === "test.f2" ? "Diagnóstico" : null),
           }}
           node={q2}
         />
@@ -606,6 +609,7 @@ describe("protocolos no lineales (refactor)", () => {
             answer: () => {},
             reset: () => {},
             isProvided: () => false,
+            providedSource: () => null,
           }}
           node={q2}
         />
@@ -654,6 +658,7 @@ describe("protocolos no lineales (refactor)", () => {
             answer: () => {},
             reset: () => {},
             isProvided: () => false,
+            providedSource: () => null,
           }}
           node={q1}
         />

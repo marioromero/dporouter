@@ -177,7 +177,8 @@ a {
   padding: 10px 28px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  flex-wrap: wrap;
+  gap: 8px 14px;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -1022,10 +1023,6 @@ h3 {
 
 /* ---------- Guided execution (Stage 1) ---------- */
 
-.guided-section {
-  border-left: 4px solid var(--accent);
-}
-
 .table-wrap {
   overflow-x: auto;
   min-width: 0;
@@ -1038,4 +1035,138 @@ h3 {
 
 .table-wrap .trace-table th {
   width: auto;
+}
+
+/* ---------- UX Reset: workspace + sticky context ---------- */
+
+.validity-strip {
+  margin: 0;
+  padding: 6px 28px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.company-tag {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #eef4ea;
+  color: #2c5a2e;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contextnav {
+  position: sticky;
+  top: 60px;
+  z-index: 10;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contextnav-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.contextnav-row.scroll {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.contextnav-row.steps {
+  justify-content: space-between;
+}
+
+.ctx {
+  flex: 0 0 auto;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 10px;
+  background: var(--surface);
+  white-space: nowrap;
+}
+
+.ctx:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.ctx.current {
+  background: var(--accent);
+  border-color: var(--accent-dark);
+  color: #fff;
+}
+
+.ctx.done {
+  border-color: var(--ok);
+  color: #175c37;
+}
+
+.work-status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.work-status.reviewed {
+  border-color: var(--ok);
+  color: #175c37;
+  background: #eef6f0;
+}
+
+.work-status.in_review {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+  background: var(--accent-soft);
+}
+
+.work-status.blocked {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: #faf0ef;
+}
+
+.work-status.not_applicable {
+  border-style: dashed;
+}
+
+@media (max-width: 1024px) {
+  .contextnav {
+    top: 58px;
+  }
+
+  .validity-strip {
+    padding: 6px 18px;
+  }
 }

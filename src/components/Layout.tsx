@@ -1,19 +1,21 @@
+import { useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { SOURCES } from "../../content/sources";
+import { useWorkspace } from "../workspace/context";
 
 const NAV = [
-  { to: "/", label: "Inicio", code: "IN", end: true },
-  { to: "/diagnostico", label: "Diagnóstico / Caracterización", code: "DG", end: true },
-  { to: "/mapa", label: "Mapa de cumplimiento", code: "MP", end: true },
-  { to: "/dominios", label: "Dominios", code: "DO", end: false },
+  { to: "/empresa", label: "Empresa", code: "EM", end: false },
+  { to: "/trabajo", label: "Trabajo", code: "TR", end: false },
+  { to: "/diagnostico", label: "Diagnóstico", code: "DG", end: true },
   { to: "/buscar", label: "Buscar", code: "BU", end: true },
-  { to: "/fuentes", label: "Fuentes y estado normativo", code: "FU", end: true },
+  { to: "/referencias", label: "Referencias", code: "RF", end: true },
 ];
 
 function modeFor(pathname: string): { label: string; className: string } | null {
-  if (pathname === "/mapa" || pathname.startsWith("/dominios") || pathname.startsWith("/actividad")) {
-    return { label: "MAPA", className: "map" };
+  if (pathname.startsWith("/trabajo") || pathname.startsWith("/actividad")) {
+    return { label: "TRABAJO", className: "map" };
   }
-  if (pathname === "/diagnostico" || pathname.startsWith("/diagnostico")) {
+  if (pathname.startsWith("/diagnostico")) {
     return { label: "GUIADO", className: "guided" };
   }
   return null;
@@ -21,7 +23,9 @@ function modeFor(pathname: string): { label: string; className: string } | null 
 
 function crumbsFor(pathname: string): string {
   if (pathname === "/") return "Inicio";
-  if (pathname.startsWith("/dominios/")) return `Dominios / ${pathname.split("/")[2] ?? ""}`;
+  if (pathname === "/empresa") return "Empresa";
+  if (pathname.startsWith("/trabajo/")) return `Trabajo / ${pathname.split("/")[2] ?? ""}`;
+  if (pathname === "/trabajo") return "Trabajo";
   if (pathname.startsWith("/actividad/")) {
     const parts = pathname.split("/");
     const base = `Actividad / ${parts[2] ?? ""}`;
@@ -30,16 +34,28 @@ function crumbsFor(pathname: string): string {
     }
     return base;
   }
-  const found = NAV.find((n) => n.to !== "/" && (pathname === n.to || pathname.startsWith(n.to + "/")));
-  if (found) {
-    return found.label;
-  }
+  if (pathname.startsWith("/diagnostico")) return "Diagnóstico";
+  if (pathname.startsWith("/buscar")) return "Buscar";
+  if (pathname.startsWith("/referencias")) return "Referencias";
   return "Contenido";
 }
+
+const TRACKABLE = ["/trabajo", "/actividad", "/diagnostico", "/buscar", "/referencias"];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const mode = modeFor(location.pathname);
+  const { company, setLastLocation } = useWorkspace();
+  // La franja de vigencia existe solo mientras haya fuentes canónicas en
+  // estado transitorio; el texto es presentación global única.
+  const showValidity = SOURCES.some((s) => s.regulatory_status === "transitional");
+
+  useEffect(() => {
+    if (!company) return;
+    if (TRACKABLE.some((p) => location.pathname === p || location.pathname.startsWith(p + "/"))) {
+      setLastLocation(location.pathname);
+    }
+  }, [location.pathname, company, setLastLocation]);
 
   function closeNav() {
     document.querySelector(".app-shell")?.classList.remove("nav-open");
@@ -53,7 +69,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <aside className="sidebar" aria-label="Navegación principal">
         <div className="sidebar-brand">
           <strong>Chile Privacy Operations</strong>
-          <span>Etapa 1 · Manual operativo</span>
+          <span>Etapa 1 · Asistente operativo</span>
         </div>
         <nav aria-label="Áreas principales">
           {NAV.map((item) => (
@@ -71,7 +87,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <div className="sidebar-foot">Baseline funcional v1.0 · Uso interno</div>
+        <div className="sidebar-foot">
+          Baseline funcional v1.0 · Uso interno
+          <br />
+          Espacio local: sin autenticación real.
+        </div>
       </aside>
       <button
         className="scrim"
@@ -92,10 +112,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <span className="crumbs" aria-label="Ubicación actual">
             {crumbsFor(location.pathname)}
           </span>
+          {company ? (
+            <span className="company-tag" title="Empresa activa">
+              {company.name}
+            </span>
+          ) : null}
           {mode ? (
             <span className={`mode-tag ${mode.className}`}>{mode.label}</span>
           ) : null}
         </div>
+        {showValidity ? (
+          <p className="validity-strip">
+            Nuevo régimen de protección de datos: vigencia desde 01-12-2026
+          </p>
+        ) : null}
         <main id="contenido" className="content">
           {children}
         </main>
@@ -105,5 +135,5 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export function DomainLink({ domainKey, children }: { domainKey: string; children?: React.ReactNode }) {
-  return <Link to={`/dominios/${domainKey}`}>{children ?? domainKey}</Link>;
+  return <Link to={`/trabajo/${domainKey}`}>{children ?? domainKey}</Link>;
 }

@@ -5,11 +5,22 @@ import type { CanonicalSource } from "../../content/sources";
 export type ProvenanceKind = "legal" | "method" | "pending" | "unresolved";
 
 const LABELS: Record<ProvenanceKind, string> = {
-  legal: "Obligación legal",
-  method: "Estándar metodológico",
-  pending: "Pendiente de regulación u orientación",
+  legal: "Exigido por norma",
+  method: "Criterio interno recomendado",
+  pending: "Pendiente de definición oficial",
   unresolved: "No resuelto",
 };
+
+/**
+ * Etiqueta humana única de procedencia (contrato UX permanente).
+ * Recibe el enum canónico y devuelve el lenguaje humano.
+ */
+export function provenanceHuman(canonical: string): string {
+  if (canonical === "legal_requirement") return LABELS.legal;
+  if (canonical === "unresolved") return LABELS.unresolved;
+  if (canonical.startsWith("pending")) return LABELS.pending;
+  return LABELS.method;
+}
 
 /**
  * Patrón visual reutilizable de procedencia.

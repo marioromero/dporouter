@@ -104,6 +104,19 @@ For domain implementation, read:
 
 Do NOT pre-load D01-D12 together unless an explicit integrity or cross-domain task requires them.
 
+## Permanent Contracts
+
+Two documents are permanent contracts alongside this file:
+
+- `docs/PRODUCT_UX_CONTRACT.md` — permanent UX rules (work-first
+  presentation, `Trabajo` area, per-company local workspace, provenance
+  and validity language, no fake functionality).
+- `docs/IMPLEMENTATION_PLAYBOOK.md` — the repetitive 12-step procedure
+  for future iterations (status → scope → skills → implement → verify →
+  commit → stop).
+
+For guided-protocol work, use the `guided-protocol` skill.
+
 ## Locked Product Principles
 
 The following rules are mandatory and must not be changed implicitly.

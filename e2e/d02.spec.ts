@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-test("/dominios/d2 muestra 12 actividades", async ({ page }) => {
-  await page.goto("/dominios/d2");
+test("/trabajo/d2 muestra 12 actividades", async ({ page }) => {
+  await page.goto("/trabajo/d2");
   await expect(page.getByText("12 actividades importadas")).toBeVisible();
   for (const code of ["D2.01", "D2.06", "D2.12"]) {
     await expect(page.locator("span.domain-code", { hasText: code })).toBeVisible();
@@ -84,19 +84,19 @@ test("mpi.assemble_program muestra treatment.inventory_create como link válido"
 }) => {
   await page.goto("/actividad/mpi.assemble_program");
   const link = page
-    .locator(".dep-item")
-    .getByRole("link", { name: /treatment\.inventory_create/ });
+    .getByRole("region", { name: "Se relaciona con" })
+    .getByRole("link", { name: "Crear inventario maestro de tratamientos" });
   await expect(link).toBeVisible();
   await expect(
-    page.getByText("Referencia canónica pendiente de importar"),
-  ).toHaveCount(2);
+    page.getByText("Más referencias canónicas pendientes de importar"),
+  ).toBeVisible();
 });
 
 test("ese link abre D2.01", async ({ page }) => {
   await page.goto("/actividad/mpi.assemble_program");
   await page
-    .locator(".dep-item")
-    .getByRole("link", { name: /treatment\.inventory_create/ })
+    .getByRole("region", { name: "Se relaciona con" })
+    .getByRole("link", { name: "Crear inventario maestro de tratamientos" })
     .click();
   await expect(
     page.getByRole("heading", { name: "Crear inventario maestro de tratamientos" }),
@@ -104,29 +104,32 @@ test("ese link abre D2.01", async ({ page }) => {
   expect(page.url()).toContain("/actividad/treatment.inventory_create");
 });
 
-test("D2.05 distingue applicability de dependencies", async ({ page }) => {
+test("D2.05 distingue aplicabilidad humana de dependencias", async ({ page }) => {
   await page.goto("/actividad/lawful_basis.assign");
+  const region = page.getByRole("region", { name: "Qué se busca resolver" });
   await expect(
-    page
-      .getByRole("region", { name: "Cuándo aplica" })
-      .getByText("treatment.purposes defined"),
+    region.getByText("Aplica cuando el tratamiento tiene finalidades definidas."),
   ).toBeVisible();
+  await expect(region.getByText("treatment.purposes defined")).toHaveCount(0);
   await expect(
-    page.locator(".dep-item").getByRole("link", { name: /treatment\.purpose_define/ }),
+    page.getByRole("region", { name: "Se relaciona con" }).getByRole("link", { name: "Definir finalidades del tratamiento" }),
   ).toBeVisible();
 });
 
-test("D2.06 muestra reasoning-record requirement", async ({ page }) => {
+test("D2.06 conserva evidencia de reasoning y auditoría colapsada", async ({ page }) => {
   await page.goto("/actividad/legitimate_interest.assessment");
-  const trace = page.locator(".trace-table");
-  await expect(trace.getByText("Requerido", { exact: true })).toBeVisible();
   await expect(page.getByText("Reasoning Record de interés legítimo")).toBeVisible();
+  const audit = page.getByTestId("auditoria-detalle");
+  await expect(audit.getByText("Requerido", { exact: true })).toHaveCount(0);
+  await audit.getByText("Datos técnicos (auditoría interna)").click();
+  await expect(audit.getByText("Requerido", { exact: true })).toBeVisible();
 });
 
-test("D2.08 distingue legal basis de agency-standard evidence", async ({ page }) => {
+test("D2.08 usa lenguaje humano para evidencia interna", async ({ page }) => {
   await page.goto("/actividad/retention.schedule");
-  await expect(page.getByText("Estándar metodológico").first()).toBeVisible();
+  await expect(page.getByText("Criterio interno recomendado").first()).toBeVisible();
   await expect(page.getByText("Artículo 3 letra c)").first()).toBeVisible();
+  await expect(page.getByText("Estándar metodológico")).toHaveCount(0);
 });
 
 test("D2.10 renderiza correctamente el flujo precontractual", async ({ page }) => {
@@ -138,18 +141,18 @@ test("D2.10 renderiza correctamente el flujo precontractual", async ({ page }) =
   ).toBeVisible();
   await expect(
     page
-      .getByRole("region", { name: "Cuándo aplica" })
-      .getByText("personal data obtained for requested precontractual measures = yes"),
+      .getByRole("region", { name: "Qué se busca resolver" })
+      .getByText("Aplica cuando se obtuvieron datos para medidas precontractuales solicitadas."),
   ).toBeVisible();
   await expect(
-    page.locator(".dep-item").getByRole("link", { name: /lawful_basis\.assign/ }),
+    page.getByRole("region", { name: "Se relaciona con" }).getByRole("link", { name: "Asignar base de licitud por finalidad" }),
   ).toBeVisible();
 });
 
-test("/fuentes continúa con las dos fuentes y provisiones actualizadas", async ({
+test("/referencias continúa con las dos fuentes y provisiones actualizadas", async ({
   page,
 }) => {
-  await page.goto("/fuentes");
+  await page.goto("/referencias");
   await expect(
     page.getByText("Ley N° 19.628 sobre Protección de la Vida Privada", {
       exact: false,
@@ -165,7 +168,7 @@ test("/fuentes continúa con las dos fuentes y provisiones actualizadas", async 
 
 test("D2 sin overflow en desktop y tablet", async ({ page }) => {
   for (const path of [
-    "/dominios/d2",
+    "/trabajo/d2",
     "/actividad/lawful_basis.assign",
     "/actividad/legitimate_interest.assessment",
   ]) {

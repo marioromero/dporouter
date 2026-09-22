@@ -28,11 +28,36 @@ Do not invent them.
 
 Current iteration:
 
-`Prompt 4 — guided execution engine pilot`
+`UX Reset — guided company workflow`
 
 Status:
 
 `COMPLETED`
+
+UX RESET está implementado:
+
+* navegación principal Empresa / Trabajo / Diagnóstico / Buscar /
+  Referencias (Trabajo reemplaza Mapa + Dominios; redirects conservan
+  deep links antiguos);
+* workspace local Stage 1 (perfiles y empresas creados por el usuario,
+  progreso independiente por empresa, localStorage, export/import JSON
+  validado; no constituye auth segura ni Stage 2);
+* Activity View V2 en lenguaje humano (sin metadata técnica visible;
+  auditoría colapsada; aplicabilidad humana; provenance única;
+  vigencia global única);
+* navegador sticky de contexto (dominios, actividades, nodos,
+  anterior/siguiente);
+* estados de trabajo not_started/in_review/reviewed/not_applicable/blocked
+  (`Revisado` nunca significa `Cumple`);
+* Diagnóstico alimenta facts reutilizables (initialFacts por empresa);
+* siguiente revisión sugerida con información real.
+
+D1/D2 permanecen canónicos (20 + 12 actividades, mismas keys, fuentes y
+dependencias; sin cambios jurídicos).
+
+D1.02 sigue siendo el único protocolo completo por ahora.
+
+D3 continúa pendiente.
 
 Implemented:
 

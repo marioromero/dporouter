@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-test("/dominios/d1 muestra 20 actividades", async ({ page }) => {
-  await page.goto("/dominios/d1");
+test("/trabajo/d1 muestra 20 actividades", async ({ page }) => {
+  await page.goto("/trabajo/d1");
   await expect(page.getByText("20 actividades importadas")).toBeVisible();
   for (const code of ["D1.01", "D1.10", "D1.20"]) {
-    await expect(page.getByText(code, { exact: true })).toBeVisible();
+    await expect(page.locator("span.domain-code", { hasText: code }).first()).toBeVisible();
   }
 });
 
@@ -63,7 +63,7 @@ test("buscar mpi.assemble_program encuentra la actividad correcta", async ({
     page.getByText("Consolidar e implementar el programa de cumplimiento MPI"),
   ).toBeVisible();
   await page
-    .locator(".domain-row", { hasText: "mpi.assemble_program" })
+    .locator(".domain-row", { hasText: "Consolidar e implementar el programa de cumplimiento MPI" })
     .first()
     .click();
   await expect(
@@ -83,10 +83,10 @@ test("DEMO sigue fuera de búsqueda", async ({ page }) => {
   ).toHaveCount(0);
 });
 
-test("/fuentes muestra exactamente las dos fuentes importadas", async ({
+test("/referencias muestra exactamente las dos fuentes importadas", async ({
   page,
 }) => {
-  await page.goto("/fuentes");
+  await page.goto("/referencias");
   await expect(
     page.getByText("Ley N° 19.628 sobre Protección de la Vida Privada", {
       exact: false,
@@ -101,25 +101,26 @@ test("/fuentes muestra exactamente las dos fuentes importadas", async ({
   await expect(page.getByText("Artículo 20", { exact: true })).toBeVisible();
 });
 
-test("una actividad muestra Vigencia diferida", async ({ page }) => {
+test("vigencia se informa globalmente una vez, no por actividad", async ({ page }) => {
   await page.goto("/actividad/governance.preventive_framework");
-  await expect(page.getByText("Vigencia diferida").first()).toBeVisible();
   await expect(
-    page.getByText("Nuevo régimen con vigencia desde 01-12-2026").first(),
+    page.getByText("Nuevo régimen de protección de datos: vigencia desde 01-12-2026"),
   ).toBeVisible();
+  await expect(page.getByText("Vigencia diferida")).toHaveCount(0);
 });
 
-test("una actividad con agency standard lo distingue de legal requirement", async ({
+test("una actividad con agency standard usa lenguaje humano único", async ({
   page,
 }) => {
   await page.goto("/actividad/mpi.formalize_adoption");
-  await expect(page.getByText("Estándar metodológico").first()).toBeVisible();
+  await expect(page.getByText("Criterio interno recomendado").first()).toBeVisible();
   await expect(page.getByText("Artículo 49").first()).toBeVisible();
+  await expect(page.getByText("Estándar metodológico")).toHaveCount(0);
 });
 
 test("una dependencia intra-D1 es navegable", async ({ page }) => {
   await page.goto("/actividad/dpo.initial_governance_validation");
-  await page.locator(".dep-item").getByRole("link", { name: /dpo\.designate/ }).click();
+  await page.getByRole("region", { name: "Se relaciona con" }).getByRole("link", { name: "Designar DPO" }).click();
   await expect(page.getByRole("heading", { name: "Designar DPO" })).toBeVisible();
   expect(page.url()).toContain("/actividad/dpo.designate");
 });
@@ -127,14 +128,14 @@ test("una dependencia intra-D1 es navegable", async ({ page }) => {
 test("D1.18 conserva pendientes sin enlaces rotos", async ({ page }) => {
   await page.goto("/actividad/mpi.assemble_program");
   await expect(
-    page.getByText("Referencia canónica pendiente de importar").first(),
+    page.getByText("Más referencias canónicas pendientes de importar").first(),
   ).toBeVisible();
   await expect(page.locator('a[href*="risk.mpi_sync"]')).toHaveCount(0);
   await expect(page.locator('a[href*="mpi.diffusion"]')).toHaveCount(0);
 });
 
 test("D1 sin overflow en desktop y tablet", async ({ page }) => {
-  for (const path of ["/dominios/d1", "/actividad/dpo.designate", "/fuentes"]) {
+  for (const path of ["/trabajo/d1", "/actividad/dpo.designate", "/referencias"]) {
     await page.goto(path);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,

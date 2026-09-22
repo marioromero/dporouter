@@ -21,7 +21,7 @@ import {
   isFactResolved,
   resolveNodeWithFacts,
 } from "../guidance/engine";
-import { CopyLinkButton, ProvenanceBadge } from "./ui";
+import { CopyLinkButton, ProvenanceBadge, provenanceHuman } from "./ui";
 
 /**
  * Vistas genéricas de ejecución guiada (Stage 1).
@@ -45,6 +45,7 @@ export interface ProtocolSession {
   answer: (factKey: string, value: string) => void;
   reset: () => void;
   isProvided: (factKey: string) => boolean;
+  providedSource: (factKey: string) => string | null;
 }
 
 function guideBase(activityKey: string): string {
@@ -65,7 +66,12 @@ export function ProtocolActivityLink({
 }) {
   const resolved = getCanonicalActivity(activityKey);
   if (resolved) {
-    return <Link to={`/actividad/${activityKey}`}>{label}</Link>;
+    // Si la etiqueta es la clave cruda, humanizar con nombre canónico.
+    const text =
+      label === activityKey
+        ? `${resolved.human_code} · ${resolved.name}`
+        : label;
+    return <Link to={`/actividad/${activityKey}`}>{text}</Link>;
   }
   if (getUnresolvedReferences().includes(activityKey)) {
     return (
@@ -97,11 +103,11 @@ export function ProtocolChrome({
   return (
     <>
       <p className="breadcrumb">
-        <Link to="/dominios">Dominios</Link>{" "}
+        <Link to="/trabajo">Trabajo</Link>{" "}
         {activity.domainKey ? (
           <>
             /{" "}
-            <Link to={`/dominios/${activity.domainKey}`}>
+            <Link to={`/trabajo/${activity.domainKey}`}>
               {activity.domainCode ?? activity.domainKey}
             </Link>{" "}
           </>
@@ -142,8 +148,8 @@ export function ProtocolChrome({
               Reiniciar evaluación
             </button>{" "}
             <span className="copy-feedback" role="note">
-              Las respuestas son transitorias de esta sesión y no se guardan como
-              registro del cliente.
+              Reinicia las respuestas de esta guía; los hechos de
+              Diagnóstico u otras guías se conservan.
             </span>
           </p>
         ) : null}
@@ -335,9 +341,12 @@ export function ProtocolNodeView({
         ) : null}
         {provided ? (
           <p data-testid="guia-provided">
-            <ProvenanceBadge kind="pending" /> Dato ya disponible: este hecho
-            proviene de antecedentes conocidos y no es necesario responderlo
+            <strong>Dato ya disponible:</strong> este hecho proviene de
+            antecedentes conocidos y no es necesario responderlo
             nuevamente. Puedes mantenerlo o actualizarlo.
+            {node.fact_key && session.providedSource(node.fact_key) ? (
+              <> Origen: {session.providedSource(node.fact_key)}.</>
+            ) : null}
           </p>
         ) : null}
         {node.evidence_to_review && node.evidence_to_review.length > 0 ? (
@@ -487,10 +496,7 @@ export function ProtocolOutcomeView({
   const visibleActions = outcome.next_actions.filter((a) =>
     a.show_when ? evaluateCondition(a.show_when, session.facts) : true,
   );
-  const nature =
-    outcome.classification === "legal_requirement"
-      ? "Obligación legal"
-      : "Estándar metodológico";
+  const nature = provenanceHuman(outcome.classification);
   return (
     <>
       <ProtocolChrome

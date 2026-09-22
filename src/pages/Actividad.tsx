@@ -1,15 +1,14 @@
 import { useParams } from "react-router-dom";
 import { getDemoActivity } from "../data/demoActivity";
-import { fromActivityDefinition, fromDemoActivity } from "../activityViewModel";
+import { fromDemoActivity } from "../activityViewModel";
 import {
   getCanonicalActivity,
-  getCanonicalKeys,
   getDomainForActivity,
-  getUnresolvedReferences,
 } from "../../content/registry";
 import { getProtocolForActivity } from "../../content/protocols/registry";
 import { ActivitySheet } from "../components/ActivitySheet";
-import { ActivityGuidedSection } from "../components/GuidedSection";
+import { ActivityWorkView } from "../components/ActivityWorkView";
+import { ContextNav } from "../components/ContextNav";
 import { NotFoundPage } from "./NotFound";
 
 export function ActividadPage() {
@@ -33,17 +32,9 @@ export function ActividadPage() {
   const protocol = getProtocolForActivity(activityKey);
 
   return (
-    <ActivitySheet
-      view={fromActivityDefinition(def, {
-        knownActivityKeys: getCanonicalKeys(),
-        pendingImportKeys: getUnresolvedReferences(),
-        domain,
-      })}
-      guided={
-        protocol ? (
-          <ActivityGuidedSection protocol={protocol} activityKey={activityKey} />
-        ) : undefined
-      }
-    />
+    <>
+      <ContextNav domainKey={domain?.domainKey} activityKey={activityKey} />
+      <ActivityWorkView def={def} domain={domain} protocol={protocol} />
+    </>
   );
 }

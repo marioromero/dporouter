@@ -4,39 +4,44 @@ import { DOMAINS } from "../data/domains";
 export function HomePage() {
   return (
     <>
-      <p className="eyebrow">ETAPA 1 · MANUAL OPERATIVO</p>
+      <p className="eyebrow">ETAPA 1 · ASISTENTE OPERATIVO</p>
       <h1>Protección de datos, llevada a ejecución</h1>
       <p className="lede">
-        Navega el modelo completo o parte por la caracterización para priorizar
-        actividades. El contenido jurídico y operativo se incorporará por dominios
-        de forma controlada.
+        Trabaja por empresa: revisa actividades, responde guías de ejecución
+        y conserva el avance en tu espacio local.
       </p>
       <div className="actions">
-        <Link className="btn" to="/diagnostico">
-          Iniciar caracterización
+        <Link className="btn" to="/empresa">
+          Ir a mi empresa
         </Link>
-        <Link className="btn secondary" to="/mapa">
-          Abrir mapa completo
+        <Link className="btn secondary" to="/trabajo">
+          Abrir trabajo
         </Link>
       </div>
 
       <h2>Acceso rápido</h2>
       <ul className="quick-links">
         <li>
-          <Link to="/buscar">
-            <strong>Buscar actividad o concepto</strong>
-            <span>Localiza dominios por nombre, código o concepto.</span>
+          <Link to="/empresa">
+            <strong>Empresa y avance</strong>
+            <span>Continuar donde quedaste y ver el trabajo pendiente.</span>
           </Link>
         </li>
         <li>
-          <Link to="/dominios">
-            <strong>Explorar dominios</strong>
+          <Link to="/trabajo">
+            <strong>Explorar trabajo</strong>
             <span>Los doce ámbitos operativos del trabajo continuo.</span>
           </Link>
         </li>
         <li>
-          <Link to="/fuentes">
-            <strong>Fuentes y estado normativo</strong>
+          <Link to="/buscar">
+            <strong>Buscar actividad o concepto</strong>
+            <span>Localiza actividades por nombre, código o concepto.</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/referencias">
+            <strong>Referencias</strong>
             <span>Cómo se distingue el origen de cada requisito.</span>
           </Link>
         </li>
@@ -46,7 +51,7 @@ export function HomePage() {
       <ul className="domain-grid-compact">
         {DOMAINS.map((d) => (
           <li key={d.domain_key}>
-            <Link to={`/dominios/${d.domain_key}`}>
+            <Link to={`/trabajo/${d.domain_key}`}>
               <span className="domain-code" aria-hidden="true">
                 {d.human_code}
               </span>

@@ -22,6 +22,10 @@ import { MPI_LIFECYCLE_REVIEW_PROTOCOL as P20 } from "../content/protocols/mpi.l
 import { TREATMENT_INVENTORY_CREATE_PROTOCOL as PD201 } from "../content/protocols/treatment.inventory_create";
 import { TREATMENT_ACTOR_ROLES_PROTOCOL as PD202 } from "../content/protocols/treatment.actor_roles";
 import { TREATMENT_PURPOSE_DEFINE_PROTOCOL as PD203 } from "../content/protocols/treatment.purpose_define";
+import { TREATMENT_SOURCE_TRACEABILITY_PROTOCOL as PD204 } from "../content/protocols/treatment.source_traceability";
+import { DATA_MINIMIZATION_REVIEW_PROTOCOL as PD207 } from "../content/protocols/data.minimization_review";
+import { RETENTION_SCHEDULE_PROTOCOL as PD208 } from "../content/protocols/retention.schedule";
+import { DATA_QUALITY_CONTROL_PROTOCOL as PD209 } from "../content/protocols/data.quality_control";
 import type { ExecutionProtocol } from "../content/protocols/types";
 import {
   getProtocolForActivity,
@@ -2590,5 +2594,281 @@ describe("batch D2: integridad sin redundancia manual", () => {
       expect(p.execution_scope).toBe("treatment");
     }
     expect(getProtocolForActivity("dpo.need_assessment")?.execution_scope ?? "company").toBe("company");
+  });
+});
+
+describe("batch D2: D2.04 procedure treatment-scoped", () => {
+  it("172. D2.04 procedure treatment sin universalidad inventada", () => {
+    expect(getProtocolForActivity("treatment.source_traceability")).toBe(PD204);
+    expect(PD204.mode).toBe("procedure");
+    expect(PD204.execution_scope).toBe("treatment");
+    expect(getCanonicalActivity(PD204.activity_key)?.human_code).toBe("D2.04");
+  });
+
+  it("173. tres checks profesionales + síntesis; estructura válida", () => {
+    expect(PD204.nodes.map((n) => n.node_key)).toEqual([
+      "identify-sources",
+      "cover-categories",
+      "keep-evidence",
+      "final-confirmation",
+    ]);
+    expect(PD204.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["traceability_documented", "traceability_missing", "traceability_in_progress"].sort(),
+    );
+    expect(validateProtocolStructure(PD204)).toEqual([]);
+  });
+
+  function fullTraceability(over: FactMap = {}): FactMap {
+    return {
+      "derived.treatment.data_items_exist": "yes",
+      "derived.treatment.sources_exist": "yes",
+      "traceability.sources_identified": "yes",
+      "traceability.category_covered": "yes",
+      "traceability.evidence_kept": "yes",
+      ...over,
+    };
+  }
+
+  it("174. sin datos o fuentes deriva a workspace", () => {
+    const e = mustOutcomeFor(
+      PD204,
+      fullTraceability({ "derived.treatment.sources_exist": "no" }),
+    );
+    expect(e.outcome_key).toBe("traceability_missing");
+    expect(e.rule_id).toBe("structural-missing");
+  });
+
+  it("175. todo verificado documenta sin efectos", () => {
+    const e = mustOutcomeFor(PD204, fullTraceability());
+    expect(e.outcome_key).toBe("traceability_documented");
+    expect(e.rule_id).toBe("all-verified");
+    expect(e.outcome.classification).toBe("legal_requirement");
+    expect(e.outcome.canonical_fact_effects ?? []).toEqual([]);
+  });
+
+  it("176. pendiente profesional no documenta", () => {
+    const e = mustOutcomeFor(
+      PD204,
+      fullTraceability({ "traceability.evidence_kept": "unknown" }),
+    );
+    expect(e.outcome_key).toBe("traceability_in_progress");
+    expect(e.rule_id).toBe("pending-verification");
+  });
+});
+
+describe("batch D2: D2.07 checklist treatment-scoped", () => {
+  it("177. D2.07 checklist treatment con matriz como vista", () => {
+    expect(getProtocolForActivity("data.minimization_review")).toBe(PD207);
+    expect(PD207.mode).toBe("checklist");
+    expect(PD207.execution_scope).toBe("treatment");
+    expect(getCanonicalActivity(PD207.activity_key)?.human_code).toBe("D2.07");
+  });
+
+  it("178. tres checks + síntesis; estructura válida", () => {
+    expect(PD207.nodes.map((n) => n.node_key)).toEqual([
+      "check-mapping",
+      "check-excess",
+      "check-gaps",
+      "final-assessment",
+    ]);
+    expect(PD207.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["minimization_conform", "remediation_required", "relations_incomplete", "information_incomplete"].sort(),
+    );
+    expect(validateProtocolStructure(PD207)).toEqual([]);
+  });
+
+  function fullMinimization(over: FactMap = {}): FactMap {
+    return {
+      "derived.treatment.data_items_exist": "yes",
+      "derived.treatment.purposes_exist": "yes",
+      "derived.treatment.links_exist": "yes",
+      "minimization.mapping_done": "yes",
+      "minimization.excess_treated": "yes",
+      "minimization.gaps_recorded": "yes",
+      ...over,
+    };
+  }
+
+  it("179. sin relaciones deriva a workspace; link no prueba minimización", () => {
+    const e = mustOutcomeFor(
+      PD207,
+      fullMinimization({ "derived.treatment.links_exist": "no" }),
+    );
+    expect(e.outcome_key).toBe("relations_incomplete");
+    expect(e.rule_id).toBe("relations-missing");
+    // Links presentes pero check pendiente: no conforma.
+    const p = mustOutcomeFor(
+      PD207,
+      fullMinimization({ "minimization.mapping_done": "unknown" }),
+    );
+    expect(p.outcome_key).toBe("information_incomplete");
+  });
+
+  it("180. todo satisfactorio conforma; brecha exige remediación", () => {
+    const e = mustOutcomeFor(PD207, fullMinimization());
+    expect(e.outcome_key).toBe("minimization_conform");
+    expect(e.rule_id).toBe("all-conform");
+    expect(e.outcome.classification).toBe("legal_requirement");
+    expect(e.outcome.canonical_fact_effects ?? []).toEqual([]);
+    const gap = mustOutcomeFor(
+      PD207,
+      fullMinimization({ "minimization.excess_treated": "no" }),
+    );
+    expect(gap.outcome_key).toBe("remediation_required");
+    expect(gap.rule_id).toBe("gaps-found");
+  });
+});
+
+describe("batch D2: D2.08 procedure treatment-scoped", () => {
+  it("181. D2.08 procedure treatment sin universalidad", () => {
+    expect(getProtocolForActivity("retention.schedule")).toBe(PD208);
+    expect(PD208.mode).toBe("procedure");
+    expect(PD208.execution_scope).toBe("treatment");
+    expect(getCanonicalActivity(PD208.activity_key)?.human_code).toBe("D2.08");
+  });
+
+  it("182. cinco checks + síntesis; estructura válida", () => {
+    expect(PD208.nodes.map((n) => n.node_key)).toEqual([
+      "relate-purpose",
+      "identify-legal-basis",
+      "define-criteria",
+      "justify-extended",
+      "document-exceptions",
+      "final-confirmation",
+    ]);
+    expect(PD208.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["retention_defined", "rules_missing", "retention_in_progress"].sort(),
+    );
+    expect(validateProtocolStructure(PD208)).toEqual([]);
+  });
+
+  function fullRetention(over: FactMap = {}): FactMap {
+    return {
+      "derived.treatment.purposes_exist": "yes",
+      "derived.treatment.retention_rules_exist": "yes",
+      "derived.treatment.retention_rules_linked": "yes",
+      "retention.purpose_related": "yes",
+      "retention.legal_basis_identified": "yes",
+      "retention.criteria_defined": "yes",
+      "retention.extended_justified": "na",
+      "retention.exceptions_documented": "yes",
+      ...over,
+    };
+  }
+
+  it("183. sin reglas deriva a workspace", () => {
+    const e = mustOutcomeFor(
+      PD208,
+      fullRetention({ "derived.treatment.retention_rules_exist": "no" }),
+    );
+    expect(e.outcome_key).toBe("rules_missing");
+    expect(e.rule_id).toBe("rules-missing");
+  });
+
+  it("184. todo verificado define sin efectos ni fechas", () => {
+    const e = mustOutcomeFor(PD208, fullRetention());
+    expect(e.outcome_key).toBe("retention_defined");
+    expect(e.rule_id).toBe("all-verified");
+    expect(e.outcome.classification).toBe("agency_standard");
+    expect(e.outcome.canonical_fact_effects ?? []).toEqual([]);
+    const text = JSON.stringify(PD208);
+    expect(text.toLowerCase()).not.toContain("vencimiento");
+  });
+
+  it("185. pendiente profesional no define", () => {
+    const e = mustOutcomeFor(
+      PD208,
+      fullRetention({ "retention.criteria_defined": "unknown" }),
+    );
+    expect(e.outcome_key).toBe("retention_in_progress");
+    expect(e.rule_id).toBe("pending-verification");
+  });
+});
+
+describe("batch D2: D2.09 checklist treatment-scoped", () => {
+  it("186. D2.09 checklist treatment sin score ni frecuencia", () => {
+    expect(getProtocolForActivity("data.quality_control")).toBe(PD209);
+    expect(PD209.mode).toBe("checklist");
+    expect(PD209.execution_scope).toBe("treatment");
+    expect(getCanonicalActivity(PD209.activity_key)?.human_code).toBe("D2.09");
+  });
+
+  it("187. cinco checks + síntesis; estructura válida", () => {
+    expect(PD209.nodes.map((n) => n.node_key)).toEqual([
+      "check-reviewed",
+      "check-sources",
+      "check-correction",
+      "check-rectification",
+      "check-recorded",
+      "final-assessment",
+    ]);
+    expect(PD209.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["quality_conform", "remediation_required", "information_incomplete"].sort(),
+    );
+    expect(validateProtocolStructure(PD209)).toEqual([]);
+  });
+
+  function fullQuality(over: FactMap = {}): FactMap {
+    return {
+      "quality.review_done": "yes",
+      "quality.sources_checked": "yes",
+      "quality.correction_defined": "na",
+      "quality.rectification_aligned": "na",
+      "quality.results_recorded": "yes",
+      ...over,
+    };
+  }
+
+  it("188. todo satisfactorio conforma; brecha exige remediación", () => {
+    const e = mustOutcomeFor(PD209, fullQuality());
+    expect(e.outcome_key).toBe("quality_conform");
+    expect(e.rule_id).toBe("all-conform");
+    expect(e.outcome.canonical_fact_effects ?? []).toEqual([]);
+    const gap = mustOutcomeFor(PD209, fullQuality({ "quality.review_done": "no" }));
+    expect(gap.outcome_key).toBe("remediation_required");
+    expect(gap.rule_id).toBe("gaps-found");
+  });
+
+  it("189. unknown bloquea conclusión definitiva", () => {
+    const e = mustOutcomeFor(
+      PD209,
+      fullQuality({ "quality.results_recorded": "unknown" }),
+    );
+    expect(e.outcome_key).toBe("information_incomplete");
+    expect(e.rule_id).toBe("missing-info");
+  });
+});
+
+describe("batch D2: integridad sin redundancia ni efectos", () => {
+  it("190. D2 consume derived sin preguntarlo; sin efectos D2", () => {
+    for (const p of [PD204, PD207, PD208, PD209]) {
+      expect(p.execution_scope).toBe("treatment");
+      expect(validateProtocolStructure(p), p.protocol_key).toEqual([]);
+      for (const n of p.nodes) {
+        if (n.node_type === "question" && n.fact_key) {
+          expect(n.fact_key.startsWith("derived."), `${p.protocol_key}/${n.node_key}`).toBe(false);
+        }
+      }
+      for (const o of p.outcomes) {
+        expect(o.canonical_fact_effects ?? [], `${p.protocol_key}/${o.outcome_key}`).toEqual([]);
+      }
+    }
+  });
+
+  it("191. namespaces D2 disjuntos y scopes treatment", () => {
+    const shared = new Set([
+      "dpo.designated",
+      "mpi.lifecycle_status",
+    ]);
+    const seen = new Map<string, string>();
+    for (const p of [PD204, PD207, PD208, PD209]) {
+      for (const f of protocolFactKeys(p)) {
+        if (shared.has(f) || f.startsWith("derived.")) continue;
+        if (seen.has(f)) {
+          throw new Error(`colisión ${f} entre ${seen.get(f)} y ${p.protocol_key}`);
+        }
+        seen.set(f, p.protocol_key);
+      }
+    }
   });
 });

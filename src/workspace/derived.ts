@@ -59,6 +59,23 @@ function deriveTreatmentFacts(
     "derived.treatment.sources_exist": yesNo(
       Object.keys(t.sources ?? {}).length > 0,
     ),
+    // Mecánico: existe al menos un link dato↔finalidad. No afirma que
+    // la cobertura sea suficiente: eso es juicio profesional.
+    "derived.treatment.links_exist": yesNo(
+      (t.dataPurposeLinks ?? []).length > 0,
+    ),
+    // Mecánico: existe al menos una regla de conservación.
+    "derived.treatment.retention_rules_exist": yesNo(
+      Object.keys(t.retentionRules ?? {}).length > 0,
+    ),
+    // Mecánico: toda regla referencia al menos un dato. No afirma
+    // proporcionalidad ni adecuación jurídica del criterio.
+    "derived.treatment.retention_rules_linked": yesNo(
+      Object.keys(t.retentionRules ?? {}).length > 0 &&
+        Object.values(t.retentionRules ?? {}).every(
+          (r) => r.dataItemIds.length > 0,
+        ),
+    ),
   };
 }
 

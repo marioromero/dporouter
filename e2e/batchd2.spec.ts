@@ -3,6 +3,26 @@ import { expect, test } from "@playwright/test";
 const D201 = "/actividad/treatment.inventory_create";
 const D202 = "/actividad/treatment.actor_roles";
 const D203 = "/actividad/treatment.purpose_define";
+const D204 = "/actividad/treatment.source_traceability";
+const D207 = "/actividad/data.minimization_review";
+const D208 = "/actividad/retention.schedule";
+const D209 = "/actividad/data.quality_control";
+
+async function crearTratamientoCompleto(page: import("@playwright/test").Page, nombre: string) {
+  await page.goto("/empresa");
+  await page.getByLabel("Nombre del tratamiento").fill(nombre);
+  await page.getByLabel("Identificador canónico (opcional)").fill("trat-01");
+  await page.getByRole("button", { name: "Agregar tratamiento" }).click();
+  await page.getByLabel("Descripción de la finalidad").fill("Facturación");
+  await page.getByRole("button", { name: "Agregar finalidad" }).click();
+  await page.getByLabel("Nombre o denominación").fill("Empresa");
+  await page.getByRole("button", { name: "Agregar actor" }).click();
+  await page.getByLabel("Etiqueta del dato").fill("RUT");
+  await page.getByRole("button", { name: "Agregar dato" }).click();
+  await page.getByLabel("Tipo de fuente").selectOption("data_subject");
+  await page.getByLabel("Descripción", { exact: true }).fill("Formulario");
+  await page.getByRole("button", { name: "Agregar fuente" }).click();
+}
 
 async function crearEmpresa(page: import("@playwright/test").Page, perfil: string, empresa: string) {
   await page.goto("/empresa");
@@ -124,4 +144,94 @@ test("D2.03 distingue existencia de validez jurídica", async ({ page }) => {
   await expect(page.getByTestId("guia-outcome-label")).toContainText(
     "Finalidades definidas y fundadas",
   );
+});
+
+test("D2.04 documenta trazabilidad sin universalidad inventada", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamientoCompleto(page, "Gestión de clientes");
+  // Vincular dato con fuente en workspace.
+  await page.goto("/empresa");
+  await page.getByTestId("workspace-data").getByRole("button", { name: "Formulario" }).click();
+  await page.goto(`${D204}/guia/identify-sources`);
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Origen trazado y acreditado",
+  );
+  await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
+});
+
+test("D2.07 conforma solo con checks profesionales, no por links", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamientoCompleto(page, "Gestión de clientes");
+  // Con links pero sin checks: no conforma.
+  await page.goto("/empresa");
+  await page.getByRole("button", { name: "RUT para Facturación" }).click();
+  await page.goto(`${D207}/guia/check-mapping`);
+  await answerAndContinue(page, "unknown");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Información insuficiente",
+  );
+  // Con checks satisfactorios: conforma.
+  await page.goto(`${D207}/guia/check-mapping`);
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Minimización conforme",
+  );
+});
+
+test("D2.07 brecha exige remediación", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamientoCompleto(page, "Gestión de clientes");
+  await page.goto("/empresa");
+  await page.getByRole("button", { name: "RUT para Facturación" }).click();
+  await page.goto(`${D207}/guia/check-mapping`);
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "no");
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Requiere acciones correctivas",
+  );
+});
+
+test("D2.08 define conservación sin fechas", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamientoCompleto(page, "Gestión de clientes");
+  await page.goto("/empresa");
+  await page.getByTestId("workspace-retention").getByRole("button", { name: "RUT" }).click();
+  await page.getByLabel("Período o criterio de término").fill("2 años tras término");
+  await page.getByLabel("Responsable operacional").fill("TI");
+  await page.getByRole("button", { name: "Agregar regla" }).click();
+  await expect(page.getByTestId("workspace-retention")).toContainText("2 años tras término");
+  await page.goto(`${D208}/guia/relate-purpose`);
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "na");
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Conservación definida y fundada",
+  );
+  const body = (await page.textContent("body")) ?? "";
+  expect(body).not.toContain("vencimiento");
+});
+
+test("D2.09 controla calidad sin score ni frecuencia", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamientoCompleto(page, "Gestión de clientes");
+  await page.goto(`${D209}/guia/check-reviewed`);
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "na");
+  await answerAndContinue(page, "na");
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Calidad conforme",
+  );
+  await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
 });

@@ -23,6 +23,10 @@ import { MPI_LIFECYCLE_REVIEW_PROTOCOL } from "./mpi.lifecycle_review";
 import { TREATMENT_INVENTORY_CREATE_PROTOCOL } from "./treatment.inventory_create";
 import { TREATMENT_ACTOR_ROLES_PROTOCOL } from "./treatment.actor_roles";
 import { TREATMENT_PURPOSE_DEFINE_PROTOCOL } from "./treatment.purpose_define";
+import { TREATMENT_SOURCE_TRACEABILITY_PROTOCOL } from "./treatment.source_traceability";
+import { DATA_MINIMIZATION_REVIEW_PROTOCOL } from "./data.minimization_review";
+import { RETENTION_SCHEDULE_PROTOCOL } from "./retention.schedule";
+import { DATA_QUALITY_CONTROL_PROTOCOL } from "./data.quality_control";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -60,6 +64,10 @@ const PROTOCOLS: ExecutionProtocol[] = [
   TREATMENT_INVENTORY_CREATE_PROTOCOL,
   TREATMENT_ACTOR_ROLES_PROTOCOL,
   TREATMENT_PURPOSE_DEFINE_PROTOCOL,
+  TREATMENT_SOURCE_TRACEABILITY_PROTOCOL,
+  DATA_MINIMIZATION_REVIEW_PROTOCOL,
+  RETENTION_SCHEDULE_PROTOCOL,
+  DATA_QUALITY_CONTROL_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

@@ -381,13 +381,14 @@ export function ActorWorkspace({ treatmentId }: { treatmentId: string }) {
 }
 
 export function DataWorkspace({ treatmentId }: { treatmentId: string }) {
-  const { company, addDataItem, deleteDataItem } = useWorkspace();
+  const { company, addDataItem, deleteDataItem, updateDataItem } = useWorkspace();
   const [label, setLabel] = useState("");
   const [category, setCategory] = useState("");
   if (!company) return null;
   const treatment = company.treatments?.[treatmentId];
   if (!treatment) return null;
   const items = Object.values(treatment.dataItems ?? {});
+  const sources = Object.values(treatment.sources ?? {});
   return (
     <section className="activity-section" aria-label="Datos" data-testid="workspace-data">
       <h2>Datos de {treatment.context.name}</h2>
@@ -407,6 +408,30 @@ export function DataWorkspace({ treatmentId }: { treatmentId: string }) {
               >
                 Eliminar
               </button>
+              {sources.length > 0 ? (
+                <div role="group" aria-label={`Fuentes de ${d.label}`}>
+                  {sources.map((s) => {
+                    const linked = d.sourceRefs.includes(s.id);
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className={linked ? "btn small" : "btn ghost small"}
+                        aria-pressed={linked}
+                        onClick={() =>
+                          updateDataItem(treatmentId, d.id, {
+                            sourceRefs: linked
+                              ? d.sourceRefs.filter((r) => r !== s.id)
+                              : [...d.sourceRefs, s.id],
+                          })
+                        }
+                      >
+                        {s.description}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -535,6 +560,201 @@ export function SourceWorkspace({ treatmentId }: { treatmentId: string }) {
           Agregar fuente
         </button>
       </div>
+    </section>
+  );
+}
+
+export function LinksWorkspace({ treatmentId }: { treatmentId: string }) {
+  const { company, addDataPurposeLink, removeDataPurposeLink } = useWorkspace();
+  if (!company) return null;
+  const treatment = company.treatments?.[treatmentId];
+  if (!treatment) return null;
+  const items = Object.values(treatment.dataItems ?? {});
+  const purposes = Object.values(treatment.purposes ?? {});
+  const linked = (dataId: string, purposeId: string) =>
+    (treatment.dataPurposeLinks ?? []).some(
+      (l) => l.dataId === dataId && l.purposeId === purposeId,
+    );
+  if (items.length === 0 || purposes.length === 0) return null;
+  return (
+    <section className="activity-section" aria-label="Relación datos y finalidades" data-testid="workspace-links">
+      <h2>Datos por finalidad en {treatment.context.name}</h2>
+      <p>
+        Marca qué datos se utilizan para cada finalidad. Es una vista de
+        relaciones tipadas, no una matriz almacenada aparte.
+      </p>
+      <div className="table-wrap">
+        <table className="trace-table">
+          <thead>
+            <tr>
+              <th scope="col">Dato</th>
+              {purposes.map((p) => (
+                <th key={p.purpose.id} scope="col">
+                  {p.purpose.description}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((d) => (
+              <tr key={d.id}>
+                <td>{d.label}</td>
+                {purposes.map((p) => {
+                  const on = linked(d.id, p.purpose.id);
+                  return (
+                    <td key={p.purpose.id}>
+                      <button
+                        type="button"
+                        className={on ? "btn small" : "btn ghost small"}
+                        aria-pressed={on}
+                        aria-label={`${d.label} para ${p.purpose.description}`}
+                        onClick={() =>
+                          on
+                            ? removeDataPurposeLink(treatmentId, {
+                                dataId: d.id,
+                                purposeId: p.purpose.id,
+                              })
+                            : addDataPurposeLink(treatmentId, {
+                                dataId: d.id,
+                                purposeId: p.purpose.id,
+                              })
+                        }
+                      >
+                        {on ? "Sí" : "No"}
+                      </button>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+export function RetentionWorkspace({ treatmentId }: { treatmentId: string }) {
+  const {
+    company,
+    addRetentionRule,
+    deleteRetentionRule,
+  } = useWorkspace();
+  const [criterion, setCriterion] = useState("");
+  const [owner, setOwner] = useState("");
+  const [event, setEvent] = useState("");
+  if (!company) return null;
+  const treatment = company.treatments?.[treatmentId];
+  if (!treatment) return null;
+  const rules = Object.values(treatment.retentionRules ?? {});
+  const items = Object.values(treatment.dataItems ?? {});
+  const [checked, setChecked] = useState<string[]>([]);
+  return (
+    <section className="activity-section" aria-label="Conservación" data-testid="workspace-retention">
+      <h2>Conservación en {treatment.context.name}</h2>
+      {rules.length === 0 ? (
+        <p>No hay reglas de conservación.</p>
+      ) : (
+        <ul>
+          {rules.map((r) => (
+            <li key={r.id}>
+              <strong>{r.criterion}</strong> · Responsable: {r.owner} ·{" "}
+              {r.dataItemIds.length} {r.dataItemIds.length === 1 ? "dato" : "datos"}{" "}
+              <button
+                type="button"
+                className="btn ghost small"
+                onClick={() => deleteRetentionRule(treatmentId, r.id)}
+                aria-label={`Eliminar regla ${r.criterion}`}
+              >
+                Eliminar
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {items.length === 0 ? (
+        <p>Agrega datos antes de definir reglas.</p>
+      ) : (
+        <>
+          <div className="field">
+            <span id="regla-datos-label">Datos alcanzados</span>
+            <div role="group" aria-labelledby="regla-datos-label">
+              {items.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  className={checked.includes(d.id) ? "btn small" : "btn ghost small"}
+                  aria-pressed={checked.includes(d.id)}
+                  onClick={() =>
+                    setChecked((prev) =>
+                      prev.includes(d.id)
+                        ? prev.filter((x) => x !== d.id)
+                        : [...prev, d.id],
+                    )
+                  }
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="field">
+            <label htmlFor="regla-criterio">Período o criterio de término</label>
+            <input
+              id="regla-criterio"
+              className="input"
+              value={criterion}
+              onChange={(e) => setCriterion(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="regla-evento">Evento de supresión (opcional)</label>
+            <input
+              id="regla-evento"
+              className="input"
+              value={event}
+              onChange={(e) => setEvent(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="regla-responsable">Responsable operacional</label>
+            <input
+              id="regla-responsable"
+              className="input"
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+          <div className="actions">
+            <button
+              type="button"
+              className="btn"
+              disabled={
+                checked.length === 0 ||
+                criterion.trim() === "" ||
+                owner.trim() === ""
+              }
+              onClick={() => {
+                addRetentionRule(treatmentId, {
+                  dataItemIds: checked,
+                  criterion,
+                  ...(event.trim() !== "" ? { event: event.trim() } : {}),
+                  owner,
+                });
+                setChecked([]);
+                setCriterion("");
+                setEvent("");
+                setOwner("");
+              }}
+            >
+              Agregar regla
+            </button>
+          </div>
+        </>
+      )}
     </section>
   );
 }

@@ -7,7 +7,8 @@ import { validateCompanyState } from "../src/workspace/store";
 import { blockingScopedConflicts } from "../src/workspace/scope";
 import { createPurpose, createTreatment } from "../src/workspace/scope";
 import { saveScopedProtocolAnswer } from "../src/workspace/scope";
-import { addActor, addDataItem, addSource, updateActor } from "../src/workspace/locals";
+import { addDataItem, addDataPurposeLink, addRetentionRule, deleteDataItem } from "../src/workspace/locals";
+import { addActor, addSource, updateActor } from "../src/workspace/locals";
 import { deriveSessionFacts } from "../src/workspace/derived";
 
 /**
@@ -164,6 +165,9 @@ describe("derived session facts", () => {
       "derived.treatment.identified": "no",
       "derived.treatment.data_items_exist": "no",
       "derived.treatment.sources_exist": "no",
+      "derived.treatment.links_exist": "no",
+      "derived.treatment.retention_rules_exist": "no",
+      "derived.treatment.retention_rules_linked": "no",
     });
   });
 
@@ -206,6 +210,9 @@ describe("derived session facts", () => {
       "derived.treatment.identified": "no",
       "derived.treatment.data_items_exist": "yes",
       "derived.treatment.sources_exist": "yes",
+      "derived.treatment.links_exist": "no",
+      "derived.treatment.retention_rules_exist": "no",
+      "derived.treatment.retention_rules_linked": "no",
     });
   });
 
@@ -334,5 +341,37 @@ describe("derived session facts", () => {
         "fixture.x.v1",
       ),
     ).toBeNull();
+  });
+
+  it("links y reglas: semántica mecánica sin juicios", () => {
+    let { c, idA } = companyAB();
+    const ctx = ctxT(c.id, idA);
+    expect(deriveSessionFacts(c, ctx)["derived.treatment.links_exist"]).toBe("no");
+    expect(deriveSessionFacts(c, ctx)["derived.treatment.retention_rules_exist"]).toBe("no");
+    expect(deriveSessionFacts(c, ctx)["derived.treatment.retention_rules_linked"]).toBe("no");
+    const d = addDataItem(c, idA, { label: "RUT" });
+    if (!d) throw new Error("sin data");
+    c = d.company;
+    const p1 = createPurpose(c, idA, "Facturación");
+    if (!p1) throw new Error("sin purpose");
+    c = p1.company;
+    const l = addDataPurposeLink(c, idA, { dataId: d.id, purposeId: p1.purposeId });
+    if (!l) throw new Error("sin link");
+    c = l;
+    expect(deriveSessionFacts(c, ctx)["derived.treatment.links_exist"]).toBe("yes");
+    const r = addRetentionRule(c, idA, {
+      dataItemIds: [d.id],
+      criterion: "2 años",
+      owner: "TI",
+    });
+    if (!r) throw new Error("sin regla");
+    c = r.company;
+    expect(deriveSessionFacts(c, ctx)["derived.treatment.retention_rules_exist"]).toBe("yes");
+    expect(deriveSessionFacts(c, ctx)["derived.treatment.retention_rules_linked"]).toBe("yes");
+    // Regla vaciada por strip conserva existencia pero pierde vínculo.
+    const stripped = deleteDataItem(c, idA, d.id);
+    if (!stripped) throw new Error("sin strip");
+    expect(deriveSessionFacts(stripped, ctx)["derived.treatment.retention_rules_exist"]).toBe("yes");
+    expect(deriveSessionFacts(stripped, ctx)["derived.treatment.retention_rules_linked"]).toBe("no");
   });
 });

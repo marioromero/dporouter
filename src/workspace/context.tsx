@@ -20,12 +20,17 @@ import { getCanonicalActivity } from "../../content/registry";
 import {
   addActor as addActorState,
   addDataItem as addDataItemState,
+  addDataPurposeLink as addDataPurposeLinkState,
+  addRetentionRule as addRetentionRuleState,
   addSource as addSourceState,
   deleteActor as deleteActorState,
   deleteDataItem as deleteDataItemState,
+  deleteRetentionRule as deleteRetentionRuleState,
   deleteSource as deleteSourceState,
+  removeDataPurposeLink as removeDataPurposeLinkState,
   updateActor as updateActorState,
   updateDataItem as updateDataItemState,
+  updateRetentionRule as updateRetentionRuleState,
   updateSource as updateSourceState,
 } from "./locals";
 import {
@@ -45,6 +50,7 @@ import type { ExecutionContext } from "./types";
 import type {
   ActorInput,
   DataItemInput,
+  RetentionRuleInput,
   SourceInput,
 } from "./locals";
 import {
@@ -162,6 +168,31 @@ interface WorkspaceContextValue {
     },
   ) => void;
   deleteSource: (treatmentId: string, id: string) => void;
+  addRetentionRule: (
+    treatmentId: string,
+    input: RetentionRuleInput,
+  ) => string | null;
+  updateRetentionRule: (
+    treatmentId: string,
+    id: string,
+    patch: {
+      dataItemIds?: string[];
+      criterion?: string;
+      legalBasisRef?: string | null;
+      event?: string | null;
+      owner?: string;
+      exceptions?: string | null;
+    },
+  ) => void;
+  deleteRetentionRule: (treatmentId: string, id: string) => void;
+  addDataPurposeLink: (
+    treatmentId: string,
+    link: { dataId: string; purposeId: string },
+  ) => void;
+  removeDataPurposeLink: (
+    treatmentId: string,
+    link: { dataId: string; purposeId: string },
+  ) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -623,6 +654,76 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     },
     [company, updateCompany],
   );
+
+  const addRetentionRule = useCallback(
+    (treatmentId: string, input: RetentionRuleInput): string | null => {
+      if (!company) return null;
+      let created: string | null = null;
+      updateCompany(company.id, (c) => {
+        const result = addRetentionRuleState(c, treatmentId, input);
+        if (!result) return c;
+        created = result.id;
+        return result.company;
+      });
+      return created;
+    },
+    [company, updateCompany],
+  );
+
+  const updateRetentionRule = useCallback(
+    (
+      treatmentId: string,
+      id: string,
+      patch: {
+        dataItemIds?: string[];
+        criterion?: string;
+        legalBasisRef?: string | null;
+        event?: string | null;
+        owner?: string;
+        exceptions?: string | null;
+      },
+    ) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => updateRetentionRuleState(c, treatmentId, id, patch) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const deleteRetentionRule = useCallback(
+    (treatmentId: string, id: string) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => deleteRetentionRuleState(c, treatmentId, id) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const addDataPurposeLink = useCallback(
+    (treatmentId: string, link: { dataId: string; purposeId: string }) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => addDataPurposeLinkState(c, treatmentId, link) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const removeDataPurposeLink = useCallback(
+    (treatmentId: string, link: { dataId: string; purposeId: string }) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => removeDataPurposeLinkState(c, treatmentId, link) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
   const setDiagnosticFact = useCallback(
     (factKey: string, value: string) => {
       if (!company) return;
@@ -877,6 +978,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       addSource,
       updateSource,
       deleteSource,
+      addRetentionRule,
+      updateRetentionRule,
+      deleteRetentionRule,
+      addDataPurposeLink,
+      removeDataPurposeLink,
     }),
     [
       data, profile, company, createProfile, selectProfile, createCompany,
@@ -888,7 +994,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       renameTreatment, deleteTreatment, addPurpose, selectPurpose,
       renamePurpose, deletePurpose, addActor, updateActor, deleteActor,
       addDataItem, updateDataItem, deleteDataItem, addSource, updateSource,
-      deleteSource,
+      deleteSource, addRetentionRule, updateRetentionRule, deleteRetentionRule,
+      addDataPurposeLink, removeDataPurposeLink,
     ],
   );
 

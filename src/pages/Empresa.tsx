@@ -12,7 +12,9 @@ import { summarizeDomain, suggestNextReview } from "../workspace/suggest";
 import {
   ActorWorkspace,
   DataWorkspace,
+  LinksWorkspace,
   PurposeWorkspace,
+  RetentionWorkspace,
   SourceWorkspace,
   TreatmentWorkspace,
 } from "../components/TreatmentWorkspace";
@@ -315,6 +317,8 @@ export function EmpresaPage() {
           <ActorWorkspace treatmentId={company.activeTreatmentId} />
           <DataWorkspace treatmentId={company.activeTreatmentId} />
           <SourceWorkspace treatmentId={company.activeTreatmentId} />
+          <LinksWorkspace treatmentId={company.activeTreatmentId} />
+          <RetentionWorkspace treatmentId={company.activeTreatmentId} />
         </>
       ) : null}
 

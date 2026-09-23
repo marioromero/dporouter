@@ -503,10 +503,15 @@ export function saveScopedProtocolAnswer(
   // se escriben por ninguna vía (la validación lo impide en contenido;
   // esto lo impide en runtime ante escritura programática directa).
   if (factKey.startsWith(DERIVED_FACT_PREFIX)) return null;
+  // Primitivas escalares: normalización y validez en el punto de
+  // escritura, para todos los scopes. Vacío o inválido no se persiste
+  // (equivale a no respondido); la UI valida antes para mensajería.
+  const stored = normalizeAnswerValue(protocolKey, factKey, value);
+  if (stored === null) return null;
   const current = getScopedProtocolAnswers(company, ctx, protocolKey);
   return setInMaps(company, ctx, protocolKey, {
     ...current,
-    [factKey]: { value, source, updatedAt: nowIso() },
+    [factKey]: { value: stored, source, updatedAt: nowIso() },
   });
 }
 
@@ -868,8 +873,64 @@ export function scopedConflictKeys(
 }
 
 /**
- * Referencias a tratamientos (Stage 1).
+ * Primitivas de captura escalar `text` / `date` (Stage 1).
  *
+ * `text`: string escalar ingresado manualmente. Se normaliza con trim;
+ * vacío o solo whitespace = no respondido (nunca se persiste).
+ * Prohibido: JSON, arrays, listas delimitadas, objetos, matrices,
+ * relaciones o múltiples registros empaquetados.
+ *
+ * `date`: fecha civil escalar `YYYY-MM-DD` proporcionada por el
+ * profesional. Sin hora, timezone, datetime, rangos, recurrencia ni
+ * generación silenciosa. Validación estricta de formato y calendario
+ * real, sin librerías.
+ */
+
+/** Fecha civil válida `YYYY-MM-DD` con día real de calendario. */
+export function isValidCivilDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [y, m, d] = value.split("-").map(Number);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
+/** Normaliza un answer `text`: trim; vacío = null (no respondido). */
+export function normalizeTextAnswer(value: string): string | null {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/**
+ * Normaliza y valida un valor de respuesta según el `answer_type`
+ * declarado por el nodo productor (`text`/`date`). Devuelve el valor
+ * a persistir o null cuando equivale a no respondido o es inválido.
+ * Genérico y dirigido por declaración; otros tipos pasan intactos.
+ */
+export function normalizeAnswerValue(
+  protocolKey: string,
+  factKey: string,
+  value: string,
+): string | null {
+  const producer = listProtocols()
+    .find((p) => p.protocol_key === protocolKey)
+    ?.nodes.find((n) => n.node_type === "question" && n.fact_key === factKey);
+  if (producer?.answer_type === "text") {
+    return normalizeTextAnswer(value);
+  }
+  if (producer?.answer_type === "date") {
+    const trimmed = value.trim();
+    return isValidCivilDate(trimmed) ? trimmed : null;
+  }
+  return value;
+}
+
+/**
+ * Referencias a tratamientos (Stage 1).
  * Un nodo pregunta con `options_source: "same_company_treatments"`
  * declara que su fact guarda una referencia a un tratamiento de la
  * misma empresa (valor = treatmentId) o una alternativa estática
@@ -891,6 +952,30 @@ export function treatmentReferenceNode(
       n.fact_key === factKey &&
       n.options_source === "same_company_treatments",
   );
+}
+
+/**
+ * Satisfacción de un fact de decisión escalar (`text`/`date`).
+ * Devuelve null cuando el fact no es escalar (rige la regla "yes").
+ * `text` exige presente, no vacío y no "unknown"; `date` exige fecha
+ * civil válida. Dirigido por el `answer_type` declarado: genérico.
+ */
+export function scalarDecisionSatisfied(
+  protocol: ExecutionProtocol,
+  factKey: string,
+  value: string | undefined,
+): boolean | null {
+  const node = protocol.nodes.find(
+    (n) => n.node_type === "question" && n.fact_key === factKey,
+  );
+  if (node?.answer_type === "text") {
+    const t = (value ?? "").trim();
+    return t !== "" && t !== "unknown";
+  }
+  if (node?.answer_type === "date") {
+    return isValidCivilDate((value ?? "").trim());
+  }
+  return null;
 }
 
 /**
@@ -932,6 +1017,51 @@ export function treatmentDisplayName(
   const t = (company.treatments ?? {})[value];
   const name = t?.context?.name;
   return typeof name === "string" && name.trim() !== "" ? name : null;
+}
+
+/**
+ * Validez de valores `text`/`date` persistidos en todo el subárbol
+ * (company + treatments + purposes, todos los protocolos). Vacío =
+ * íntegro. Un respaldo con texto vacío o fecha inválida en un nodo
+ * declarante se rechaza en import con error explícito (respaldo
+ * corrupto); otros tipos no se tocan. Dirigido por declaración: el
+ * contrato vive en el nodo productor, nunca aquí.
+ */
+export function validateAnswerValues(
+  company: CompanyState,
+  protocols: ExecutionProtocol[] = listProtocols(),
+): string[] {
+  const errors: string[] = [];
+  const buckets: Record<string, Record<string, FactRecord>>[] = [
+    company.protocolAnswers ?? {},
+  ];
+  for (const t of Object.values(company.treatments ?? {})) {
+    buckets.push(t.protocolAnswers ?? {});
+    for (const p of Object.values(t.purposes ?? {})) {
+      buckets.push(p.protocolAnswers ?? {});
+    }
+  }
+  for (const answers of buckets) {
+    for (const [protocolKey, map] of Object.entries(answers)) {
+      const protocol = protocols.find((p) => p.protocol_key === protocolKey);
+      if (!protocol) continue;
+      for (const [factKey, record] of Object.entries(map)) {
+        const node = protocol.nodes.find(
+          (n) => n.node_type === "question" && n.fact_key === factKey,
+        );
+        if (node?.answer_type === "text") {
+          if ((record?.value ?? "").trim() === "") {
+            errors.push(`Texto vacío persistido (${factKey}).`);
+          }
+        } else if (node?.answer_type === "date") {
+          if (!isValidCivilDate((record?.value ?? "").trim())) {
+            errors.push(`Fecha inválida persistida (${factKey}).`);
+          }
+        }
+      }
+    }
+  }
+  return errors;
 }
 
 /**

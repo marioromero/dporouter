@@ -71,19 +71,27 @@ D1.03 usa juicio profesional documentado (sin deducción automática).
 D2 real state:
 
 * 12 ActivityDefinitions canónicas;
-* 10 protocolos guiados (D2.01–D2.10), todos execution-ready;
+* 12 protocolos guiados (D2.01–D2.12), todos execution-ready;
 * D2.06 con juicio purpose-scoped y efectos same-scope (product-ready);
 * D2.10 con juicio treatment-scoped, referencia declarada a tratamiento
   posterior y efectos same-treatment (execution-ready; product-ready
   pendiente: el estado `not_required` determinístico no tiene vía de
   materialización en modo decision);
+* D2.11 con juicio treatment-scoped y ramas mecánica/interpretativa
+  (execution-ready; product-ready pendiente: rama mecánica sin
+  materialización, misma familia del gap determinista);
+* D2.12 procedure company-scope sin juicio (execution-ready;
+  product-ready pendiente: `DYNAMIC_VALUE_EFFECT_GAP` para
+  `last_revalidated_at`);
+* scalar capture primitives `text`/`date` (Stage 1: escalares vigentes,
+  sin estructuras ni historial);
 * D2.05 purpose-scoped con deterministic decision gap (sin materializar);
 * scope infrastructure Company → TreatmentContext → TreatmentPurpose
   (scopes cerrados, addressing con ancestry, resolución scopeada,
   finalización de juicio scope-aware, referencias a tratamientos
   declaradas y validadas, export/import validado);
-* capture gaps pendientes (matrices como vista, fechas) y temporales
-  (D2.11/D2.12, fuera de scope de esta iteración).
+* capture gap pendiente (matrices como vista); D2.11/D2.12
+  implementados sin historial ni instancias.
 
 D3 continúa pendiente.
 

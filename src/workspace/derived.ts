@@ -81,15 +81,24 @@ function deriveTreatmentFacts(
 
 /**
  * Proyección efectiva para un execution context válido. Company
- * aporta vacío; treatment sus derivados; purpose los del padre más
- * los propios. Contexto inválido → vacío.
+ * aporta existencia de inventario; treatment sus derivados; purpose
+ * los del padre más los propios. Contexto inválido → vacío.
  */
 export function deriveSessionFacts(
   company: CompanyState | null,
   ctx: ExecutionContext,
 ): FactMap {
   if (!company || company.id !== ctx.companyId) return {};
-  if (ctx.scope === "company") return {};
+  if (ctx.scope === "company") {
+    // Mecánico: existe al menos un tratamiento (inventario no vacío).
+    // Nunca corrección ni completitud del inventario: eso es revisión
+    // profesional (D2.12).
+    return {
+      "derived.company.treatments_exist": yesNo(
+        Object.keys(company.treatments ?? {}).length > 0,
+      ),
+    };
+  }
   const out: FactMap = {
     ...deriveTreatmentFacts(company, ctx.treatmentId),
   };

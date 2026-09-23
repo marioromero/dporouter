@@ -11,6 +11,7 @@ import {
   activeExecutionContext,
   blockingScopedConflicts,
   referenceFactState,
+  scalarDecisionSatisfied,
   treatmentDisplayName,
   treatmentReferenceNode,
 } from "../workspace/scope";
@@ -397,6 +398,8 @@ function MissingFacts({
         referenceFactState(protocol, company, ctx, f, facts[f]) !== "satisfied"
       );
     }
+    const scalar = scalarDecisionSatisfied(protocol, f, facts[f]);
+    if (scalar !== null) return !scalar;
     return facts[f] !== "yes";
   });
   const blocked: string[] =
@@ -419,11 +422,13 @@ function MissingFacts({
                 ? referenceFactState(protocol, company, ctx, f, facts[f]) === "invalid"
                   ? "referencia inválida: vuelve a seleccionar el tratamiento posterior"
                   : "pendiente de determinar el tratamiento posterior"
-                : facts[f] === undefined
-                  ? "pendiente de responder"
-                  : facts[f] === "unknown"
-                    ? "registrado como desconocido"
-                    : "marcado como no considerado: debe considerarse con respaldo para concluir"}
+                : scalarDecisionSatisfied(protocol, f, facts[f]) === false
+                  ? "pendiente de registrar"
+                  : facts[f] === undefined
+                    ? "pendiente de responder"
+                    : facts[f] === "unknown"
+                      ? "registrado como desconocido"
+                      : "marcado como no considerado: debe considerarse con respaldo para concluir"}
             </li>
           ))}
         </ul>

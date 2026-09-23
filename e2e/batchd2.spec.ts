@@ -238,6 +238,8 @@ test("D2.09 controla calidad sin score ni frecuencia", async ({ page }) => {
 
 const D205 = "/actividad/lawful_basis.assign";
 const D210 = "/actividad/precontractual_data.cleanup";
+const D211 = "/actividad/treatment.change_review";
+const D212 = "/actividad/inventory.periodic_revalidation";
 
 async function crearTratamientoConPurposes(page: import("@playwright/test").Page) {
   await page.goto("/empresa");
@@ -375,4 +377,106 @@ test("D2.10 depuración completa sin posterior", async ({ page }) => {
   await expect(page).toHaveURL(new RegExp("/guia/adopt-conclusion$"));
   await adoptarConclusion(page, "cleanup_completed");
   await expect(page.getByTestId("juicio-conclusion-label")).toContainText("Depuración completada");
+});
+
+async function responderTexto(page: import("@playwright/test").Page, texto: string) {
+  await page.getByTestId("guia-text-input").fill(texto);
+  await page.getByTestId("guia-text-save").click();
+  await page.getByTestId("guia-continue").click();
+}
+
+async function responderFecha(page: import("@playwright/test").Page, fecha: string) {
+  await page.getByTestId("guia-date-input").fill(fecha);
+  await page.getByTestId("guia-date-save").click();
+  await page.getByTestId("guia-continue").click();
+}
+
+test("D2.11 sin cambio no requiere revisión", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamiento(page, "Gestión de clientes");
+  await page.goto(`${D211}/guia/trigger`);
+  await expect(page.getByTestId("guia-scope")).toContainText("Tratamiento: Gestión de clientes");
+  await answerAndContinue(page, "no");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText("Sin cambio material");
+});
+
+test("D2.11 cambio mecánico registra sin juicio", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamiento(page, "Gestión de clientes");
+  await page.goto(`${D211}/guia/trigger`);
+  await answerAndContinue(page, "yes");
+  await responderFecha(page, "2026-09-20");
+  await responderTexto(page, "Nueva finalidad de marketing");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "no");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText("Cambio registrado");
+  await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
+});
+
+test("D2.11 cambio interpretativo finaliza con juicio documentado", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamiento(page, "Gestión de clientes");
+  await crearTratamiento(page, "Soporte");
+  await seleccionarTratamiento(page, "Gestión de clientes");
+  await page.goto(`${D211}/guia/trigger`);
+  await answerAndContinue(page, "yes");
+  await responderFecha(page, "2026-09-20");
+  await responderTexto(page, "Nueva finalidad de marketing");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/adopt-conclusion$"));
+  await expect(page.getByTestId("juicio-conclusion")).toBeVisible();
+  await page.getByTestId("juicio-opcion-change_review_completed").click();
+  await page.getByLabel("Referencias de evidencia (una por línea)").fill("Revisión de cambio v1");
+  await page.getByLabel("Razonamiento").fill("Cambio evaluado, inventario actualizado.");
+  await page.getByLabel("Quien adopta la conclusión").fill("DPO");
+  await page.getByRole("button", { name: "Adoptar conclusión profesional" }).click();
+  await expect(page.getByTestId("juicio-conclusion-label")).toContainText("Revisión completada");
+  await page.reload();
+  await expect(page.getByTestId("juicio-conclusion-label")).toContainText("Revisión completada");
+  // El otro tratamiento no hereda la conclusión.
+  await seleccionarTratamiento(page, "Soporte");
+  await page.goto(`${D211}/guia/adopt-conclusion`);
+  await expect(page.getByRole("button", { name: "Adoptar conclusión profesional" })).toBeVisible();
+});
+
+test("D2.12 sin inventario deriva a D2.01", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await page.goto(`${D212}/guia/resultado`);
+  await expect(page.getByTestId("guia-outcome-label")).toContainText("Sin inventario");
+});
+
+test("D2.12 revalidación completa deja inventario al día", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamiento(page, "Gestión de clientes");
+  await page.goto(`${D212}/guia/scope-note`);
+  await responderTexto(page, "Todos los tratamientos del plan");
+  for (let i = 0; i < 7; i++) {
+    await answerAndContinue(page, "yes");
+  }
+  await responderFecha(page, "2026-09-23");
+  await answerAndContinue(page, "no");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText("Inventario al día");
+  await expect(page.getByTestId("guia-finalize-status")).toContainText("Estado aún no registrado");
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText("Estado registrado para esta empresa");
+  await page.reload();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText("Estado registrado para esta empresa");
+});
+
+test("D2.12 hallazgos dejan remediación requerida", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamiento(page, "Gestión de clientes");
+  await page.goto(`${D212}/guia/scope-note`);
+  await responderTexto(page, "Tratamiento de clientes");
+  for (let i = 0; i < 7; i++) {
+    await answerAndContinue(page, "yes");
+  }
+  await responderFecha(page, "2026-09-23");
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText("Remediación requerida");
 });

@@ -442,7 +442,16 @@ describe("Activity View V2", () => {
     const pending = ALL_ACTIVITIES.find(
       (a) => !getProtocolForActivity(a.activity_key),
     );
-    if (!pending) throw new Error("sin actividad sin protocolo");
+    if (!pending) {
+      // D1+D2 con cobertura total (20 + 12): no queda pendiente que
+      // mostrar. La rama honesta sigue existiendo para futuras
+      // actividades (D3).
+      expect(ALL_ACTIVITIES).toHaveLength(32);
+      for (const a of ALL_ACTIVITIES) {
+        expect(getProtocolForActivity(a.activity_key), a.activity_key).toBeTruthy();
+      }
+      return;
+    }
     renderWorkView(pending.activity_key);
     expect(screen.getByText("Guía operativa pendiente de incorporar")).toBeTruthy();
     const body = document.body.textContent ?? "";
@@ -645,5 +654,65 @@ describe("migración de workspace heredado", () => {
     });
     expect(duped.profiles.map((p) => p.name)).toEqual(["A"]);
     expect(duped.activeProfileId).toBe("p1");
+  });
+});
+
+describe("aislamiento asesor/empresa con answers nuevos", () => {
+  const at = new Date().toISOString();
+
+  function companyWithAnswer(name: string, protocolKey: string, factKey: string, value: string) {
+    const c = newCompany(name);
+    return {
+      ...c,
+      protocolAnswers: {
+        [protocolKey]: { [factKey]: { value, source: protocolKey, updatedAt: at } },
+      },
+    };
+  }
+
+  function workspaceData() {
+    const c1 = companyWithAnswer("E1", "treatment.change_review.v1", "change.date", "2026-09-20");
+    const c2 = companyWithAnswer("E2", "treatment.change_review.v1", "change.date", "2026-09-21");
+    return {
+      version: 1 as const,
+      profiles: [
+        { id: "p1", name: "Asesor Uno", createdAt: at, companyIds: [c1.id], activeCompanyId: c1.id },
+        { id: "p2", name: "Asesor Dos", createdAt: at, companyIds: [c2.id], activeCompanyId: c2.id },
+      ],
+      activeProfileId: "p1",
+      companies: { [c1.id]: c1, [c2.id]: c2 },
+    };
+  }
+
+  it("dos empresas y dos asesores no cruzan answers text/date", () => {
+    localStorage.clear();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(workspaceData()));
+    const loaded = loadWorkspace();
+    const ids = Object.keys(loaded.companies);
+    expect(ids).toHaveLength(2);
+    const values = ids.map(
+      (id) => loaded.companies[id].protocolAnswers["treatment.change_review.v1"]?.["change.date"]?.value,
+    );
+    expect(values.sort()).toEqual(["2026-09-20", "2026-09-21"]);
+    // Perfiles separados con sus empresas.
+    expect(loaded.profiles.map((p) => p.id).sort()).toEqual(["p1", "p2"]);
+    const p1 = loaded.profiles.find((p) => p.id === "p1")!;
+    const p2 = loaded.profiles.find((p) => p.id === "p2")!;
+    expect(p1.companyIds).not.toEqual(p2.companyIds);
+    localStorage.clear();
+  });
+
+  it("export por empresa conserva sus answers; import los restaura", () => {
+    const data = workspaceData();
+    const c1 = data.companies[data.profiles[0].companyIds[0]];
+    const exported = JSON.stringify(c1);
+    const checked = validateCompanyState(JSON.parse(exported));
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+    expect(
+      checked.value.protocolAnswers["treatment.change_review.v1"]?.["change.date"]?.value,
+    ).toBe("2026-09-20");
+    // La otra empresa no viaja en el export de esta.
+    expect(exported).not.toContain("2026-09-21");
   });
 });

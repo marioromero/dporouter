@@ -29,6 +29,8 @@ import { DATA_QUALITY_CONTROL_PROTOCOL as PD209 } from "../content/protocols/dat
 import { LAWFUL_BASIS_ASSIGN_PROTOCOL as PD205 } from "../content/protocols/lawful_basis.assign";
 import { LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL as PD206 } from "../content/protocols/legitimate_interest.assessment";
 import { PRECONTRACTUAL_DATA_CLEANUP_PROTOCOL as PD210 } from "../content/protocols/precontractual_data.cleanup";
+import { TREATMENT_CHANGE_REVIEW_PROTOCOL as PD211 } from "../content/protocols/treatment.change_review";
+import { INVENTORY_PERIODIC_REVALIDATION_PROTOCOL as PD212 } from "../content/protocols/inventory.periodic_revalidation";
 import type { ExecutionProtocol } from "../content/protocols/types";
 import type { LegalBasis } from "../src/types";
 import {
@@ -58,10 +60,13 @@ import {
   createPurpose,
   createTreatment,
   deleteTreatment,
+  isValidCivilDate,
+  normalizeAnswerValue,
   referenceFactState,
   saveScopedProtocolAnswer,
   selectTreatment,
   treatmentReferenceNode,
+  validateAnswerValues,
   validateTreatmentReferences,
 } from "../src/workspace/scope";
 import { validateCompanyState } from "../src/workspace/store";
@@ -3716,5 +3721,598 @@ describe("D2.10 depuración precontractual", () => {
       expect(validateProtocolStructure(p)).toEqual([]);
     }
     expect(getProtocolForActivity("precontractual_data.cleanup")).toBe(PD210);
+  });
+});
+
+describe("primitives text/date", () => {
+  const DT = "change.date";
+  const TX = "change.description";
+
+  function treatmentCtx(c: { id: string }, treatmentId: string) {
+    return { scope: "treatment", companyId: c.id, treatmentId } as const;
+  }
+
+  function companyCtx(c: { id: string }) {
+    return { scope: "company", companyId: c.id } as const;
+  }
+
+  it("220. date valida formato y calendario real", () => {
+    expect(isValidCivilDate("2026-09-23")).toBe(true);
+    expect(isValidCivilDate("2026-13-01")).toBe(false);
+    expect(isValidCivilDate("2026-02-30")).toBe(false);
+    expect(isValidCivilDate("2026-09-23T00:00:00Z")).toBe(false);
+    expect(isValidCivilDate("23-09-2026")).toBe(false);
+    expect(isValidCivilDate("")).toBe(false);
+    expect(isValidCivilDate("2024-02-29")).toBe(true);
+  });
+
+  it("221. text con trim; vacío no se persiste", () => {
+    let c = newCompany("T SpA");
+    const t = createTreatment(c, { name: "A" });
+    if (!t) throw new Error("sin T");
+    c = t.company;
+    const ctx = treatmentCtx(c, t.treatmentId);
+    const saved = saveScopedProtocolAnswer(c, ctx, PD211.protocol_key, TX, "  cambio de finalidad  ", PD211.protocol_key);
+    if (!saved) throw new Error("debió guardar");
+    expect(saved.treatments?.[t.treatmentId]?.protocolAnswers[PD211.protocol_key]?.[TX]?.value).toBe(
+      "cambio de finalidad",
+    );
+    // Vacío o whitespace = no respondido: no escribe.
+    expect(
+      saveScopedProtocolAnswer(saved, ctx, PD211.protocol_key, TX, "   ", PD211.protocol_key),
+    ).toBeNull();
+    // Fecha inválida no se persiste.
+    expect(
+      saveScopedProtocolAnswer(saved, ctx, PD211.protocol_key, DT, "2026-02-30", PD211.protocol_key),
+    ).toBeNull();
+    expect(
+      saveScopedProtocolAnswer(saved, ctx, PD211.protocol_key, DT, "2026-09-23T00:00:00.000Z", PD211.protocol_key),
+    ).toBeNull();
+  });
+
+  it("222. date con whitespace se normaliza; round-trip exacto", () => {
+    let c = newCompany("T SpA");
+    const t = createTreatment(c, { name: "A" });
+    if (!t) throw new Error("sin T");
+    c = t.company;
+    const ctx = treatmentCtx(c, t.treatmentId);
+    const saved = saveScopedProtocolAnswer(c, ctx, PD211.protocol_key, DT, "  2026-09-23  ", PD211.protocol_key);
+    if (!saved) throw new Error("debió guardar");
+    const roundTrip = JSON.parse(JSON.stringify(saved));
+    expect(
+      roundTrip.treatments?.[t.treatmentId]?.protocolAnswers[PD211.protocol_key]?.[DT]?.value,
+    ).toBe("2026-09-23");
+    expect(validateCompanyState(roundTrip).ok).toBe(true);
+    expect(validateAnswerValues(roundTrip)).toEqual([]);
+  });
+
+  it("223. text/date scopeados: A/B y company aislados", () => {
+    let c = newCompany("T SpA");
+    const a = createTreatment(c, { name: "A" });
+    if (!a) throw new Error("sin A");
+    c = a.company;
+    const b = createTreatment(c, { name: "B" });
+    if (!b) throw new Error("sin B");
+    c = b.company;
+    const ctxA = treatmentCtx(c, a.treatmentId);
+    const next = saveScopedProtocolAnswer(c, ctxA, PD211.protocol_key, TX, "cambio A", PD211.protocol_key);
+    if (!next) throw new Error("debió guardar");
+    // B no ve el texto de A; company tampoco.
+    expect(next.treatments?.[b.treatmentId]?.protocolAnswers[PD211.protocol_key]).toBeUndefined();
+    expect(next.protocolAnswers[PD211.protocol_key]).toBeUndefined();
+    // Company scope escribe en company, no en treatments.
+    const cc = saveScopedProtocolAnswer(next, companyCtx(next), PD212.protocol_key, "review.date", "2026-09-23", PD212.protocol_key);
+    if (!cc) throw new Error("debió guardar company");
+    expect(cc.protocolAnswers[PD212.protocol_key]?.["review.date"]?.value).toBe("2026-09-23");
+    expect(cc.treatments?.[a.treatmentId]?.protocolAnswers[PD212.protocol_key]).toBeUndefined();
+  });
+
+  it("224. import corrupto con fecha/texto inválido se rechaza", () => {
+    let c = newCompany("T SpA");
+    const t = createTreatment(c, { name: "A" });
+    if (!t) throw new Error("sin T");
+    c = t.company;
+    const base = c.treatments?.[t.treatmentId];
+    if (!base) throw new Error("sin base");
+    const bad: CompanyState = {
+      ...c,
+      treatments: {
+        ...c.treatments,
+        [t.treatmentId]: {
+          ...base,
+          protocolAnswers: {
+            [PD211.protocol_key]: {
+              [DT]: { value: "2026-13-01", source: "x", updatedAt: new Date().toISOString() },
+            },
+          },
+        },
+      },
+    };
+    expect(validateAnswerValues(bad)).not.toEqual([]);
+    const badText: CompanyState = {
+      ...c,
+      treatments: {
+        ...c.treatments,
+        [t.treatmentId]: {
+          ...base,
+          protocolAnswers: {
+            [PD211.protocol_key]: {
+              [TX]: { value: "   ", source: "x", updatedAt: new Date().toISOString() },
+            },
+          },
+        },
+      },
+    };
+    expect(validateAnswerValues(badText)).not.toEqual([]);
+  });
+
+  it("225. otros answer types pasan intactos por normalización", () => {
+    expect(normalizeAnswerValue("desconocido.v1", "algun.fact", "yes")).toBe("yes");
+    expect(normalizeAnswerValue(PD211.protocol_key, "change.detected", "yes")).toBe("yes");
+    expect(normalizeAnswerValue(PD211.protocol_key, DT, "2026-09-23")).toBe("2026-09-23");
+    expect(normalizeAnswerValue(PD211.protocol_key, DT, "ayer")).toBeNull();
+    expect(normalizeAnswerValue(PD211.protocol_key, TX, "  x  ")).toBe("x");
+    expect(normalizeAnswerValue(PD211.protocol_key, TX, "  ")).toBeNull();
+  });
+});
+
+describe("D2.11 revisión de cambios", () => {
+  const T = "change.detected";
+  const DT = "change.date";
+  const TX = "change.description";
+  const AT = "change.attributes_identified";
+  const IM = "change.impact_assessed";
+  const IN = "change.inventory_updated";
+  const IX = "change.requires_interpretation";
+  const STATUS = "treatment.change_review_status";
+
+  function treatmentCtx(c: { id: string }, treatmentId: string) {
+    return { scope: "treatment", companyId: c.id, treatmentId } as const;
+  }
+
+  function twoTreatments() {
+    let c = newCompany("Cambios SpA");
+    const a = createTreatment(c, { name: "A" });
+    if (!a) throw new Error("sin A");
+    c = a.company;
+    const b = createTreatment(c, { name: "B" });
+    if (!b) throw new Error("sin B");
+    c = b.company;
+    return { c, idA: a.treatmentId, idB: b.treatmentId };
+  }
+
+  function fullFacts(over: FactMap = {}): FactMap {
+    return {
+      [T]: "yes",
+      [DT]: "2026-09-20",
+      [TX]: "Nueva finalidad de marketing",
+      [AT]: "yes",
+      [IM]: "yes",
+      [IN]: "yes",
+      [IX]: "yes",
+      ...over,
+    };
+  }
+
+  function answerAll(c: CompanyState, ctx: { scope: "treatment"; companyId: string; treatmentId: string }, facts: FactMap): CompanyState {
+    let out = c;
+    for (const [k, v] of Object.entries(facts)) {
+      const next = saveScopedProtocolAnswer(out, ctx, PD211.protocol_key, k, v, PD211.protocol_key);
+      if (!next) throw new Error(`sin guardar ${k}`);
+      out = next;
+    }
+    return out;
+  }
+
+  function pcDraft(conclusion = "change_review_completed") {
+    return {
+      conclusion,
+      legal_question: "¿Revisión completa?",
+      evidence_refs: ["Revisión de cambio v1"],
+      rationale: "Cambio evaluado, inventario actualizado.",
+      decided_by: "DPO",
+      reviewed_by: "",
+      decided_at: new Date().toISOString(),
+    };
+  }
+
+  const PC_BASIS: LegalBasis[] = [
+    {
+      source_id: "cl_ley_19628_2026",
+      source_name: "Ley N° 19.628",
+      article_or_provision: "Artículo 14",
+      reference_text: "",
+      source_url: "",
+      basis_type: "law",
+      regulatory_status: "transitional",
+      last_verified_at: "2026-09-21",
+    },
+  ];
+
+  it("226. D2.11 treatment decision con ramas mecánica e interpretativa", () => {
+    expect(getProtocolForActivity("treatment.change_review")).toBe(PD211);
+    expect(PD211.mode).toBe("decision");
+    expect(PD211.execution_scope).toBe("treatment");
+    expect(PD211.entry_node_key).toBe("trigger");
+    expect(getCanonicalActivity(PD211.activity_key)?.human_code).toBe("D2.11");
+    expect(PD211.nodes.map((n) => n.node_key)).toEqual([
+      "trigger",
+      "change-date",
+      "change-description",
+      "attributes",
+      "impact",
+      "inventory",
+      "interpretation",
+      "sufficiency-gate",
+      "adopt-conclusion",
+    ]);
+    expect(PD211.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["assessment_incomplete", "no_change", "change_recorded", "change_review_completed"].sort(),
+    );
+    expect(PD211.decision_fact_keys).toEqual([T, AT, IM, IN, IX, DT, TX]);
+    // Solo el outcome de juicio lleva efectos.
+    for (const o of PD211.outcomes) {
+      if (o.outcome_key === "change_review_completed") {
+        expect(o.canonical_fact_effects).toEqual([{ fact_key: STATUS, value: "completed" }]);
+      } else {
+        expect(o.canonical_fact_effects ?? []).toEqual([]);
+      }
+    }
+    expect(getCanonicalActivity("treatment.inventory_create")?.human_code).toBe("D2.01");
+    expect(findConclusionNode(PD211)?.node_key).toBe("adopt-conclusion");
+    expect(validateProtocolStructure(PD211)).toEqual([]);
+  });
+
+  it("227. sin cambio no hay revisión: determinístico sin efectos", () => {
+    const e = mustOutcomeFor(PD211, { [T]: "no" });
+    expect(e.outcome_key).toBe("no_change");
+    const unknown = mustOutcomeFor(PD211, { [T]: "unknown" });
+    expect(unknown.outcome_key).toBe("assessment_incomplete");
+  });
+
+  it("228. rama mecánica registra sin juicio ni efectos", () => {
+    const facts = fullFacts({ [IX]: "no" });
+    const e = mustOutcomeFor(PD211, facts);
+    expect(e.outcome_key).toBe("change_recorded");
+    // Triaje sin responder: el walk espera en el nodo; unknown:
+    // incompleto en ambas direcciones (nunca adopta sin triaje).
+    const noTriage = { ...fullFacts({ [IX]: "no" }) };
+    delete noTriage[IX];
+    const awaiting = evaluateProtocol(PD211, noTriage);
+    expect(awaiting.status).toBe("awaiting_facts");
+    if (awaiting.status !== "awaiting_facts") return;
+    expect(awaiting.current_node_key).toBe("interpretation");
+    const ei = mustOutcomeFor(PD211, fullFacts({ [IX]: "unknown" }));
+    expect(ei.outcome_key).toBe("assessment_incomplete");
+    // Sin interpretación no hay base de juicio: el gate la exige.
+    const { c, idA } = twoTreatments();
+    const ctx = treatmentCtx(c, idA);
+    expect(gatePasses(PD211, c, facts, ctx)).toBe(false);
+    const r = finalizeJudgment({
+      protocol: PD211,
+      company: c,
+      facts,
+      draft: pcDraft(),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("229. rama interpretativa finaliza con juicio treatment-scoped", () => {
+    let { c, idA, idB } = twoTreatments();
+    const ctx = treatmentCtx(c, idA);
+    const facts = fullFacts();
+    c = answerAll(c, ctx, facts);
+    expect(gatePasses(PD211, c, facts, ctx)).toBe(true);
+    const result = finalizeJudgment({
+      protocol: PD211,
+      company: c,
+      facts,
+      draft: pcDraft(),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effects).toEqual([{ fact_key: STATUS, value: "completed" }]);
+    const applied = applyScopedFinalization(c, PD211, ctx, result.record, result.effects);
+    if (!applied) throw new Error("sin aplicación");
+    expect(
+      applied.treatments?.[idA]?.reasoningRecords[PD211.protocol_key]?.conclusion,
+    ).toBe("change_review_completed");
+    expect(
+      applied.treatments?.[idA]?.protocolAnswers[PD211.protocol_key]?.[STATUS]?.value,
+    ).toBe("completed");
+    // Fecha y descripción persisten como captura, no como effect.
+    expect(
+      applied.treatments?.[idA]?.protocolAnswers[PD211.protocol_key]?.[DT]?.value,
+    ).toBe("2026-09-20");
+    expect(
+      applied.treatments?.[idA]?.protocolAnswers[PD211.protocol_key]?.[TX]?.value,
+    ).toBe("Nueva finalidad de marketing");
+    // B intacto.
+    expect(applied.treatments?.[idB]?.protocolAnswers[PD211.protocol_key]).toBeUndefined();
+    expect(getRecordedJudgment(PD211, applied, facts, ctx).status).toBe("valid");
+  });
+
+  it("230. before/after no crea history: un cambio reemplaza al anterior", () => {
+    let { c, idA } = twoTreatments();
+    const ctx = treatmentCtx(c, idA);
+    c = answerAll(c, ctx, fullFacts({ [DT]: "2026-09-20", [TX]: "Cambio uno" }));
+    c = answerAll(c, ctx, fullFacts({ [DT]: "2026-09-21", [TX]: "Cambio dos" }));
+    const answers = c.treatments?.[idA]?.protocolAnswers[PD211.protocol_key] ?? {};
+    // Un solo valor vigente por fact: sin arrays, sin versiones.
+    expect(answers[DT]?.value).toBe("2026-09-21");
+    expect(answers[TX]?.value).toBe("Cambio dos");
+    expect(Array.isArray(answers[DT]?.value)).toBe(false);
+  });
+
+  it("231. A/B aislados; conflicto en B no bloquea A", () => {
+    let { c, idA, idB } = twoTreatments();
+    const at = new Date().toISOString();
+    const tb = c.treatments?.[idB];
+    if (!tb) throw new Error("sin B");
+    c = {
+      ...c,
+      treatments: {
+        ...c.treatments,
+        [idB]: {
+          ...tb,
+          protocolAnswers: {
+            "proto.a.v1": { [AT]: { value: "yes", source: "proto.a.v1", updatedAt: at } },
+            "proto.b.v1": { [AT]: { value: "no", source: "proto.b.v1", updatedAt: at } },
+          },
+        },
+      },
+    };
+    const ctxB = { scope: "treatment", companyId: c.id, treatmentId: idB } as const;
+    expect(blockingScopedConflicts([T, AT, IM, IN, IX, DT, TX], c, ctxB)).toContain(AT);
+    const ctx = treatmentCtx(c, idA);
+    expect(blockingScopedConflicts([T, AT, IM, IN, IX, DT, TX], c, ctx)).toEqual([]);
+    const facts = fullFacts();
+    c = answerAll(c, ctx, facts);
+    const result = finalizeJudgment({
+      protocol: PD211,
+      company: c,
+      facts,
+      draft: pcDraft(),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("232. export/import conserva fecha, texto y reasoning", () => {
+    let { c, idA } = twoTreatments();
+    const ctx = treatmentCtx(c, idA);
+    const facts = fullFacts();
+    c = answerAll(c, ctx, facts);
+    const result = finalizeJudgment({
+      protocol: PD211,
+      company: c,
+      facts,
+      draft: pcDraft(),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const applied = applyScopedFinalization(c, PD211, ctx, result.record, result.effects);
+    if (!applied) throw new Error("sin aplicación");
+    const roundTrip = JSON.parse(JSON.stringify(applied));
+    expect(validateCompanyState(roundTrip).ok).toBe(true);
+    expect(validateAnswerValues(roundTrip)).toEqual([]);
+    expect(validateTreatmentReferences(roundTrip)).toEqual([]);
+    if (!validateCompanyState(roundTrip).ok) return;
+    const checked = validateCompanyState(roundTrip);
+    if (!checked.ok) return;
+    expect(
+      checked.value.treatments?.[idA]?.protocolAnswers[PD211.protocol_key]?.[DT]?.value,
+    ).toBe("2026-09-20");
+    expect(
+      checked.value.treatments?.[idA]?.reasoningRecords[PD211.protocol_key]?.conclusion,
+    ).toBe("change_review_completed");
+  });
+
+  it("233. atributos del treatment no se materializan vía protocolo", () => {
+    for (const o of PD211.outcomes) {
+      for (const e of o.canonical_fact_effects ?? []) {
+        expect(e.fact_key).toBe(STATUS);
+      }
+    }
+  });
+});
+
+describe("D2.12 revalidación de inventario", () => {
+  const EXISTS = "derived.company.treatments_exist";
+  const SCOPE = "review.treatments_covered";
+  const DATE = "review.date";
+  const REM = "review.remediation_needed";
+  const STATUS = "inventory.revalidation_status";
+  const CHECKS = [
+    "review.existence_confirmed",
+    "review.actors_revalidated",
+    "review.purposes_revalidated",
+    "review.sources_data_revalidated",
+    "review.bases_revalidated",
+    "review.mmq_reviewed",
+    "review.new_treatments_checked",
+  ];
+
+  function companyCtx(c: { id: string }) {
+    return { scope: "company", companyId: c.id } as const;
+  }
+
+  function withTreatment() {
+    let c = newCompany("Inv SpA");
+    const t = createTreatment(c, { name: "A" });
+    if (!t) throw new Error("sin T");
+    c = t.company;
+    return c;
+  }
+
+  function fullFacts(over: FactMap = {}): FactMap {
+    const checks = Object.fromEntries(CHECKS.map((k) => [k, "yes"]));
+    return {
+      [EXISTS]: "yes",
+      [SCOPE]: "Todos los tratamientos del plan",
+      [DATE]: "2026-09-23",
+      [REM]: "no",
+      ...checks,
+      ...over,
+    };
+  }
+
+  function answerAll(c: CompanyState, facts: FactMap): CompanyState {
+    let out = c;
+    const ctx = companyCtx(c);
+    for (const [k, v] of Object.entries(facts)) {
+      if (k.startsWith("derived.")) continue;
+      const next = saveScopedProtocolAnswer(out, ctx, PD212.protocol_key, k, v, PD212.protocol_key);
+      if (!next) throw new Error(`sin guardar ${k}`);
+      out = next;
+    }
+    return out;
+  }
+
+  it("234. D2.12 company procedure sin juicio", () => {
+    expect(getProtocolForActivity("inventory.periodic_revalidation")).toBe(PD212);
+    expect(PD212.mode).toBe("procedure");
+    expect(PD212.execution_scope).toBe("company");
+    expect(PD212.entry_node_key).toBe("inventory-gate");
+    expect(getCanonicalActivity(PD212.activity_key)?.human_code).toBe("D2.12");
+    expect(PD212.reasoning_requirements).toBeUndefined();
+    expect(PD212.external_fact_keys).toEqual([EXISTS]);
+    expect(PD212.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["revalidation_incomplete", "inventory_missing", "inventory_current", "remediation_required"].sort(),
+    );
+    // Efectos solo de estado estático; nunca la fecha canónica.
+    for (const o of PD212.outcomes) {
+      for (const e of o.canonical_fact_effects ?? []) {
+        expect(e.fact_key).toBe(STATUS);
+      }
+    }
+    expect(getCanonicalActivity("treatment.inventory_create")?.human_code).toBe("D2.01");
+    expect(validateProtocolStructure(PD212)).toEqual([]);
+  });
+
+  it("235. sin inventario deriva a D2.01", () => {
+    const e = mustOutcomeFor(PD212, { [EXISTS]: "no" });
+    expect(e.outcome_key).toBe("inventory_missing");
+  });
+
+  it("236. revalidación completa deja inventario al día", () => {
+    let c = withTreatment();
+    const facts = fullFacts();
+    c = answerAll(c, facts);
+    const validated = validateProcedureFinalization({
+      protocol: PD212,
+      company: c,
+      facts,
+      outcomeKey: "inventory_current",
+    });
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    expect(validated.effects).toEqual([{ fact_key: STATUS, value: "current" }]);
+    const { company: next, applied } = applyProcedureFinalization(c, PD212, validated.effects);
+    expect(applied).toEqual([STATUS]);
+    expect(next.protocolAnswers[PD212.protocol_key]?.[STATUS]?.value).toBe("current");
+    // La fecha persiste como captura company-level, no como effect.
+    expect(next.protocolAnswers[PD212.protocol_key]?.[DATE]?.value).toBe("2026-09-23");
+    // Idempotente.
+    const twice = applyProcedureFinalization(next, PD212, validated.effects);
+    expect(twice.skipped).toEqual([STATUS]);
+  });
+
+  it("237. hallazgos dejan remediación requerida", () => {
+    let c = withTreatment();
+    const facts = fullFacts({ [REM]: "yes" });
+    c = answerAll(c, facts);
+    const e = mustOutcomeFor(PD212, facts);
+    expect(e.outcome_key).toBe("remediation_required");
+    const validated = validateProcedureFinalization({
+      protocol: PD212,
+      company: c,
+      facts,
+      outcomeKey: "remediation_required",
+    });
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const { company: next } = applyProcedureFinalization(c, PD212, validated.effects);
+    expect(next.protocolAnswers[PD212.protocol_key]?.[STATUS]?.value).toBe("remediation_required");
+    // Incompleto no escribe.
+    const rejected = validateProcedureFinalization({
+      protocol: PD212,
+      company: c,
+      facts: fullFacts({ [REM]: "yes", [CHECKS[0]]: "no" }),
+      outcomeKey: "remediation_required",
+    });
+    expect(rejected.ok).toBe(false);
+  });
+
+  it("238. fecha canónica sin mapping: DYNAMIC_VALUE_EFFECT_GAP", () => {
+    // Ningún outcome declara last_revalidated_at: el contrato solo
+    // admite pares estáticos y no se extiende en esta iteración.
+    const serialized = JSON.stringify(PD212);
+    expect(serialized).not.toContain("treatment_inventory.last_revalidated_at");
+    expect(getFinalizableOutcome(PD212, "inventory_current")?.canonical_fact_effects).toEqual([
+      { fact_key: STATUS, value: "current" },
+    ]);
+    expect(getFinalizableOutcome(PD212, "revalidation_incomplete")).toBeUndefined();
+    expect(getFinalizableOutcome(PD212, "inventory_missing")).toBeUndefined();
+  });
+
+  it("239. sin period instance: revalidar reemplaza fecha y estado", () => {
+    let c = withTreatment();
+    c = answerAll(c, fullFacts({ [DATE]: "2026-09-23", [REM]: "no" }));
+    const first = validateProcedureFinalization({
+      protocol: PD212,
+      company: c,
+      facts: fullFacts({ [DATE]: "2026-09-23", [REM]: "no" }),
+      outcomeKey: "inventory_current",
+    });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    const applied1 = applyProcedureFinalization(c, PD212, first.effects);
+    // Segunda revalidación con hallazgos: reemplaza, no agrega.
+    c = answerAll(applied1.company, fullFacts({ [DATE]: "2026-09-24", [REM]: "yes" }));
+    const answers = c.protocolAnswers[PD212.protocol_key] ?? {};
+    expect(answers[DATE]?.value).toBe("2026-09-24");
+    expect(Object.keys(answers).filter((k) => k === DATE)).toHaveLength(1);
+    const second = validateProcedureFinalization({
+      protocol: PD212,
+      company: c,
+      facts: fullFacts({ [DATE]: "2026-09-24", [REM]: "yes" }),
+      outcomeKey: "remediation_required",
+    });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    const applied2 = applyProcedureFinalization(c, PD212, second.effects);
+    expect(applied2.company.protocolAnswers[PD212.protocol_key]?.[STATUS]?.value).toBe(
+      "remediation_required",
+    );
+  });
+
+  it("240. export/import conserva D2.12 sin cruzar scopes", () => {
+    let c = withTreatment();
+    const facts = fullFacts();
+    c = answerAll(c, facts);
+    const validated = validateProcedureFinalization({
+      protocol: PD212,
+      company: c,
+      facts,
+      outcomeKey: "inventory_current",
+    });
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const { company: next } = applyProcedureFinalization(c, PD212, validated.effects);
+    const roundTrip = JSON.parse(JSON.stringify(next));
+    expect(validateCompanyState(roundTrip).ok).toBe(true);
+    expect(validateAnswerValues(roundTrip)).toEqual([]);
+    // Company-level no filtra a treatments.
+    const ids = Object.keys(roundTrip.treatments ?? {});
+    expect(ids.length).toBe(1);
+    expect(roundTrip.treatments[ids[0]].protocolAnswers[PD212.protocol_key]).toBeUndefined();
   });
 });

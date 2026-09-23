@@ -31,7 +31,12 @@ export function isDerivedFactKey(factKey: string): boolean {
 
 export type GuidanceNodeType = "question" | "decision" | "result";
 
-export type GuidanceAnswerType = "yes_no_unknown" | "single_select" | "none";
+export type GuidanceAnswerType =
+  | "yes_no_unknown"
+  | "single_select"
+  | "none"
+  | "text"
+  | "date";
 
 /** Procedencia de un protocolo, nodo o resultado. */
 export type ProtocolProvenance = "legal_requirement" | "agency_standard";

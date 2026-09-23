@@ -1,6 +1,6 @@
 # Guided Execution
 
-Status: STAGE 1 CANONICAL LAYER — D1.01–D1.20, D2.01–D2.10 (D2.06 con juicio purpose-scoped, D2.10 con juicio treatment-scoped)
+Status: STAGE 1 CANONICAL LAYER — D1.01–D1.20, D2.01–D2.12 (juicios scopeados D2.06/D2.10/D2.11; D2.12 procedure company-scope)
 
 `The guidance engine assists professional execution; it does not silently create new legal obligations.`
 

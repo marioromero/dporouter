@@ -12,6 +12,7 @@ import {
   getTreatment,
   referenceFactState,
   resolveExecutionContext,
+  scalarDecisionSatisfied,
   setScopedJudgmentState,
   treatmentReferenceNode,
 } from "./scope";
@@ -83,6 +84,11 @@ export function gatePasses(
       if (referenceFactState(protocol, company, ctx ?? null, f, facts[f]) !== "satisfied") {
         return false;
       }
+      continue;
+    }
+    const scalar = scalarDecisionSatisfied(protocol, f, facts[f]);
+    if (scalar !== null) {
+      if (!scalar) return false;
       continue;
     }
     if (facts[f] !== "yes") return false;
@@ -233,6 +239,13 @@ export function getRecordedJudgment(
           reasons.push(`${describeFactKey(f)} quedó sin determinar.`);
         } else if (state === "invalid") {
           reasons.push(`${describeFactKey(f)} referencia un tratamiento inválido.`);
+        }
+        continue;
+      }
+      const scalar = scalarDecisionSatisfied(protocol, f, facts[f]);
+      if (scalar !== null) {
+        if (!scalar) {
+          reasons.push(`${describeFactKey(f)} quedó sin registrar.`);
         }
         continue;
       }

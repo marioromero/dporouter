@@ -105,7 +105,9 @@ describe("derived session facts", () => {
     const { c, idA } = companyAB();
     const ctx = ctxT(c.id, idA);
     expect(deriveSessionFacts(c, ctx)).toEqual(deriveSessionFacts(c, ctx));
-    expect(deriveSessionFacts(c, { scope: "company", companyId: c.id })).toEqual({});
+    expect(deriveSessionFacts(c, { scope: "company", companyId: c.id })).toEqual({
+      "derived.company.treatments_exist": "yes",
+    });
   });
 
   it("aislamiento treatment: A completo, B con rol faltante", () => {
@@ -310,14 +312,21 @@ describe("derived session facts", () => {
     if (e2.status === "outcome") expect(e2.outcome_key).toBe("pending");
   });
 
-  it("D1 intacto: company no proyecta; solo D2 consume derived.*", () => {
+  it("company proyecta existencia de inventario; D1 no consume derived.*", () => {
     const c = newCompany("D1 SpA");
-    expect(deriveSessionFacts(c, { scope: "company", companyId: c.id })).toEqual({});
+    expect(deriveSessionFacts(c, { scope: "company", companyId: c.id })).toEqual({
+      "derived.company.treatments_exist": "no",
+    });
     for (const p of listProtocols()) {
       expect(validateProtocolStructure(p)).toEqual([]);
       const usesDerived = JSON.stringify(p).includes("derived.");
-      if ((p.execution_scope ?? "company") === "company") {
+      const isD1 = /^(dpo\.|mpi\.|governance\.)/.test(p.protocol_key);
+      if (isD1) {
         expect(usesDerived, p.protocol_key).toBe(false);
+      }
+      // Company-scope solo consume el derivado de inventario (D2.12).
+      if ((p.execution_scope ?? "company") === "company" && usesDerived) {
+        expect(p.protocol_key).toBe("inventory.periodic_revalidation.v1");
       }
     }
   });

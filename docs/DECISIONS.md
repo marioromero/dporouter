@@ -531,3 +531,60 @@ import — all blocks, never silent passes.
 
 Stage 1 boundary: single-target references only; no chains, no
 traversal, no history/tombstones.
+
+---
+
+## ADR-049 — Scalar capture primitives text and date
+
+Status: ACCEPTED
+
+`text` (trimmed scalar string; empty = unanswered, never stored) and
+`date` (strict civil `YYYY-MM-DD`, never stored when invalid) extend
+`answer_type` for values the professional enters. Both persist as
+normal protocol answers in their ExecutionContext — company,
+treatment or purpose — with no special storage, no `FactRecord`
+change, and verbatim JSON round-trip. Enforcement lives at the write
+point (all scopes plus memory session) and at import (corrupt stored
+values rejected explicitly). The engine is untouched: only stored
+values exist, and stored values are always valid.
+
+Discarded: option lists for free values (destroys or invents
+semantics), silent normalization on import (rewrites evidence), and
+any date library (unneeded for format + calendar validation).
+
+Stage 1 boundary: scalars only — no JSON, arrays, matrices,
+relations, datetimes, ranges, recurrence or history.
+
+---
+
+## ADR-050 — D2.11 and D2.12 readiness with recorded gaps
+
+Status: ACCEPTED
+
+D2.11 (`treatment.change_review`, decision) keeps both canon paths:
+an interpretive branch finalizing professional judgment
+treatment-scoped with `change_review_status = completed`, and a
+mechanical branch closing deterministically without effects or
+record. Before/after comparison is transient evaluation input plus
+documentary evidence; a new change overwrites date and description
+(latest wins), never versions. Treatment attribute updates happen in
+the workspace, never via protocol effects (no mapping exists and none
+is invented). Execution-ready yes; product-ready no (mechanical
+branch shares the known deterministic-decision gap family).
+
+D2.12 (`inventory.periodic_revalidation`, procedure, company scope,
+no reasoning) finalizes static status effects through the existing
+company-scope procedure path. Treatment selection is session input
+(a free-text scope note), never an entity. The review date is
+captured as a scalar answer and persists as such; materializing
+canon `treatment_inventory.last_revalidated_at` would require dynamic
+effect values, which the contract forbids: recorded as
+`DYNAMIC_VALUE_EFFECT_GAP`. Execution-ready yes; product-ready no.
+
+Discarded: `set_dynamic` / `from_answer` effect semantics,
+`recompute` as a persisted operator (recompute is live derivation),
+and per-period review instances (the canon defines no periods).
+
+Stage 1 boundary: no history, no periodic instances, no Stage 2
+semantics; `DETERMINISTIC_DECISION_FINALIZATION_GAP` untouched
+(D1.02, D2.05, D2.10 branch, D2.11 mechanical branch).

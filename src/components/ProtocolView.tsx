@@ -30,6 +30,8 @@ import { getFactStatus } from "../workspace/facts";
 import {
   activeExecutionContext,
   getScopedFactState,
+  isValidCivilDate,
+  normalizeTextAnswer,
   scopedConflictKeys,
   treatmentDisplayName,
 } from "../workspace/scope";
@@ -444,6 +446,133 @@ function TreatmentReferenceSelector({
   );
 }
 
+/**
+ * Captura escalar `text` (Stage 1).
+ *
+ * Control mínimo: el valor lo ingresa el profesional como string
+ * escalar y se registra con el `fact_key` del nodo. Trim al guardar;
+ * vacío = no respondido (no se persiste). Sin rich-text, sin
+ * estructuras, sin listas.
+ */
+function TextAnswerControl({
+  session,
+  node,
+}: {
+  session: ProtocolSession;
+  node: GuidanceNode;
+}) {
+  const current = node.fact_key ? session.facts[node.fact_key] : undefined;
+  const [draft, setDraft] = useState(current ?? "");
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="field">
+      <label htmlFor={`guia-text-${node.node_key}`}>{node.title}</label>
+      <textarea
+        id={`guia-text-${node.node_key}`}
+        className="input"
+        data-testid="guia-text-input"
+        rows={3}
+        value={draft}
+        aria-label={node.title}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          setError(null);
+        }}
+      />
+      {error ? (
+        <p data-testid="guia-answer-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <div className="actions">
+        <button
+          type="button"
+          className="btn"
+          data-testid="guia-text-save"
+          onClick={() => {
+            if (!node.fact_key) return;
+            const normalized = normalizeTextAnswer(draft);
+            if (normalized === null) {
+              setError("Ingresa un texto no vacío o deja sin responder.");
+              return;
+            }
+            setError(null);
+            session.answer(node.fact_key, normalized);
+          }}
+        >
+          Guardar respuesta
+        </button>
+      </div>
+      {current !== undefined ? (
+        <p data-testid="guia-text-current">Registrado: {current}</p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Captura escalar `date` (Stage 1).
+ *
+ * Fecha civil `YYYY-MM-DD` proporcionada por el profesional. El
+ * control de fecha es conveniencia del stack; el valor contractual
+ * sigue siendo el string, validado estrictamente y sin timezone.
+ */
+function DateAnswerControl({
+  session,
+  node,
+}: {
+  session: ProtocolSession;
+  node: GuidanceNode;
+}) {
+  const current = node.fact_key ? session.facts[node.fact_key] : undefined;
+  const [draft, setDraft] = useState(current ?? "");
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="field">
+      <label htmlFor={`guia-date-${node.node_key}`}>{node.title}</label>
+      <input
+        id={`guia-date-${node.node_key}`}
+        type="date"
+        className="input"
+        data-testid="guia-date-input"
+        value={draft}
+        aria-label={node.title}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          setError(null);
+        }}
+      />
+      {error ? (
+        <p data-testid="guia-answer-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <div className="actions">
+        <button
+          type="button"
+          className="btn"
+          data-testid="guia-date-save"
+          onClick={() => {
+            if (!node.fact_key) return;
+            const trimmed = draft.trim();
+            if (!isValidCivilDate(trimmed)) {
+              setError("Ingresa una fecha válida con formato AAAA-MM-DD.");
+              return;
+            }
+            setError(null);
+            session.answer(node.fact_key, trimmed);
+          }}
+        >
+          Guardar fecha
+        </button>
+      </div>
+      {current !== undefined ? (
+        <p data-testid="guia-date-current">Registrada: {current}</p>
+      ) : null}
+    </div>
+  );
+}
+
 /** Vista de un nodo pregunta con sus opciones canónicas. */
 export function ProtocolNodeView({
   protocol,
@@ -580,7 +709,11 @@ export function ProtocolNodeView({
         {node.help_text && node.help_text.length > 0
           ? node.help_text.map((h, i) => <p key={i}>{h}</p>)
           : null}
-        {node.options_source === "same_company_treatments" && node.fact_key ? (
+        {node.answer_type === "text" && node.fact_key ? (
+          <TextAnswerControl session={session} node={node} />
+        ) : node.answer_type === "date" && node.fact_key ? (
+          <DateAnswerControl session={session} node={node} />
+        ) : node.options_source === "same_company_treatments" && node.fact_key ? (
           <TreatmentReferenceSelector
             protocol={protocol}
             session={session}

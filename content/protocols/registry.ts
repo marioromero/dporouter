@@ -30,6 +30,8 @@ import { DATA_QUALITY_CONTROL_PROTOCOL } from "./data.quality_control";
 import { LAWFUL_BASIS_ASSIGN_PROTOCOL } from "./lawful_basis.assign";
 import { LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL } from "./legitimate_interest.assessment";
 import { PRECONTRACTUAL_DATA_CLEANUP_PROTOCOL } from "./precontractual_data.cleanup";
+import { TREATMENT_CHANGE_REVIEW_PROTOCOL } from "./treatment.change_review";
+import { INVENTORY_PERIODIC_REVALIDATION_PROTOCOL } from "./inventory.periodic_revalidation";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -74,6 +76,8 @@ const PROTOCOLS: ExecutionProtocol[] = [
   LAWFUL_BASIS_ASSIGN_PROTOCOL,
   LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL,
   PRECONTRACTUAL_DATA_CLEANUP_PROTOCOL,
+  TREATMENT_CHANGE_REVIEW_PROTOCOL,
+  INVENTORY_PERIODIC_REVALIDATION_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(
@@ -167,8 +171,21 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
           `${protocol.protocol_key}: nodo ${n.node_key} produce fact derivado ${n.fact_key}`,
         );
       }
+      // Captura escalar: text/date no admiten opciones (ni estáticas ni
+      // dinámicas); el valor lo ingresa el profesional.
+      if (n.answer_type === "text" || n.answer_type === "date") {
+        if ((n.options ?? []).length > 0 || n.options_source !== undefined) {
+          errors.push(
+            `${protocol.protocol_key}: nodo ${n.node_key} escalar con opciones`,
+          );
+        }
+        continue;
+      }
       if (!n.options || n.options.length === 0) {
-        errors.push(`${protocol.protocol_key}: nodo ${n.node_key} sin opciones`);
+        if (n.options_source === undefined) {
+          errors.push(`${protocol.protocol_key}: nodo ${n.node_key} sin opciones`);
+        }
+        continue;
       }
       for (const o of n.options ?? []) {
         if (o.next_node_key && !nodeKeys.has(o.next_node_key)) {

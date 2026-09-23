@@ -46,6 +46,7 @@ import {
   scopedAddressAlternatives,
   selectPurpose as selectPurposeState,
   selectTreatment as selectTreatmentState,
+  validateAnswerValues,
   validateTreatmentReferences,
 } from "./scope";
 import type { ExecutionContext } from "./types";
@@ -925,6 +926,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       const refErrors = validateTreatmentReferences(checked.value);
       if (refErrors.length > 0) {
         return { ok: false, error: refErrors[0] };
+      }
+      const valueErrors = validateAnswerValues(checked.value);
+      if (valueErrors.length > 0) {
+        return { ok: false, error: valueErrors[0] };
       }
       const incoming = checked.value;
       if (

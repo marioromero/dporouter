@@ -14,6 +14,7 @@ import {
   buildScopedFactMap,
   excludeScopedProtocol,
   getScopedProtocolAnswers,
+  normalizeAnswerValue,
   scopedInjectedRecord,
 } from "../workspace/scope";
 import { deriveSessionFacts } from "../workspace/derived";
@@ -126,9 +127,13 @@ export function GuidanceSessionProvider({
         saveScopedProtocolAnswer(ctx, protocolKey, factKey, value, protocolKey);
         return;
       }
+      // Sin empresa: memoria transitoria con la misma normalización
+      // (vacío/inválido en text/date equivale a no respondido).
+      const stored = normalizeAnswerValue(protocolKey, factKey, value);
+      if (stored === null) return;
       setMemory((prev) => ({
         ...prev,
-        [protocolKey]: { ...(prev[protocolKey] ?? {}), [factKey]: value },
+        [protocolKey]: { ...(prev[protocolKey] ?? {}), [factKey]: stored },
       }));
     },
     [company, saveScopedProtocolAnswer],

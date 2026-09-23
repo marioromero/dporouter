@@ -770,6 +770,8 @@ Allowed baseline `answer_type` values:
 yes_no_unknown
 single_select
 none
+text
+date
 ```
 
 Allowed baseline `options_source` values:
@@ -791,6 +793,19 @@ Rules:
   `external_fact_keys[]`; facts may originate outside the current protocol.
 * A decision rule may route either to another node (`goto_node_key`) or to
   an outcome (`goto_outcome_key`).
+* Scalar capture nodes (`text`, `date`) carry no options and no
+  `options_source`; the professional enters the value:
+  - `text` is a scalar string, trimmed on write; empty or whitespace-only
+    counts as unanswered and is never persisted. It never stores JSON,
+    arrays, delimited lists, objects, matrices, relations or packed
+    records.
+  - `date` is a civil date strictly `YYYY-MM-DD` with a real calendar
+    day. No time, timezone, datetime, ranges, recurrence or silent
+    generation. Invalid values are never persisted.
+  - Both persist as normal protocol answers in their ExecutionContext
+    (company, treatment or purpose): no special storage, no `FactRecord`
+    change, `YYYY-MM-DD` kept verbatim in JSON. Import rejects stored
+    empty text or invalid dates as corrupt.
 * `options_source` (absent by default) declares runtime-generated
   options for a `single_select` question whose values cannot be
   enumerated statically without destroying semantics.

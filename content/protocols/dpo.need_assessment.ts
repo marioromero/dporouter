@@ -12,6 +12,16 @@ import type { ExecutionProtocol, FactCondition } from "./types";
  * - obligación derivada del MPI (consecuencia del estado MPI);
  * - recomendación profesional de la agencia (estándar metodológico).
  * Nunca se mezclan.
+ *
+ * Auditoría de materialización (reconciliación D1): el state_effect
+ * `dpo.recommendation_outcome` es un valor singular autónomo
+ * (divisible: la prohibición de activar obligación por recomendación
+ * ya se honra vía clasificación), pero sus outcomes deterministas no
+ * tienen vía de materialización compatible con contratos actuales — la
+ * finalización explícita genérica cubre solo procedure/checklist y su
+ * extensión a decision excede lo autorizado. Sin efectos declarados:
+ * execution-ready, product-ready=false (gap estructural: vía de
+ * materialización para outcomes deterministas de decision).
  */
 
 /** Hechos de recomendación profesional que deben estar resueltos. */

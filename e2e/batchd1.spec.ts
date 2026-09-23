@@ -718,6 +718,36 @@ test("D1.20 continuidad confirma vigencia", async ({ page }) => {
   await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
 });
 
+test("D1.09 validado finaliza estado y persiste", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await page.goto(`${D109}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  for (const node of [
+    "check-reporting-line",
+    "check-autonomy",
+    "check-conflicts",
+    "check-resources",
+    "check-suitability",
+    "check-access",
+  ]) {
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Gobernanza inicial validada",
+  );
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado aún no registrado",
+  );
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+  await page.reload();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+});
+
 test("batch sin overflow en desktop y tablet", async ({ page }) => {
   for (const path of [
     D104,

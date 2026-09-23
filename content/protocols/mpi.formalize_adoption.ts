@@ -12,6 +12,15 @@ import type { ExecutionProtocol, FactCondition } from "./types";
  * verificaciones de hechos ("¿quedó verificado y registrado?"), no como
  * preguntas de descubrimiento. answer_type single_select con estados
  * explícitos Pendiente / Verificado; nunca yes_no_unknown ambiguo.
+ *
+ * Auditoría de materialización (reconciliación D1): el state_effect es
+ * un bundle indivisible del acto de adopción (lifecycle + fecha
+ * efectiva + referencia de evidencia + activación del requerimiento
+ * DPO con fuente y fecha). Separar `lifecycle = adoption_formalized`
+ * dejaría un estado parcial sin trazabilidad (cuándo, con qué
+ * evidencia, qué requerimiento activa): no se materializa ninguno
+ * parcialmente. Sin efectos declarados: execution-ready,
+ * product-ready=false (gap lifecycle/histórico del bundle de adopción).
  */
 
 const VERIFICATION_FACTS = [

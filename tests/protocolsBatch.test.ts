@@ -2260,3 +2260,108 @@ describe("batch D1: integridad del cuarto batch", () => {
     }
   });
 });
+
+describe("reconciliación D1.02/D1.04/D1.09", () => {
+  function fullGovernance(over: FactMap = {}): FactMap {
+    return {
+      "dpo.designated": "yes",
+      "dpo.governance.reporting_line": "yes",
+      "dpo.governance.autonomy": "yes",
+      "dpo.governance.conflicts": "yes",
+      "dpo.governance.resources": "yes",
+      "dpo.governance.suitability": "yes",
+      "dpo.governance.access": "yes",
+      ...over,
+    };
+  }
+
+  it("150. D1.09 declara efectos singulares en definitivos", () => {
+    const validated = getFinalizableOutcome(P09, "governance_validated");
+    expect(validated?.canonical_fact_effects).toEqual([
+      { fact_key: "dpo.governance_validation_status", value: "valid" },
+    ]);
+    const remediation = getFinalizableOutcome(P09, "remediation_required");
+    expect(remediation?.canonical_fact_effects).toEqual([
+      { fact_key: "dpo.governance_validation_status", value: "remediation_required" },
+    ]);
+    expect(getFinalizableOutcome(P09, "information_incomplete")).toBeUndefined();
+    expect(getFinalizableOutcome(P09, "prerequisite_missing")).toBeUndefined();
+  });
+
+  it("151. D1.09 validado finaliza; repetir es no-op; incompleto no escribe", () => {
+    const company = newCompany("Revalida SpA");
+    const validated = validateProcedureFinalization({
+      protocol: P09,
+      company,
+      facts: fullGovernance(),
+      outcomeKey: "governance_validated",
+    });
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const { company: next, applied } = applyProcedureFinalization(
+      company,
+      P09,
+      validated.effects,
+    );
+    expect(applied).toEqual(["dpo.governance_validation_status"]);
+    expect(
+      next.protocolAnswers[P09.protocol_key]?.["dpo.governance_validation_status"]?.value,
+    ).toBe("valid");
+    const twice = applyProcedureFinalization(next, P09, validated.effects);
+    expect(twice.applied).toEqual([]);
+    const rejected = validateProcedureFinalization({
+      protocol: P09,
+      company,
+      facts: fullGovernance({ "dpo.governance.access": "unknown" }),
+      outcomeKey: "governance_validated",
+    });
+    expect(rejected.ok).toBe(false);
+  });
+
+  it("152. D1.09 con brecha materializa remediación", () => {
+    const company = newCompany("Brecha SpA");
+    const validated = validateProcedureFinalization({
+      protocol: P09,
+      company,
+      facts: fullGovernance({ "dpo.governance.resources": "no" }),
+      outcomeKey: "remediation_required",
+    });
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const { company: next } = applyProcedureFinalization(
+      company,
+      P09,
+      validated.effects,
+    );
+    expect(
+      next.protocolAnswers[P09.protocol_key]?.["dpo.governance_validation_status"]?.value,
+    ).toBe("remediation_required");
+  });
+
+  it("153. D1.02 sin efectos: vía decision sin materialización", () => {
+    for (const o of P02.outcomes) {
+      expect(o.canonical_fact_effects ?? []).toEqual([]);
+    }
+    // La vía genérica sigue rechazando decision (contrato congelado).
+    const rejected = validateProcedureFinalization({
+      protocol: P02,
+      company: newCompany("D02 SpA"),
+      facts: {},
+      outcomeKey: "required_by_mpi",
+    });
+    expect(rejected.ok).toBe(false);
+  });
+
+  it("154. D1.04 sin efectos: bundle de adopción indivisible", () => {
+    for (const o of P04.outcomes) {
+      expect(o.canonical_fact_effects ?? []).toEqual([]);
+    }
+    const rejected = validateProcedureFinalization({
+      protocol: P04,
+      company: newCompany("D04 SpA"),
+      facts: {},
+      outcomeKey: "formalization_complete",
+    });
+    expect(rejected.ok).toBe(false);
+  });
+});

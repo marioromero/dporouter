@@ -12,6 +12,14 @@ import type { ExecutionProtocol, FactCondition } from "./types";
  * requiere acción o corrección, Desconocido = información insuficiente.
  * Sin score global; sin usar Revisado como cumplimiento jurídico. Los
  * checks son independientes y resolvibles en cualquier orden.
+ *
+ * Materialización canónica (reconciliación D1): el state_effect
+ * `dpo.governance_validation_status = valid | remediation_required`
+ * es un valor singular autónomo. Cada outcome definitivo lo
+ * materializa 1:1 mediante finalización explícita genérica
+ * (`governance_validated` → valid, `remediation_required` →
+ * remediation_required). Sin fechas, historial ni lifecycle: divisible
+ * y compatible con contratos actuales. execution-ready + product-ready.
  */
 
 const CHECK_FACTS = [
@@ -316,6 +324,9 @@ export const DPO_GOVERNANCE_VALIDATION_PROTOCOL: ExecutionProtocol = {
       explanation:
         "Los seis criterios están revisados y satisfactorios para el DPO designado, según la evidencia revisada en esta sesión.",
       provenance: "agency_standard",
+      canonical_fact_effects: [
+        { fact_key: "dpo.governance_validation_status", value: "valid" },
+      ],
       next_actions: [
         {
           kind: "activity",
@@ -331,6 +342,9 @@ export const DPO_GOVERNANCE_VALIDATION_PROTOCOL: ExecutionProtocol = {
       explanation:
         "Al menos un criterio presenta brechas. Documenta cada brecha y su medida correctiva en la ficha de validación.",
       provenance: "agency_standard",
+      canonical_fact_effects: [
+        { fact_key: "dpo.governance_validation_status", value: "remediation_required" },
+      ],
       next_actions: [
         {
           kind: "info",

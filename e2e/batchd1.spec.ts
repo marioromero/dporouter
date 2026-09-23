@@ -176,6 +176,110 @@ test("D1.04 por empresa: progreso independiente", async ({ page }) => {
   await expect(page.getByTestId("guia-progress")).toContainText("0 de 4");
 });
 
+const D101 = "/actividad/governance.preventive_framework";
+const D108 = "/actividad/dpo.designate";
+const D111 = "/actividad/dpo.operating_model";
+
+test("D1.01 completo establece marco y lo distingue de MPI", async ({ page }) => {
+  await page.goto(`${D101}/guia/role-gate`);
+  await answerAndContinue(page, "yes");
+  for (const node of [
+    "identify-actions",
+    "determine-gaps",
+    "define-framework",
+    "followup-mechanism",
+  ]) {
+    await expect(page).toHaveURL(new RegExp(`/guia/${node}$`));
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Marco preventivo establecido y evidenciado",
+  );
+  await expect(page.getByTestId("guia-next-actions")).toContainText(
+    "independiente de la adopción de un MPI",
+  );
+});
+
+test("D1.01 sin rol deriva a roles D2", async ({ page }) => {
+  await page.goto(`${D101}/guia/role-gate`);
+  await answerAndContinue(page, "no");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "No aplica: sin rol de responsable",
+  );
+  await page
+    .getByTestId("guia-next-actions")
+    .getByRole("link", { name: "Revisar roles por actor y tratamiento" })
+    .click();
+  await expect(page).toHaveURL(/\/actividad\/treatment\.actor_roles$/);
+});
+
+test("D1.08 sin antecedente deriva a D1.02 sin re-resolver", async ({ page }) => {
+  await page.goto(`${D108}/guia/trigger-gate`);
+  await answerAndContinue(page, "undecided");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Antecedente aún sin definir",
+  );
+  await page
+    .getByTestId("guia-next-actions")
+    .getByRole("link", { name: "Definir la necesidad en D1.02" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Evaluar necesidad y recomendación de DPO" }),
+  ).toBeVisible();
+});
+
+test("D1.08 interna completa enlaza validación D1.09", async ({ page }) => {
+  await page.goto(`${D108}/guia/trigger-gate`);
+  await answerAndContinue(page, "voluntary");
+  await expect(page).toHaveURL(new RegExp("/guia/confirm-authority$"));
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/modality$"));
+  await answerAndContinue(page, "internal");
+  await expect(page).toHaveURL(new RegExp("/guia/natural-person$"));
+  await answerAndContinue(page, "na");
+  await expect(page).toHaveURL(new RegExp("/guia/group-conditions$"));
+  await answerAndContinue(page, "na");
+  await expect(page).toHaveURL(new RegExp("/guia/suitability$"));
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/formalization$"));
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Designación formalizada y trazable",
+  );
+  await page
+    .getByTestId("guia-next-actions")
+    .getByRole("link", { name: "Validar la gobernanza inicial del DPO en D1.09" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Validar gobernanza inicial del DPO" }),
+  ).toBeVisible();
+});
+
+test("D1.11 completo enlaza plan anual D1.13", async ({ page }) => {
+  await page.goto(`${D111}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  for (const node of [
+    "organize-reporting",
+    "organize-involvement",
+    "organize-info-access",
+    "organize-functions",
+    "organize-cadence",
+  ]) {
+    await expect(page).toHaveURL(new RegExp(`/guia/${node}$`));
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Modelo operativo activo",
+  );
+  await page
+    .getByTestId("guia-next-actions")
+    .getByRole("link", { name: "Planificar el trabajo anual con el modelo como insumo" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Desarrollar plan anual del DPO" }),
+  ).toBeVisible();
+});
+
 test("batch sin overflow en desktop y tablet", async ({ page }) => {
   for (const path of [
     D104,

@@ -431,7 +431,7 @@ describe("Activity View V2", () => {
   });
 
   it("sin protocolo muestra pendiente honesto y sin fingir", () => {
-    renderWorkView("governance.preventive_framework");
+    renderWorkView("dpo.contact_and_agency_notification");
     expect(screen.getByText("Guía operativa pendiente de incorporar")).toBeTruthy();
     const body = document.body.textContent ?? "";
     expect(body).not.toContain("Iniciar evaluación");

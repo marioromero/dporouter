@@ -3,6 +3,9 @@ import { DPO_NEED_ASSESSMENT_PROTOCOL } from "./dpo.need_assessment";
 import { MPI_FORMALIZE_ADOPTION_PROTOCOL } from "./mpi.formalize_adoption";
 import { DPO_GOVERNANCE_VALIDATION_PROTOCOL } from "./dpo.initial_governance_validation";
 import { MPI_NEED_ASSESSMENT_PROTOCOL } from "./mpi.need_assessment";
+import { GOVERNANCE_PREVENTIVE_FRAMEWORK_PROTOCOL } from "./governance.preventive_framework";
+import { DPO_DESIGNATE_PROTOCOL } from "./dpo.designate";
+import { DPO_OPERATING_MODEL_PROTOCOL } from "./dpo.operating_model";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -21,6 +24,9 @@ const PROTOCOLS: ExecutionProtocol[] = [
   MPI_FORMALIZE_ADOPTION_PROTOCOL,
   DPO_GOVERNANCE_VALIDATION_PROTOCOL,
   MPI_NEED_ASSESSMENT_PROTOCOL,
+  GOVERNANCE_PREVENTIVE_FRAMEWORK_PROTOCOL,
+  DPO_DESIGNATE_PROTOCOL,
+  DPO_OPERATING_MODEL_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

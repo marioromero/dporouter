@@ -2,14 +2,20 @@ import { describe, expect, it } from "vitest";
 import { MPI_FORMALIZE_ADOPTION_PROTOCOL as P04 } from "../content/protocols/mpi.formalize_adoption";
 import { DPO_GOVERNANCE_VALIDATION_PROTOCOL as P09 } from "../content/protocols/dpo.initial_governance_validation";
 import { DPO_NEED_ASSESSMENT_PROTOCOL as P02 } from "../content/protocols/dpo.need_assessment";
+import { MPI_NEED_ASSESSMENT_PROTOCOL as P03 } from "../content/protocols/mpi.need_assessment";
+import { GOVERNANCE_PREVENTIVE_FRAMEWORK_PROTOCOL as P01 } from "../content/protocols/governance.preventive_framework";
+import { DPO_DESIGNATE_PROTOCOL as P08 } from "../content/protocols/dpo.designate";
+import { DPO_OPERATING_MODEL_PROTOCOL as P11 } from "../content/protocols/dpo.operating_model";
+import type { ExecutionProtocol } from "../content/protocols/types";
 import {
   getProtocolForActivity,
   validateProtocolStructure,
 } from "../content/protocols/registry";
 import { evaluateProtocol } from "../src/guidance/engine";
 import type { FactMap } from "../content/protocols/types";
-import { mergedFactRecords } from "../src/workspace/facts";
+import { blockingConflicts, mergedFactRecords } from "../src/workspace/facts";
 import { newCompany } from "../src/workspace/types";
+import { validateCompanyState } from "../src/workspace/store";
 import { getCanonicalActivity } from "../content/registry";
 
 function mustOutcome(
@@ -304,5 +310,396 @@ describe("batch D1: integridad del batch", () => {
     expect(getProtocolForActivity("dpo.need_assessment")).toBe(P02);
     expect(P02.mode).toBe("decision");
     expect(validateProtocolStructure(P02)).toEqual([]);
+  });
+});
+
+function mustOutcomeFor(protocol: ExecutionProtocol, facts: FactMap) {
+  const e = evaluateProtocol(protocol, facts);
+  if (e.status !== "outcome") {
+    throw new Error(`se esperaba outcome, fue ${e.status}`);
+  }
+  return e;
+}
+
+function protocolFactKeys(protocol: ExecutionProtocol): string[] {
+  const out = new Set<string>(protocol.decision_fact_keys);
+  for (const n of protocol.nodes) {
+    if (n.fact_key) out.add(n.fact_key);
+    for (const f of n.required_facts ?? []) out.add(f);
+  }
+  return [...out];
+}
+
+describe("batch D1: D1.01 procedure", () => {
+  it("26. D1.01 tiene exactamente un protocolo activo mode procedure", () => {
+    expect(getProtocolForActivity("governance.preventive_framework")).toBe(P01);
+    expect(P01.protocol_key).toBe("governance.preventive_framework.v1");
+    expect(P01.mode).toBe("procedure");
+    expect(P01.version).toBe(1);
+    expect(P01.entry_node_key).toBe("role-gate");
+    expect(getCanonicalActivity(P01.activity_key)?.human_code).toBe("D1.01");
+  });
+
+  it("27. compuerta, cuatro verificaciones canónicas y síntesis", () => {
+    expect(P01.nodes.map((n) => n.node_key)).toEqual([
+      "role-gate",
+      "identify-actions",
+      "determine-gaps",
+      "define-framework",
+      "followup-mechanism",
+      "final-confirmation",
+    ]);
+    expect(P01.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["framework_established", "framework_in_progress", "not_applicable"].sort(),
+    );
+  });
+
+  it("28. estructura válida y siguiente paso resuelve", () => {
+    expect(validateProtocolStructure(P01)).toEqual([]);
+    expect(getCanonicalActivity("treatment.actor_roles")).toBeDefined();
+  });
+
+  it("29. sin rol de responsable no aplica y deriva a roles D2", () => {
+    const e = mustOutcomeFor(P01, { "governance.client_is_responsible": "no" });
+    expect(e.outcome_key).toBe("not_applicable");
+    expect(e.rule_id).toBe("not-responsible");
+    const action = e.outcome.next_actions.find((a) => a.kind === "activity");
+    expect(action?.activity_key).toBe("treatment.actor_roles");
+  });
+
+  it("30. todo verificado produce marco establecido", () => {
+    const e = mustOutcomeFor(P01, {
+      "governance.client_is_responsible": "yes",
+      "governance.actions_identified": "yes",
+      "governance.gaps_determined": "yes",
+      "governance.framework_defined": "yes",
+      "governance.followup_established": "yes",
+    });
+    expect(e.outcome_key).toBe("framework_established");
+    expect(e.rule_id).toBe("all-verified");
+  });
+
+  it("31. pendiente o sin información mantiene en construcción, nunca establecido", () => {
+    const e = mustOutcomeFor(P01, {
+      "governance.client_is_responsible": "yes",
+      "governance.actions_identified": "yes",
+      "governance.gaps_determined": "no",
+      "governance.framework_defined": "yes",
+      "governance.followup_established": "yes",
+    });
+    expect(e.outcome_key).toBe("framework_in_progress");
+    const u = mustOutcomeFor(P01, {
+      "governance.client_is_responsible": "yes",
+      "governance.actions_identified": "unknown",
+      "governance.gaps_determined": "yes",
+      "governance.framework_defined": "yes",
+      "governance.followup_established": "yes",
+    });
+    expect(u.outcome_key).toBe("framework_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+  });
+
+  it("32. unknown no equivale a verificado", () => {
+    const e = evaluateProtocol(P01, { "governance.client_is_responsible": "yes" });
+    expect(e.status).toBe("awaiting_facts");
+    if (e.status === "awaiting_facts") {
+      expect(e.current_node_key).toBe("identify-actions");
+    }
+  });
+
+  it("33. marco distinguido de MPI: sin rama de adopción", () => {
+    const complete = P01.outcomes.find((o) => o.outcome_key === "framework_established");
+    expect(
+      complete?.next_actions.some(
+        (a) => a.kind === "info" && (a.note ?? "").includes("independiente"),
+      ),
+    ).toBe(true);
+    // Ninguna regla ni acción deriva a evaluar o formalizar MPI.
+    const text = JSON.stringify({ t: P01.nodes.map((n) => n.transitions), o: P01.outcomes });
+    expect(text).not.toContain("mpi.need_assessment");
+    expect(text).not.toContain("mpi.formalize_adoption");
+  });
+});
+
+describe("batch D1: D1.08 procedure", () => {
+  it("34. D1.08 tiene exactamente un protocolo activo mode procedure", () => {
+    expect(getProtocolForActivity("dpo.designate")).toBe(P08);
+    expect(P08.protocol_key).toBe("dpo.designate.v1");
+    expect(P08.mode).toBe("procedure");
+    expect(P08.version).toBe(1);
+    expect(P08.entry_node_key).toBe("trigger-gate");
+    expect(getCanonicalActivity(P08.activity_key)?.human_code).toBe("D1.08");
+  });
+
+  it("35. antecedente, prerrequisitos, acto y síntesis sin árbol artificial", () => {
+    expect(P08.nodes.map((n) => n.node_key)).toEqual([
+      "trigger-gate",
+      "confirm-authority",
+      "modality",
+      "natural-person",
+      "group-conditions",
+      "suitability",
+      "formalization",
+      "final-confirmation",
+    ]);
+    expect(P08.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["designation_complete", "designation_in_progress", "prerequisite_pending"].sort(),
+    );
+    // Una sola síntesis decisional; el resto son verificaciones planas.
+    expect(P08.nodes.filter((n) => n.node_type === "decision")).toHaveLength(1);
+  });
+
+  it("36. estructura válida y siguientes pasos resuelven", () => {
+    expect(validateProtocolStructure(P08)).toEqual([]);
+    expect(getCanonicalActivity("dpo.initial_governance_validation")).toBeDefined();
+    expect(getCanonicalActivity("dpo.need_assessment")).toBeDefined();
+  });
+
+  it("37. sin antecedente deriva a D1.02 sin re-resolverlo", () => {
+    const e = mustOutcomeFor(P08, { "dpo.designation_trigger": "undecided" });
+    expect(e.outcome_key).toBe("prerequisite_pending");
+    expect(e.rule_id).toBe("trigger-undefined");
+    const action = e.outcome.next_actions.find((a) => a.kind === "activity");
+    expect(action?.activity_key).toBe("dpo.need_assessment");
+    // No re-pregunta factores de D1.02 ni estados MPI: namespace propio.
+    for (const f of protocolFactKeys(P08)) {
+      expect(f.startsWith("dpo.designation_"), f).toBe(true);
+    }
+  });
+
+  function fullDesignation(over: FactMap = {}): FactMap {
+    return {
+      "dpo.designation_trigger": "voluntary",
+      "dpo.designation_authority": "yes",
+      "dpo.designation_modality": "internal",
+      "dpo.designation_natural_person": "na",
+      "dpo.designation_group_conditions": "na",
+      "dpo.designation_suitability": "yes",
+      "dpo.designation_formalization": "yes",
+      ...over,
+    };
+  }
+
+  it("38. designación interna completa enlaza validación D1.09", () => {
+    const e = mustOutcomeFor(P08, fullDesignation());
+    expect(e.outcome_key).toBe("designation_complete");
+    expect(e.rule_id).toBe("all-verified");
+    const complete = e.outcome;
+    expect(complete.classification).toBe("legal_requirement");
+    expect(complete.provenance).toBe("legal_requirement");
+    expect(
+      complete.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("dpo.initial_governance_validation");
+  });
+
+  it("39. persona jurídica sin persona natural no completa", () => {
+    const e = mustOutcomeFor(
+      P08,
+      fullDesignation({
+        "dpo.designation_modality": "external_entity",
+        "dpo.designation_natural_person": "na",
+      }),
+    );
+    expect(e.outcome_key).toBe("designation_in_progress");
+    expect(e.rule_id).toBe("entity-without-natural-person");
+    const ok = mustOutcomeFor(
+      P08,
+      fullDesignation({
+        "dpo.designation_modality": "external_entity",
+        "dpo.designation_natural_person": "yes",
+      }),
+    );
+    expect(ok.outcome_key).toBe("designation_complete");
+  });
+
+  it("40. pendiente o sin información mantiene en curso, nunca completa", () => {
+    const e = mustOutcomeFor(P08, fullDesignation({ "dpo.designation_suitability": "no" }));
+    expect(e.outcome_key).toBe("designation_in_progress");
+    const u = mustOutcomeFor(
+      P08,
+      fullDesignation({ "dpo.designation_formalization": "unknown" }),
+    );
+    expect(u.outcome_key).toBe("designation_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+  });
+
+  it("41. obligación y estándar no se mezclan en resultados", () => {
+    const byKey = new Map(P08.outcomes.map((o) => [o.outcome_key, o]));
+    expect(byKey.get("designation_complete")?.classification).toBe("legal_requirement");
+    expect(byKey.get("designation_in_progress")?.classification).toBe("agency_standard");
+    expect(byKey.get("prerequisite_pending")?.classification).toBe("agency_standard");
+  });
+});
+
+describe("batch D1: D1.11 procedure", () => {
+  it("42. D1.11 tiene exactamente un protocolo activo mode procedure", () => {
+    expect(getProtocolForActivity("dpo.operating_model")).toBe(P11);
+    expect(P11.protocol_key).toBe("dpo.operating_model.v1");
+    expect(P11.mode).toBe("procedure");
+    expect(P11.version).toBe(1);
+    expect(P11.entry_node_key).toBe("designation-gate");
+    expect(getCanonicalActivity(P11.activity_key)?.human_code).toBe("D1.11");
+  });
+
+  it("43. lista operacional plana: compuerta, cinco verificaciones y síntesis", () => {
+    expect(P11.nodes.map((n) => n.node_key)).toEqual([
+      "designation-gate",
+      "organize-reporting",
+      "organize-involvement",
+      "organize-info-access",
+      "organize-functions",
+      "organize-cadence",
+      "final-confirmation",
+    ]);
+    expect(P11.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["operating_model_active", "operating_model_in_progress", "prerequisite_missing"].sort(),
+    );
+    expect(P11.nodes.filter((n) => n.node_type === "decision")).toHaveLength(1);
+  });
+
+  it("44. estructura válida y siguientes pasos resuelven", () => {
+    expect(validateProtocolStructure(P11)).toEqual([]);
+    expect(getCanonicalActivity("dpo.annual_plan")).toBeDefined();
+    expect(getCanonicalActivity("dpo.designate")).toBeDefined();
+  });
+
+  it("45. sin designación deriva a D1.08", () => {
+    const e = mustOutcomeFor(P11, { "dpo.designated": "no" });
+    expect(e.outcome_key).toBe("prerequisite_missing");
+    expect(e.rule_id).toBe("no-designation");
+    const action = e.outcome.next_actions.find((a) => a.kind === "activity");
+    expect(action?.activity_key).toBe("dpo.designate");
+  });
+
+  function fullModel(over: FactMap = {}): FactMap {
+    return {
+      "dpo.designated": "yes",
+      "dpo.operating.reporting": "yes",
+      "dpo.operating.involvement": "yes",
+      "dpo.operating.info_access": "yes",
+      "dpo.operating.functions_map": "yes",
+      "dpo.operating.cadence": "yes",
+      ...over,
+    };
+  }
+
+  it("46. todo organizado produce modelo activo y enlaza plan anual", () => {
+    const e = mustOutcomeFor(P11, fullModel());
+    expect(e.outcome_key).toBe("operating_model_active");
+    expect(e.rule_id).toBe("all-verified");
+    expect(
+      e.outcome.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("dpo.annual_plan");
+  });
+
+  it("47. pendiente mantiene en organización con elementos visibles", () => {
+    const e = mustOutcomeFor(P11, fullModel({ "dpo.operating.cadence": "no" }));
+    expect(e.outcome_key).toBe("operating_model_in_progress");
+    const u = mustOutcomeFor(P11, fullModel({ "dpo.operating.involvement": "unknown" }));
+    expect(u.outcome_key).toBe("operating_model_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+  });
+
+  it("48. compuerta reutiliza el fact de D1.09", () => {
+    const gate = P11.nodes.find((n) => n.node_key === "designation-gate");
+    expect(gate?.fact_key).toBe("dpo.designated");
+    // Namespace propio salvo la compuerta compartida y documentada.
+    for (const f of protocolFactKeys(P11)) {
+      expect(f === "dpo.designated" || f.startsWith("dpo.operating."), f).toBe(true);
+    }
+  });
+});
+
+describe("batch D1: integridad del segundo batch", () => {
+  it("49. namespaces disjuntos salvo compuerta compartida documentada", () => {
+    const f01 = new Set(protocolFactKeys(P01));
+    const f08 = new Set(protocolFactKeys(P08));
+    const f11 = new Set(protocolFactKeys(P11));
+    const f02 = new Set(protocolFactKeys(P02));
+    const f04 = new Set(protocolFactKeys(P04));
+    const f09 = new Set(protocolFactKeys(P09));
+    const prior = new Set([...f02, ...f04, ...f09]);
+    for (const f of f01) expect(prior.has(f), `D1.01 colisiona: ${f}`).toBe(false);
+    for (const f of f08) expect(prior.has(f), `D1.08 colisiona: ${f}`).toBe(false);
+    for (const f of f11) {
+      if (f === "dpo.designated") continue;
+      expect(prior.has(f), `D1.11 colisiona: ${f}`).toBe(false);
+    }
+    for (const f of f08) expect(f01.has(f), `D1.08/D1.01 colisionan: ${f}`).toBe(false);
+    for (const f of f11) {
+      if (f === "dpo.designated") continue;
+      expect(f01.has(f), `D1.11/D1.01 colisionan: ${f}`).toBe(false);
+      expect(f08.has(f), `D1.11/D1.08 colisionan: ${f}`).toBe(false);
+    }
+  });
+
+  it("50. protocolos anteriores intactos tras el batch", () => {
+    expect(getProtocolForActivity("dpo.need_assessment")).toBe(P02);
+    expect(getProtocolForActivity("mpi.need_assessment")).toBe(P03);
+    expect(getProtocolForActivity("mpi.formalize_adoption")).toBe(P04);
+    expect(getProtocolForActivity("dpo.initial_governance_validation")).toBe(P09);
+    for (const p of [P02, P03, P04, P09, P01, P08, P11]) {
+      expect(validateProtocolStructure(p), p.protocol_key).toEqual([]);
+    }
+  });
+
+  it("51. respuestas aisladas por empresa", () => {
+    const at = new Date().toISOString();
+    const a = newCompany("Empresa A SpA");
+    const b = newCompany("Empresa B SpA");
+    a.protocolAnswers[P01.protocol_key] = {
+      "governance.framework_defined": { value: "yes", source: P01.protocol_key, updatedAt: at },
+    };
+    b.protocolAnswers[P01.protocol_key] = {
+      "governance.framework_defined": { value: "no", source: P01.protocol_key, updatedAt: at },
+    };
+    const fa = mergedFactRecords(a);
+    const fb = mergedFactRecords(b);
+    expect(fa["governance.framework_defined"]?.value).toBe("yes");
+    expect(fb["governance.framework_defined"]?.value).toBe("no");
+    // Cambiar de empresa cambia el contexto: sin fuga entre empresas.
+    expect(fa["governance.framework_defined"]?.value).not.toBe(
+      fb["governance.framework_defined"]?.value,
+    );
+  });
+
+  it("52. efectos de verificación sobreviven export/import", () => {
+    const at = new Date().toISOString();
+    const company = newCompany("Export SpA");
+    company.protocolAnswers[P08.protocol_key] = {
+      "dpo.designation_trigger": { value: "voluntary", source: P08.protocol_key, updatedAt: at },
+      "dpo.designation_formalization": { value: "yes", source: P08.protocol_key, updatedAt: at },
+    };
+    // Mecanismo existente: la empresa se serializa íntegra a JSON.
+    const exported = JSON.stringify(company);
+    const checked = validateCompanyState(JSON.parse(exported));
+    expect(checked.ok).toBe(true);
+    if (!checked.ok) return;
+    const facts: FactMap = {};
+    for (const [k, r] of Object.entries(mergedFactRecords(checked.value))) {
+      facts[k] = r.value;
+    }
+    expect(facts["dpo.designation_trigger"]).toBe("voluntary");
+    expect(facts["dpo.designation_formalization"]).toBe("yes");
+  });
+
+  it("53. desacuerdo entre fuentes bloquea conclusión definitiva", () => {
+    const at = new Date().toISOString();
+    const company = newCompany("Conflicto SpA");
+    company.diagnosticFacts["dpo.designated"] = {
+      value: "yes",
+      source: "diagnostico",
+      updatedAt: at,
+    };
+    company.protocolAnswers[P11.protocol_key] = {
+      "dpo.designated": { value: "no", source: P11.protocol_key, updatedAt: at },
+    };
+    // Conflicto visible y bloqueante, nunca unknown ni false.
+    expect(blockingConflicts(P11, company)).toContain("dpo.designated");
+    // Acuerdo entre fuentes resuelve sin conflicto.
+    company.protocolAnswers[P11.protocol_key] = {
+      "dpo.designated": { value: "yes", source: P11.protocol_key, updatedAt: at },
+    };
+    expect(blockingConflicts(P11, company)).not.toContain("dpo.designated");
   });
 });

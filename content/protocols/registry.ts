@@ -6,6 +6,9 @@ import { MPI_NEED_ASSESSMENT_PROTOCOL } from "./mpi.need_assessment";
 import { GOVERNANCE_PREVENTIVE_FRAMEWORK_PROTOCOL } from "./governance.preventive_framework";
 import { DPO_DESIGNATE_PROTOCOL } from "./dpo.designate";
 import { DPO_OPERATING_MODEL_PROTOCOL } from "./dpo.operating_model";
+import { DPO_INFRINGEMENT_ESCALATION_PROTOCOL } from "./dpo.infringement_escalation";
+import { DPO_TERMINATE_OR_REPLACE_PROTOCOL } from "./dpo.terminate_or_replace";
+import { MPI_ASSEMBLE_PROGRAM_PROTOCOL } from "./mpi.assemble_program";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -27,6 +30,9 @@ const PROTOCOLS: ExecutionProtocol[] = [
   GOVERNANCE_PREVENTIVE_FRAMEWORK_PROTOCOL,
   DPO_DESIGNATE_PROTOCOL,
   DPO_OPERATING_MODEL_PROTOCOL,
+  DPO_INFRINGEMENT_ESCALATION_PROTOCOL,
+  DPO_TERMINATE_OR_REPLACE_PROTOCOL,
+  MPI_ASSEMBLE_PROGRAM_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

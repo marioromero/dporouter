@@ -371,6 +371,123 @@ test("D1.08 completo no ofrece registro canónico", async ({ page }) => {
   await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
 });
 
+const D115 = "/actividad/dpo.infringement_escalation";
+const D117 = "/actividad/dpo.terminate_or_replace";
+const D118 = "/actividad/mpi.assemble_program";
+
+async function registrarMpiDiagnostico(
+  page: import("@playwright/test").Page,
+  estado: string,
+) {
+  await page.goto("/diagnostico");
+  await page.getByLabel("Estado del MPI (caracterización)").selectOption(estado);
+  await page.getByRole("button", { name: "Registrar hecho" }).click();
+}
+
+test("D1.15 completo sin registro canónico", async ({ page }) => {
+  await page.goto(`${D115}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/case-gate$"));
+  await answerAndContinue(page, "known");
+  for (const node of [
+    "register-case",
+    "determine-facts",
+    "communicate-authority",
+    "record-measures",
+  ]) {
+    await expect(page).toHaveURL(new RegExp(`/guia/${node}$`));
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page).toHaveURL(new RegExp("/guia/derive-findings$"));
+  await answerAndContinue(page, "na");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Infracción escalada y registrada",
+  );
+  // Sin lifecycle effects: execution-ready pero sin bloque de registro.
+  await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
+});
+
+test("D1.17 sin lifecycle queda incompleto y deriva a ciclo de vida", async ({ page }) => {
+  await page.goto(`${D117}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/event-confirmation$"));
+  await answerAndContinue(page, "occurred");
+  await expect(page).toHaveURL(new RegExp("/guia/other-source$"));
+  await answerAndContinue(page, "no");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Evaluación incompleta",
+  );
+  await page
+    .getByTestId("guia-next-actions")
+    .getByRole("link", { name: "Revisar el ciclo de vida del MPI" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Revisar ciclo de vida del MPI" }),
+  ).toBeVisible();
+});
+
+test("D1.17 con MPI activo exige reemplazo y enlaza D1.08", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await registrarMpiDiagnostico(page, "implemented");
+  await page.goto(`${D117}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "occurred");
+  await answerAndContinue(page, "no");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Vacancia con reemplazo requerido",
+  );
+  await page
+    .getByTestId("guia-next-actions")
+    .getByRole("link", { name: "Designar al reemplazante en D1.08" })
+    .click();
+  await expect(page.getByRole("heading", { name: "Designar DPO" })).toBeVisible();
+});
+
+test("D1.18 completo finaliza implemented", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await registrarMpiDiagnostico(page, "implementing");
+  await page.goto(`${D118}/guia/verify-responsible`);
+  for (const node of [
+    "verify-responsible",
+    "verify-dpo",
+    "characterize-treatments",
+    "identify-risks",
+    "verify-protocols",
+    "verify-obligations",
+    "verify-integration",
+    "verify-diffusion",
+    "consolidate-evidence",
+  ]) {
+    await expect(page).toHaveURL(new RegExp(`/guia/${node}$`));
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Programa MPI implementado",
+  );
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado aún no registrado",
+  );
+  await page.getByTestId("guia-finalize-apply").click();
+  // El dato previo de Diagnóstico (implementación en curso) discrepa del
+  // estado finalizado: conflicto explícito, nunca mezcla silenciosa.
+  await expect(page.getByTestId("guia-conflict-block")).toBeVisible();
+  await page
+    .getByTestId("resolver-mpi.lifecycle_status")
+    .getByRole("button", { name: /Implementado · Evaluación guiada/ })
+    .click();
+  await page
+    .getByTestId("resolver-mpi.lifecycle_status")
+    .getByRole("button", { name: "Resolver conflicto" })
+    .click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+  await page.reload();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+});
+
 test("batch sin overflow en desktop y tablet", async ({ page }) => {
   for (const path of [
     D104,

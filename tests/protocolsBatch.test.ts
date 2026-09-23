@@ -6,6 +6,9 @@ import { MPI_NEED_ASSESSMENT_PROTOCOL as P03 } from "../content/protocols/mpi.ne
 import { GOVERNANCE_PREVENTIVE_FRAMEWORK_PROTOCOL as P01 } from "../content/protocols/governance.preventive_framework";
 import { DPO_DESIGNATE_PROTOCOL as P08 } from "../content/protocols/dpo.designate";
 import { DPO_OPERATING_MODEL_PROTOCOL as P11 } from "../content/protocols/dpo.operating_model";
+import { DPO_INFRINGEMENT_ESCALATION_PROTOCOL as P15 } from "../content/protocols/dpo.infringement_escalation";
+import { DPO_TERMINATE_OR_REPLACE_PROTOCOL as P17 } from "../content/protocols/dpo.terminate_or_replace";
+import { MPI_ASSEMBLE_PROGRAM_PROTOCOL as P18 } from "../content/protocols/mpi.assemble_program";
 import type { ExecutionProtocol } from "../content/protocols/types";
 import {
   getProtocolForActivity,
@@ -14,6 +17,10 @@ import {
 import { evaluateProtocol } from "../src/guidance/engine";
 import type { FactMap } from "../content/protocols/types";
 import { blockingConflicts, mergedFactRecords } from "../src/workspace/facts";
+import {
+  applyProcedureFinalization,
+  validateProcedureFinalization,
+} from "../src/workspace/finalize";
 import { newCompany } from "../src/workspace/types";
 import { validateCompanyState } from "../src/workspace/store";
 import { getCanonicalActivity } from "../content/registry";
@@ -701,5 +708,436 @@ describe("batch D1: integridad del segundo batch", () => {
       "dpo.designated": { value: "yes", source: P11.protocol_key, updatedAt: at },
     };
     expect(blockingConflicts(P11, company)).not.toContain("dpo.designated");
+  });
+});
+
+describe("batch D1: D1.15 procedure", () => {
+  it("54. D1.15 tiene exactamente un protocolo activo mode procedure", () => {
+    expect(getProtocolForActivity("dpo.infringement_escalation")).toBe(P15);
+    expect(P15.protocol_key).toBe("dpo.infringement_escalation.v1");
+    expect(P15.mode).toBe("procedure");
+    expect(P15.version).toBe(1);
+    expect(P15.entry_node_key).toBe("designation-gate");
+    expect(getCanonicalActivity(P15.activity_key)?.human_code).toBe("D1.15");
+  });
+
+  it("55. compuertas, cinco verificaciones y síntesis", () => {
+    expect(P15.nodes.map((n) => n.node_key)).toEqual([
+      "designation-gate",
+      "case-gate",
+      "register-case",
+      "determine-facts",
+      "communicate-authority",
+      "record-measures",
+      "derive-findings",
+      "final-confirmation",
+    ]);
+    expect(P15.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      [
+        "escalation_complete",
+        "escalation_in_progress",
+        "prerequisite_missing",
+        "no_pending_case",
+      ].sort(),
+    );
+  });
+
+  it("56. estructura válida y siguiente paso resuelve", () => {
+    expect(validateProtocolStructure(P15)).toEqual([]);
+    expect(getCanonicalActivity("dpo.designate")).toBeDefined();
+    expect(getCanonicalActivity("dpo.operating_model")).toBeDefined();
+  });
+
+  it("57. sin designación o sin caso deriva sin inventar", () => {
+    const missing = mustOutcomeFor(P15, { "dpo.designated": "no" });
+    expect(missing.outcome_key).toBe("prerequisite_missing");
+    expect(
+      missing.outcome.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("dpo.designate");
+    const idle = mustOutcomeFor(P15, {
+      "dpo.designated": "yes",
+      "dpo.escalation.case_known": "none",
+    });
+    expect(idle.outcome_key).toBe("no_pending_case");
+    expect(idle.rule_id).toBe("no-case");
+  });
+
+  function fullEscalation(over: FactMap = {}): FactMap {
+    return {
+      "dpo.designated": "yes",
+      "dpo.escalation.case_known": "known",
+      "dpo.escalation.registered": "yes",
+      "dpo.escalation.determined": "yes",
+      "dpo.escalation.communicated": "yes",
+      "dpo.escalation.measures": "yes",
+      "dpo.escalation.findings_derivation": "na",
+      ...over,
+    };
+  }
+
+  it("58. caso completo produce escalamiento con expediente", () => {
+    const e = mustOutcomeFor(P15, fullEscalation());
+    expect(e.outcome_key).toBe("escalation_complete");
+    expect(e.rule_id).toBe("all-verified");
+    expect(e.outcome.classification).toBe("legal_requirement");
+    const note = e.outcome.next_actions.find((a) => a.kind === "info")?.note ?? "";
+    for (const item of [
+      "registro de comunicación",
+      "antecedentes remitidos",
+      "fecha y destinatario",
+      "medidas adoptadas o instruidas",
+    ]) {
+      expect(note, item).toContain(item);
+    }
+  });
+
+  it("59. pendiente o sin información mantiene en curso", () => {
+    const e = mustOutcomeFor(P15, fullEscalation({ "dpo.escalation.measures": "no" }));
+    expect(e.outcome_key).toBe("escalation_in_progress");
+    const u = mustOutcomeFor(
+      P15,
+      fullEscalation({ "dpo.escalation.communicated": "unknown" }),
+    );
+    expect(u.outcome_key).toBe("escalation_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+  });
+
+  it("60. sin gravedad ni scoring inventados", () => {
+    const text = JSON.stringify(P15).toLowerCase();
+    expect(text).not.toContain("score");
+    expect(text).not.toContain("gravedad");
+    expect(text).not.toContain("severidad");
+    expect(text).not.toContain("criticidad");
+  });
+});
+
+describe("batch D1: D1.17 decision", () => {
+  it("61. D1.17 tiene exactamente un protocolo activo mode decision", () => {
+    expect(getProtocolForActivity("dpo.terminate_or_replace")).toBe(P17);
+    expect(P17.protocol_key).toBe("dpo.terminate_or_replace.v1");
+    expect(P17.mode).toBe("decision");
+    expect(P17.version).toBe(1);
+    expect(P17.entry_node_key).toBe("designation-gate");
+    expect(getCanonicalActivity(P17.activity_key)?.human_code).toBe("D1.17");
+  });
+
+  it("62. tres determinaciones y síntesis con lifecycle externo", () => {
+    expect(P17.nodes.map((n) => n.node_key)).toEqual([
+      "designation-gate",
+      "event-confirmation",
+      "other-source",
+      "requirement-assessment",
+    ]);
+    expect(P17.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      [
+        "replacement_required",
+        "voluntary_closure",
+        "assessment_incomplete",
+        "prerequisite_missing",
+        "no_pending_event",
+      ].sort(),
+    );
+    expect(P17.external_fact_keys).toContain("mpi.lifecycle_status");
+  });
+
+  it("63. estructura válida y siguientes pasos resuelven", () => {
+    expect(validateProtocolStructure(P17)).toEqual([]);
+    expect(getCanonicalActivity("dpo.designate")).toBeDefined();
+    expect(getCanonicalActivity("mpi.lifecycle_review")).toBeDefined();
+  });
+
+  function terminationFacts(over: FactMap = {}): FactMap {
+    return {
+      "dpo.designated": "yes",
+      "dpo.termination.event_occurred": "occurred",
+      "mpi.lifecycle_status": "implemented",
+      "dpo.termination.other_source": "no",
+      ...over,
+    };
+  }
+
+  it("64. MPI activo exige vacancia con reemplazo y enlaza D1.08", () => {
+    const e = mustOutcomeFor(P17, terminationFacts());
+    expect(e.outcome_key).toBe("replacement_required");
+    expect(e.rule_id).toBe("mpi-active-replacement");
+    expect(e.outcome.classification).toBe("legal_requirement");
+    expect(
+      e.outcome.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("dpo.designate");
+  });
+
+  it("65. voluntario sin otra fuente cierra sin deber automático", () => {
+    const e = mustOutcomeFor(
+      P17,
+      terminationFacts({
+        "mpi.lifecycle_status": "not_adopted",
+        "dpo.termination.other_source": "no",
+      }),
+    );
+    expect(e.outcome_key).toBe("voluntary_closure");
+    expect(e.rule_id).toBe("voluntary-closure");
+  });
+
+  it("66. otra fuente vigente también exige reemplazo", () => {
+    const e = mustOutcomeFor(
+      P17,
+      terminationFacts({
+        "mpi.lifecycle_status": "discontinued",
+        "dpo.termination.other_source": "yes",
+      }),
+    );
+    expect(e.outcome_key).toBe("replacement_required");
+    expect(e.rule_id).toBe("other-source-replacement");
+  });
+
+  it("67. sin evento no hay gestión; unknown nunca cierra", () => {
+    const idle = mustOutcomeFor(
+      P17,
+      terminationFacts({ "dpo.termination.event_occurred": "none" }),
+    );
+    expect(idle.outcome_key).toBe("no_pending_event");
+    const noLifecycle = mustOutcomeFor(
+      P17,
+      terminationFacts({ "mpi.lifecycle_status": "unknown" }),
+    );
+    expect(noLifecycle.outcome_key).toBe("assessment_incomplete");
+    const noEvent = mustOutcomeFor(
+      P17,
+      terminationFacts({ "dpo.termination.event_occurred": "unknown" }),
+    );
+    expect(noEvent.outcome_key).toBe("assessment_incomplete");
+    // Incompleto deriva a revisar el ciclo de vida, no a cerrar.
+    const review = noLifecycle.outcome.next_actions.find((a) => a.kind === "activity");
+    expect(review?.activity_key).toBe("mpi.lifecycle_review");
+  });
+
+  it("68. no recrea D1.02 ni D1.04: lifecycle solo externo", () => {
+    for (const f of protocolFactKeys(P17)) {
+      expect(
+        f === "dpo.designated" ||
+          f.startsWith("dpo.termination.") ||
+          f === "mpi.lifecycle_status",
+        f,
+      ).toBe(true);
+    }
+    expect(P17.external_fact_keys).toEqual(["mpi.lifecycle_status"]);
+    const text = JSON.stringify(P17.nodes);
+    expect(text).not.toContain("dpo_assessment.");
+  });
+});
+
+describe("batch D1: D1.18 procedure", () => {
+  it("69. D1.18 tiene exactamente un protocolo activo mode procedure", () => {
+    expect(getProtocolForActivity("mpi.assemble_program")).toBe(P18);
+    expect(P18.protocol_key).toBe("mpi.assemble_program.v1");
+    expect(P18.mode).toBe("procedure");
+    expect(P18.version).toBe(1);
+    expect(P18.entry_node_key).toBe("verify-responsible");
+    expect(getCanonicalActivity(P18.activity_key)?.human_code).toBe("D1.18");
+  });
+
+  it("70. nueve componentes planos más síntesis", () => {
+    expect(P18.nodes.map((n) => n.node_key)).toEqual([
+      "verify-responsible",
+      "verify-dpo",
+      "characterize-treatments",
+      "identify-risks",
+      "verify-protocols",
+      "verify-obligations",
+      "verify-integration",
+      "verify-diffusion",
+      "consolidate-evidence",
+      "final-confirmation",
+    ]);
+    expect(P18.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["assembly_complete", "assembly_in_progress", "not_started"].sort(),
+    );
+    expect(P18.nodes.filter((n) => n.node_type === "decision")).toHaveLength(1);
+    expect(P18.external_fact_keys).toContain("mpi.lifecycle_status");
+  });
+
+  it("71. estructura válida y siguientes pasos resuelven", () => {
+    expect(validateProtocolStructure(P18)).toEqual([]);
+    expect(getCanonicalActivity("mpi.lifecycle_review")).toBeDefined();
+    expect(getCanonicalActivity("mpi.formalize_adoption")).toBeDefined();
+  });
+
+  function fullAssembly(over: FactMap = {}): FactMap {
+    return {
+      "mpi.lifecycle_status": "implementing",
+      "mpi.assembly.responsible_identified": "yes",
+      "mpi.assembly.dpo_verified": "yes",
+      "mpi.assembly.treatments_characterized": "yes",
+      "mpi.assembly.risks_identified": "yes",
+      "mpi.assembly.protocols_verified": "yes",
+      "mpi.assembly.obligations_verified": "yes",
+      "mpi.assembly.integration_verified": "yes",
+      "mpi.assembly.diffusion_verified": "yes",
+      "mpi.assembly.evidence_consolidated": "yes",
+      ...over,
+    };
+  }
+
+  it("72. sin adopción no inicia y deriva a D1.04 sin recrearlo", () => {
+    const e = mustOutcomeFor(P18, {
+      ...fullAssembly(),
+      "mpi.lifecycle_status": "not_adopted",
+    });
+    expect(e.outcome_key).toBe("not_started");
+    expect(e.rule_id).toBe("not-adopted");
+    expect(
+      e.outcome.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("mpi.formalize_adoption");
+  });
+
+  it("73. todo operativo produce programa implementado con efecto", () => {
+    const e = mustOutcomeFor(P18, fullAssembly());
+    expect(e.outcome_key).toBe("assembly_complete");
+    expect(e.rule_id).toBe("all-operative");
+    expect(e.outcome.classification).toBe("legal_requirement");
+    expect(e.outcome.canonical_fact_effects).toEqual([
+      { fact_key: "mpi.lifecycle_status", value: "implemented" },
+    ]);
+    expect(
+      e.outcome.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("mpi.lifecycle_review");
+  });
+
+  it("74. pendiente mantiene en ensamblaje sin efectos", () => {
+    const e = mustOutcomeFor(
+      P18,
+      fullAssembly({ "mpi.assembly.diffusion_verified": "no" }),
+    );
+    expect(e.outcome_key).toBe("assembly_in_progress");
+    const u = mustOutcomeFor(
+      P18,
+      fullAssembly({ "mpi.assembly.risks_identified": "unknown" }),
+    );
+    expect(u.outcome_key).toBe("assembly_in_progress");
+    expect(u.rule_id).toBe("pending-components");
+  });
+
+  it("75. namespaces propios y disjuntos", () => {
+    for (const f of protocolFactKeys(P18)) {
+      expect(
+        f === "mpi.lifecycle_status" || f.startsWith("mpi.assembly."),
+        f,
+      ).toBe(true);
+    }
+    const own = new Set(
+      protocolFactKeys(P18).filter((f) => f !== "mpi.lifecycle_status"),
+    );
+    for (const f of protocolFactKeys(P15)) {
+      expect(own.has(f), `D1.18/D1.15 colisionan: ${f}`).toBe(false);
+    }
+    for (const f of protocolFactKeys(P17)) {
+      if (f === "mpi.lifecycle_status" || f === "dpo.designated") continue;
+      expect(own.has(f), `D1.18/D1.17 colisionan: ${f}`).toBe(false);
+    }
+  });
+});
+
+describe("batch D1: integridad del tercer batch", () => {
+  it("76. diez protocolos registrados, anteriores intactos", () => {
+    expect(
+      [
+        P01,
+        P08,
+        P11,
+        P15,
+        P17,
+        P18,
+      ].every((p) => validateProtocolStructure(p).length === 0),
+    ).toBe(true);
+    expect(getProtocolForActivity("dpo.need_assessment")?.mode).toBe("decision");
+    expect(getProtocolForActivity("mpi.need_assessment")?.mode).toBe("decision");
+    expect(getProtocolForActivity("mpi.formalize_adoption")?.mode).toBe("procedure");
+    expect(
+      getProtocolForActivity("dpo.initial_governance_validation")?.mode,
+    ).toBe("checklist");
+  });
+
+  it("77. D1.18 finalizado materializa implemented; incompleto no", () => {
+    const company = newCompany("Ensambla SpA");
+    const facts: FactMap = {
+      "mpi.lifecycle_status": "implementing",
+      "mpi.assembly.responsible_identified": "yes",
+      "mpi.assembly.dpo_verified": "yes",
+      "mpi.assembly.treatments_characterized": "yes",
+      "mpi.assembly.risks_identified": "yes",
+      "mpi.assembly.protocols_verified": "yes",
+      "mpi.assembly.obligations_verified": "yes",
+      "mpi.assembly.integration_verified": "yes",
+      "mpi.assembly.diffusion_verified": "yes",
+      "mpi.assembly.evidence_consolidated": "yes",
+    };
+    const validated = validateProcedureFinalization({
+      protocol: P18,
+      company,
+      facts,
+      outcomeKey: "assembly_complete",
+    });
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const { company: next, applied } = applyProcedureFinalization(
+      company,
+      P18,
+      validated.effects,
+    );
+    expect(applied).toEqual(["mpi.lifecycle_status"]);
+    expect(
+      next.protocolAnswers[P18.protocol_key]?.["mpi.lifecycle_status"]?.value,
+    ).toBe("implemented");
+    // Repetir es no-op.
+    const twice = applyProcedureFinalization(next, P18, validated.effects);
+    expect(twice.applied).toEqual([]);
+    // Incompleto nunca escribe.
+    const rejected = validateProcedureFinalization({
+      protocol: P18,
+      company,
+      facts: { ...facts, "mpi.assembly.diffusion_verified": "no" },
+      outcomeKey: "assembly_complete",
+    });
+    expect(rejected.ok).toBe(false);
+  });
+
+  it("78. desacuerdo de lifecycle bloquea D1.17 hasta resolución", () => {
+    const at = new Date().toISOString();
+    const company = newCompany("Ciclo SpA");
+    company.protocolAnswers[P18.protocol_key] = {
+      "mpi.lifecycle_status": {
+        value: "implemented",
+        source: P18.protocol_key,
+        updatedAt: at,
+      },
+    };
+    company.protocolAnswers["dpo.need_assessment.v1"] = {
+      "mpi.lifecycle_status": {
+        value: "implementing",
+        source: "dpo.need_assessment.v1",
+        updatedAt: at,
+      },
+    };
+    expect(blockingConflicts(P17, company)).toContain("mpi.lifecycle_status");
+    // Acuerdo entre fuentes libera.
+    company.protocolAnswers["dpo.need_assessment.v1"] = {
+      "mpi.lifecycle_status": {
+        value: "implemented",
+        source: "dpo.need_assessment.v1",
+        updatedAt: at,
+      },
+    };
+    expect(blockingConflicts(P17, company)).not.toContain("mpi.lifecycle_status");
+  });
+
+  it("79. D1.15 y D1.17 sin lifecycle effects: solo execution-ready", () => {
+    for (const p of [P15, P17]) {
+      for (const o of p.outcomes) {
+        expect(
+          o.canonical_fact_effects ?? [],
+          `${p.protocol_key}/${o.outcome_key}`,
+        ).toEqual([]);
+      }
+    }
   });
 });

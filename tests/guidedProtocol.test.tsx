@@ -72,7 +72,7 @@ describe("motor de ejecución guiada — piloto D1.02", () => {
     expect(
       listProtocols().map((p) => p.activity_key).sort(),
     ).toEqual(
-      ["dpo.designate", "dpo.initial_governance_validation", "dpo.need_assessment", "dpo.operating_model", "governance.preventive_framework", "mpi.formalize_adoption", "mpi.need_assessment"].sort(),
+      ["dpo.designate", "dpo.infringement_escalation", "dpo.initial_governance_validation", "dpo.need_assessment", "dpo.operating_model", "dpo.terminate_or_replace", "governance.preventive_framework", "mpi.assemble_program", "mpi.formalize_adoption", "mpi.need_assessment"].sort(),
     );
   });
 

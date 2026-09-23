@@ -122,6 +122,12 @@ export interface TreatmentScopedState {
   protocolAnswers: Record<string, Record<string, FactRecord>>;
   reasoningRecords: Record<string, ProtocolReasoningRecord>;
   purposes: Record<string, PurposeScopedState>;
+  /** Colecciones locales D2. Ausentes = válidas (workspaces previos). */
+  actors?: Record<string, ActorRecord>;
+  dataItems?: Record<string, DataItemRecord>;
+  sources?: Record<string, SourceRecord>;
+  retentionRules?: Record<string, RetentionRuleRecord>;
+  dataPurposeLinks?: DataPurposeLink[];
 }
 
 /** Estado scopeado de una finalidad: objeto + protocol state propio. */
@@ -129,6 +135,59 @@ export interface PurposeScopedState {
   purpose: TreatmentPurpose;
   protocolAnswers: Record<string, Record<string, FactRecord>>;
   reasoningRecords: Record<string, ProtocolReasoningRecord>;
+}
+
+/**
+ * Value objects locales de un treatment. Viven solo dentro de su
+ * TreatmentContext, con identidad local para edición y referencia
+ * interna. Sin execution scope, workflow, reasoning, progreso,
+ * lifecycle ni alcance global: NO son entidades jurídicas nuevas.
+ */
+
+/** Actor interviniente en el tratamiento (rol por actor×treatment). */
+export interface ActorRecord {
+  id: string;
+  kind: "organization" | "person";
+  name: string;
+  /** Ausente = interviniente sin rol de tratamiento determinado. */
+  role?: "responsible" | "processor";
+  evidenceRef?: string;
+}
+
+/** Unidad local direccionable de datos dentro del tratamiento. */
+export interface DataItemRecord {
+  id: string;
+  label: string;
+  /** Atributo de agrupación, NO entidad. */
+  category?: string;
+  sourceRefs: string[];
+  note?: string;
+}
+
+/** Origen local de datos. Vocabulario cerrado canónico D2.04. */
+export interface SourceRecord {
+  id: string;
+  kind: "data_subject" | "third_party_org" | "public_source" | "other";
+  description: string;
+  evidenceRef?: string;
+}
+
+/** Regla local de conservación sobre conjuntos de datos. */
+export interface RetentionRuleRecord {
+  id: string;
+  dataItemIds: string[];
+  /** Período o criterio textual. Nunca interpretar como fecha. */
+  criterion: string;
+  legalBasisRef?: string;
+  event?: string;
+  owner: string;
+  exceptions?: string;
+}
+
+/** Relación dato↔finalidad. Owner: treatment. Sin entidad Matrix. */
+export interface DataPurposeLink {
+  dataId: string;
+  purposeId: string;
 }
 
 /**

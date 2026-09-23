@@ -161,6 +161,11 @@ function touchCompany(company: CompanyState): CompanyState {
   return { ...company, updatedAt: nowIso() };
 }
 
+/** Refresca el sello temporal en operaciones de subárbol (locals.ts). */
+export function touchCompanyState(company: CompanyState): CompanyState {
+  return touchCompany(company);
+}
+
 export function createTreatment(
   company: CompanyState,
   input: { name: string; description?: string; canonicalTreatmentId?: string },
@@ -333,7 +338,7 @@ export function renamePurpose(
   });
 }
 
-/** Hard-delete con purga del protocol state propio + navegación. */
+/** Hard-delete con purga del protocol state propio + links + navegación. */
 export function deletePurpose(
   company: CompanyState,
   treatmentId: string,
@@ -347,7 +352,13 @@ export function deletePurpose(
     ...company,
     treatments: {
       ...(company.treatments ?? {}),
-      [treatmentId]: { ...t, purposes },
+      [treatmentId]: {
+        ...t,
+        purposes,
+        dataPurposeLinks: (t.dataPurposeLinks ?? []).filter(
+          (l) => l.purposeId !== purposeId,
+        ),
+      },
     },
   });
   if (

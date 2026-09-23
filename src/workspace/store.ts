@@ -234,8 +234,7 @@ function checkTreatmentState(v: unknown, companyId: string): boolean {
 }
 
 // Helpers del subárbol jurídico: reutilizan los guards compartidos del
-// archivo (este commit incorpora el hardening de migración pendiente
-// como dependencia estructural; ver mensaje de commit).
+// archivo.
 
 /**
  * Migra el subárbol jurídico, entrada por entrada: conserva
@@ -244,6 +243,229 @@ function checkTreatmentState(v: unknown, companyId: string): boolean {
  * y descarta lo corrupto. Sin treatments el resultado es ausencia
  * válida (D1-only).
  */
+function isNonEmptyString(v: unknown): v is string {
+  return typeof v === "string" && v.trim() !== "";
+}
+
+function checkActorRecord(v: unknown): boolean {
+  if (!isRecord(v)) return false;
+  if (typeof v.id !== "string" || v.id.trim() === "") return false;
+  if (v.kind !== "organization" && v.kind !== "person") return false;
+  if (typeof v.name !== "string" || v.name.trim() === "") return false;
+  if (
+    v.role !== undefined &&
+    v.role !== "responsible" &&
+    v.role !== "processor"
+  ) {
+    return false;
+  }
+  return v.evidenceRef === undefined || typeof v.evidenceRef === "string";
+}
+
+function checkDataItemRecord(v: unknown, sourceIds: Set<string>): boolean {
+  if (!isRecord(v)) return false;
+  if (typeof v.id !== "string" || v.id.trim() === "") return false;
+  if (typeof v.label !== "string" || v.label.trim() === "") return false;
+  if (v.category !== undefined && typeof v.category !== "string") return false;
+  if (!Array.isArray(v.sourceRefs)) return false;
+  const seen = new Set<string>();
+  for (const r of v.sourceRefs) {
+    if (typeof r !== "string" || seen.has(r) || !sourceIds.has(r)) return false;
+    seen.add(r);
+  }
+  return v.note === undefined || typeof v.note === "string";
+}
+
+function checkSourceRecord(v: unknown): boolean {
+  if (!isRecord(v)) return false;
+  if (typeof v.id !== "string" || v.id.trim() === "") return false;
+  if (
+    v.kind !== "data_subject" &&
+    v.kind !== "third_party_org" &&
+    v.kind !== "public_source" &&
+    v.kind !== "other"
+  ) {
+    return false;
+  }
+  if (!isNonEmptyString(v.description)) return false;
+  return v.evidenceRef === undefined || typeof v.evidenceRef === "string";
+}
+
+function checkRetentionRuleRecord(v: unknown, dataIds: Set<string>): boolean {
+  if (!isRecord(v)) return false;
+  if (typeof v.id !== "string" || v.id.trim() === "") return false;
+  if (!Array.isArray(v.dataItemIds)) return false;
+  const seen = new Set<string>();
+  for (const r of v.dataItemIds) {
+    if (typeof r !== "string" || seen.has(r) || !dataIds.has(r)) return false;
+    seen.add(r);
+  }
+  if (!isNonEmptyString(v.criterion)) return false;
+  if (!isNonEmptyString(v.owner)) return false;
+  if (v.legalBasisRef !== undefined && typeof v.legalBasisRef !== "string") {
+    return false;
+  }
+  if (v.event !== undefined && typeof v.event !== "string") return false;
+  return v.exceptions === undefined || typeof v.exceptions === "string";
+}
+
+function checkDataPurposeLinks(
+  v: unknown,
+  dataIds: Set<string>,
+  purposeIds: Set<string>,
+): boolean {
+  if (!Array.isArray(v)) return false;
+  const seen = new Set<string>();
+  for (const l of v) {
+    if (!isRecord(l)) return false;
+    if (typeof l.dataId !== "string" || typeof l.purposeId !== "string") {
+      return false;
+    }
+    if (!dataIds.has(l.dataId) || !purposeIds.has(l.purposeId)) return false;
+    const key = JSON.stringify([l.dataId, l.purposeId]);
+    if (seen.has(key)) return false;
+    seen.add(key);
+  }
+  return true;
+}
+
+/**
+ * Valida colecciones locales de un treatment ya migrado (IDs únicos por
+ * construcción de mapa + refs existentes). Devuelve el treatment
+ * normalizado o null si es inválido.
+ */
+function checkLocalCollections(
+  t: Record<string, unknown>,
+): Record<string, unknown> | null {
+  const actors = isRecord(t.actors) ? t.actors : {};
+  const dataItems = isRecord(t.dataItems) ? t.dataItems : {};
+  const sources = isRecord(t.sources) ? t.sources : {};
+  const retentionRules = isRecord(t.retentionRules) ? t.retentionRules : {};
+  for (const [k, a] of Object.entries(actors)) {
+    if (!isSafeKey(k) || !isRecord(a) || a.id !== k || !checkActorRecord(a)) {
+      return null;
+    }
+  }
+  const sourceIds = new Set<string>();
+  for (const [k, s] of Object.entries(sources)) {
+    if (!isSafeKey(k) || !isRecord(s) || s.id !== k || !checkSourceRecord(s)) {
+      return null;
+    }
+    sourceIds.add(k);
+  }
+  const dataIds = new Set<string>();
+  for (const [k, d] of Object.entries(dataItems)) {
+    if (!isSafeKey(k) || !isRecord(d) || d.id !== k) return null;
+    dataIds.add(k);
+  }
+  for (const d of Object.values(dataItems)) {
+    if (!checkDataItemRecord(d, sourceIds)) return null;
+  }
+  for (const [k, r] of Object.entries(retentionRules)) {
+    if (!isSafeKey(k) || !isRecord(r) || r.id !== k) return null;
+  }
+  for (const r of Object.values(retentionRules)) {
+    if (!checkRetentionRuleRecord(r, dataIds)) return null;
+  }
+  const purposeIds = new Set<string>(
+    isRecord(t.purposes) ? Object.keys(t.purposes) : [],
+  );
+  const links = t.dataPurposeLinks ?? [];
+  if (!checkDataPurposeLinks(links, dataIds, purposeIds)) return null;
+  return { actors, dataItems, sources, retentionRules, dataPurposeLinks: links };
+}
+
+/**
+ * Normaliza colecciones locales en migración: conserva entradas
+ * válidas (normalizando ids a sus claves), poda refs colgadas y
+ * duplica nada. Lo inválido se descarta entrada por entrada.
+ */
+function normalizeLocalCollections(
+  t: Record<string, unknown>,
+  purposeIds: Set<string>,
+): {
+  actors: Record<string, unknown>;
+  dataItems: Record<string, unknown>;
+  sources: Record<string, unknown>;
+  retentionRules: Record<string, unknown>;
+  dataPurposeLinks: unknown[];
+} {
+  const actors: Record<string, unknown> = {};
+  if (isRecord(t.actors)) {
+    for (const [k, a] of Object.entries(t.actors)) {
+      if (!isSafeKey(k) || !isRecord(a)) continue;
+      const candidate = { ...a, id: k };
+      if (checkActorRecord(candidate)) actors[k] = candidate;
+    }
+  }
+  const sources: Record<string, unknown> = {};
+  if (isRecord(t.sources)) {
+    for (const [k, s] of Object.entries(t.sources)) {
+      if (!isSafeKey(k) || !isRecord(s)) continue;
+      const candidate = { ...s, id: k };
+      if (checkSourceRecord(candidate)) sources[k] = candidate;
+    }
+  }
+  const sourceIds = new Set(Object.keys(sources));
+  const dataItems: Record<string, unknown> = {};
+  if (isRecord(t.dataItems)) {
+    for (const [k, d] of Object.entries(t.dataItems)) {
+      if (!isSafeKey(k) || !isRecord(d)) continue;
+      const refs = Array.isArray(d.sourceRefs)
+        ? [...new Set(d.sourceRefs.filter((r) => typeof r === "string" && sourceIds.has(r)))]
+        : [];
+      const candidate: Record<string, unknown> = { ...d, id: k, sourceRefs: refs };
+      if (
+        typeof candidate.label === "string" &&
+        candidate.label.trim() !== "" &&
+        (candidate.category === undefined || typeof candidate.category === "string") &&
+        (candidate.note === undefined || typeof candidate.note === "string") &&
+        checkDataItemRecord(candidate, sourceIds)
+      ) {
+        dataItems[k] = candidate;
+      }
+    }
+  }
+  const dataIds = new Set(Object.keys(dataItems));
+  const retentionRules: Record<string, unknown> = {};
+  if (isRecord(t.retentionRules)) {
+    for (const [k, r] of Object.entries(t.retentionRules)) {
+      if (!isSafeKey(k) || !isRecord(r)) continue;
+      const refs = Array.isArray(r.dataItemIds)
+        ? [...new Set(r.dataItemIds.filter((x) => typeof x === "string" && dataIds.has(x)))]
+        : [];
+      const candidate: Record<string, unknown> = { ...r, id: k, dataItemIds: refs };
+      if (
+        isNonEmptyString(candidate.criterion) &&
+        isNonEmptyString(candidate.owner) &&
+        (candidate.legalBasisRef === undefined || typeof candidate.legalBasisRef === "string") &&
+        (candidate.event === undefined || typeof candidate.event === "string") &&
+        (candidate.exceptions === undefined || typeof candidate.exceptions === "string") &&
+        checkRetentionRuleRecord(candidate, dataIds)
+      ) {
+        retentionRules[k] = candidate;
+      }
+    }
+  }
+  // Solo contra purposes ya normalizados (los inválidos se podaron).
+  const seen = new Set<string>();
+  const dataPurposeLinks: unknown[] = [];
+  if (Array.isArray(t.dataPurposeLinks)) {
+    for (const l of t.dataPurposeLinks) {
+      if (!isRecord(l)) continue;
+      if (typeof l.dataId !== "string" || typeof l.purposeId !== "string") {
+        continue;
+      }
+      if (!dataIds.has(l.dataId) || !purposeIds.has(l.purposeId)) continue;
+      const key = JSON.stringify([l.dataId, l.purposeId]);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      dataPurposeLinks.push({ dataId: l.dataId, purposeId: l.purposeId });
+    }
+  }
+  return { actors, dataItems, sources, retentionRules, dataPurposeLinks };
+}
+
 function pruneAnswerMaps(v: unknown): Record<string, Record<string, FactRecord>> {
   const out: Record<string, Record<string, FactRecord>> = {};
   if (!isRecord(v)) return out;
@@ -283,14 +505,20 @@ function migrateTreatments(
         purposes[pk] = candidate as PurposeScopedState;
       }
     }
+    const locals = normalizeLocalCollections(
+      { ...t, purposes },
+      new Set(Object.keys(purposes)),
+    );
     const candidate = {
       ...t,
       context: ctx,
       protocolAnswers: pruneAnswerMaps(t.protocolAnswers),
       reasoningRecords: pruneMap(t.reasoningRecords, checkReasoningRecord),
       purposes,
+      ...locals,
     };
     if (!checkTreatmentState(candidate, companyId)) continue;
+    if (!checkLocalCollections(candidate)) continue;
     out[key] = candidate as TreatmentScopedState;
   }
   return out;
@@ -345,7 +573,8 @@ export function validateCompanyState(
         !isRecord(item.context) ||
         (item.context as Record<string, unknown>).id !== key ||
         (item.context as Record<string, unknown>).companyId !== data.id ||
-        !checkTreatmentState(item, data.id as string)
+        !checkTreatmentState(item, data.id as string) ||
+        !checkLocalCollections(item)
       ) {
         return {
           ok: false,

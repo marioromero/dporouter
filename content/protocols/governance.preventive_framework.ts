@@ -271,6 +271,12 @@ export const GOVERNANCE_PREVENTIVE_FRAMEWORK_PROTOCOL: ExecutionProtocol = {
       explanation:
         "El rol, las acciones existentes, los vacíos, el marco con responsabilidades y el seguimiento quedaron verificados.",
       provenance: "agency_standard",
+      // Mapping directo e inequívoco al valor canónico declarado por la
+      // actividad (state_effect): se materializa solo mediante la
+      // finalización explícita del procedimiento.
+      canonical_fact_effects: [
+        { fact_key: "governance.prevention_framework_status", value: "established" },
+      ],
       next_actions: [
         {
           kind: "info",

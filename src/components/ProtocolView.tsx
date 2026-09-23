@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import type {
   ExecutionProtocol,
   FactMap,
@@ -573,6 +574,24 @@ export function ProtocolOutcomeView({
     a.show_when ? evaluateCondition(a.show_when, session.facts) : true,
   );
   const nature = provenanceHuman(outcome.classification);
+  const { company, finalizeProtocolOutcome } = useWorkspace();
+  const [finalizeErrors, setFinalizeErrors] = useState<string[]>([]);
+  const canonicalEffects = outcome.canonical_fact_effects ?? [];
+  // Solo procedure/checklist con efectos declarados ofrecen registro
+  // explícito. El modo decision con juicio (D1.03) usa su propio camino.
+  const offersFinalize =
+    (protocol.mode === "procedure" || protocol.mode === "checklist") &&
+    canonicalEffects.length > 0;
+  // Solo lectura: registrado si la observación propia coincide en valor.
+  // Nunca escribe al renderizar.
+  const finalizeRegistered =
+    offersFinalize &&
+    company != null &&
+    canonicalEffects.every(
+      (e) =>
+        company.protocolAnswers[protocol.protocol_key]?.[e.fact_key]?.value ===
+        e.value,
+    );
   return (
     <>
       <ProtocolChrome
@@ -657,6 +676,49 @@ export function ProtocolOutcomeView({
               >
                 Resolver siguiente antecedente
               </Link>
+            </div>
+          </>
+        ) : null}
+        {offersFinalize ? (
+          <>
+            <h3>Registro del estado</h3>
+            <div data-testid="guia-finalize">
+              <p>
+                Este resultado definitivo puede registrarse como antecedente
+                de la empresa. El registro es una acción explícita: no ocurre
+                por abrir esta pantalla ni por navegar.
+              </p>
+              <p data-testid="guia-finalize-status">
+                {finalizeRegistered
+                  ? "Estado registrado para esta empresa."
+                  : "Estado aún no registrado."}
+              </p>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="btn secondary small"
+                  data-testid="guia-finalize-apply"
+                  onClick={() => {
+                    const r = finalizeProtocolOutcome(
+                      protocol.protocol_key,
+                      outcome.outcome_key,
+                      session.facts,
+                    );
+                    setFinalizeErrors(r.ok ? [] : r.errors);
+                  }}
+                >
+                  {finalizeRegistered
+                    ? "Confirmar registro del estado"
+                    : "Registrar estado de la empresa"}
+                </button>
+              </div>
+              {finalizeErrors.length > 0 ? (
+                <ul data-testid="guia-finalize-errors">
+                  {finalizeErrors.map((e, i) => (
+                    <li key={i}>{e}</li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
           </>
         ) : null}

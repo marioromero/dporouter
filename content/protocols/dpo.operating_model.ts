@@ -277,6 +277,12 @@ export const DPO_OPERATING_MODEL_PROTOCOL: ExecutionProtocol = {
       explanation:
         "La designación, el reporte, el involucramiento, el acceso, el mapa de funciones y la cadencia quedaron verificados.",
       provenance: "agency_standard",
+      // Mapping directo e inequívoco al valor canónico declarado por la
+      // actividad (state_effect): se materializa solo mediante la
+      // finalización explícita del procedimiento.
+      canonical_fact_effects: [
+        { fact_key: "dpo.operating_model_status", value: "active" },
+      ],
       next_actions: [
         {
           kind: "activity",

@@ -21,6 +21,14 @@ import type { ExecutionProtocol, FactCondition } from "./types";
  * antecedente (requerimiento vigente o decisión voluntaria) y deriva a
  * D1.02 cuando aún está sin definir. La evaluación previa de D1.02, si
  * existe, se revisa como evidencia de entrada (input_dependency).
+ *
+ * Registro de finalización:
+ * - execution-ready: true (la guía conduce al acto verificable);
+ * - product-ready: false (sin lifecycle effects canónicos);
+ * - motivo: el state_effect canónico es un bundle temporal/histórico
+ *   (fecha efectiva, append de historial, vacancy/replacement) no
+ *   representable como pares {fact_key, value}; no se materializa
+ *   parcialmente ni con workarounds.
  */
 
 const TRIGGER_FACT = "dpo.designation_trigger";

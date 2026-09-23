@@ -22,6 +22,10 @@ import {
   finalizeJudgment,
   type ReasoningDraft,
 } from "./reasoning";
+import {
+  applyProcedureFinalization,
+  validateProcedureFinalization,
+} from "./finalize";
 import type { FactMap } from "../../content/protocols/types";
 
 /**
@@ -55,6 +59,11 @@ interface WorkspaceContextValue {
     draft: ReasoningDraft,
     facts: FactMap,
   ) => { ok: true } | { ok: false; errors: string[] };
+  finalizeProtocolOutcome: (
+    protocolKey: string,
+    outcomeKey: string,
+    facts: FactMap,
+  ) => { ok: true; applied: string[] } | { ok: false; errors: string[] };
   setLastLocation: (path: string) => void;
   exportCompany: (id: string) => string | null;
   importCompany: (json: string) => { ok: true } | { ok: false; error: string };
@@ -331,6 +340,40 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     [company, updateCompany],
   );
 
+  /**
+   * Finalización explícita genérica de un resultado definitivo con
+   * efectos canónicos (protocolos procedure/checklist). Valida primero
+   * y persiste los facts en una única escritura junto al estado. Nunca
+   * se ejecuta por render ni navegación: solo por acción del profesional.
+   * Independiente del camino de juicio D1.03 (sin ReasoningRecord).
+   */
+  const finalizeProtocolOutcome = useCallback(
+    (
+      protocolKey: string,
+      outcomeKey: string,
+      facts: FactMap,
+    ): { ok: true; applied: string[] } | { ok: false; errors: string[] } => {
+      if (!company) return { ok: false, errors: ["Requiere empresa activa."] };
+      const protocol = getProtocol(protocolKey);
+      if (!protocol) return { ok: false, errors: ["Protocolo desconocido."] };
+      const validated = validateProcedureFinalization({
+        protocol,
+        company,
+        facts,
+        outcomeKey,
+      });
+      if (!validated.ok) return validated;
+      const { company: next, applied } = applyProcedureFinalization(
+        company,
+        protocol,
+        validated.effects,
+      );
+      updateCompany(company.id, () => next);
+      return { ok: true, applied };
+    },
+    [company, updateCompany],
+  );
+
   const exportCompany = useCallback(
     (id: string): string | null => {
       const c = data.companies[id];
@@ -402,6 +445,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       clearDiagnosticFact,
       resolveFactConflict,
       finalizeProfessionalJudgment,
+      finalizeProtocolOutcome,
       setLastLocation,
       exportCompany,
       importCompany,
@@ -410,7 +454,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       data, profile, company, createProfile, selectProfile, createCompany,
       selectCompany, setActivityStatus, saveProtocolAnswer, clearProtocolAnswers,
       clearProtocolFact, setDiagnosticFact, clearDiagnosticFact, resolveFactConflict,
-      finalizeProfessionalJudgment, setLastLocation,
+      finalizeProfessionalJudgment, finalizeProtocolOutcome, setLastLocation,
       exportCompany, importCompany,
     ],
   );

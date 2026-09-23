@@ -280,6 +280,97 @@ test("D1.11 completo enlaza plan anual D1.13", async ({ page }) => {
   ).toBeVisible();
 });
 
+async function crearEmpresaFin(page: import("@playwright/test").Page) {
+  await page.goto("/empresa");
+  await page.getByLabel("Nombre del perfil local").fill("Perfil Fin");
+  await page.getByRole("button", { name: "Crear perfil" }).click();
+  await page.getByLabel("Nombre de la empresa").fill("Empresa Fin");
+  await page.getByRole("button", { name: "Crear empresa" }).click();
+}
+
+test("D1.01 finaliza explícito, idempotente y sin mutar al render", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await page.goto(`${D101}/guia/role-gate`);
+  await answerAndContinue(page, "yes");
+  for (const node of [
+    "identify-actions",
+    "determine-gaps",
+    "define-framework",
+    "followup-mechanism",
+  ]) {
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Marco preventivo establecido y evidenciado",
+  );
+  // Sin acción no hay registro, ni siquiera recargando.
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado aún no registrado",
+  );
+  await page.reload();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado aún no registrado",
+  );
+  // Acción explícita registra; repetir es no-op; recargar conserva.
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+  await page.reload();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+  // El estado materializado llega a Diagnóstico como hecho de la empresa.
+  await page.goto("/diagnostico");
+  await expect(page.getByTestId("diagnostico-facts")).toContainText(
+    "Antecedente registrado",
+  );
+});
+
+test("D1.11 finaliza su estado canónico", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await page.goto(`${D111}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  for (const node of [
+    "organize-reporting",
+    "organize-involvement",
+    "organize-info-access",
+    "organize-functions",
+    "organize-cadence",
+  ]) {
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Modelo operativo activo",
+  );
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado aún no registrado",
+  );
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+});
+
+test("D1.08 completo no ofrece registro canónico", async ({ page }) => {
+  await page.goto(`${D108}/guia/trigger-gate`);
+  await answerAndContinue(page, "voluntary");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "internal");
+  await answerAndContinue(page, "na");
+  await answerAndContinue(page, "na");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Designación formalizada y trazable",
+  );
+  await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
+});
+
 test("batch sin overflow en desktop y tablet", async ({ page }) => {
   for (const path of [
     D104,

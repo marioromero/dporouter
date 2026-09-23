@@ -46,11 +46,26 @@ const EXPECTED_NAMES = [
 
 const EXPECTED_BASIS: Record<string, "agency_standard" | "legal_requirement"> = {
   "transparency.policy_assemble": "legal_requirement",
-  "transparency.publication_validate": "legal_requirement",
-  "consent.mechanism_design": "legal_requirement",
+  "transparency.publication_validate": "agency_standard",
+  "consent.mechanism_design": "agency_standard",
   "consent.freedom_assess": "agency_standard",
-  "consent.proof_design": "legal_requirement",
-  "consent.withdrawal_enable": "legal_requirement",
+  "consent.proof_design": "agency_standard",
+  "consent.withdrawal_enable": "agency_standard",
+};
+
+const EXPECTED_TRIGGERS: Record<string, string> = {
+  "transparency.policy_assemble":
+    "¿La empresa cuenta con una política o información pública de tratamiento vigente, completa y actualizada conforme a los requisitos aplicables de transparencia?",
+  "transparency.publication_validate":
+    "¿La política o información de transparencia vigente se encuentra efectivamente publicada y disponible al público bajo las condiciones legales aplicables?",
+  "consent.mechanism_design":
+    "¿La finalidad activa utiliza consentimiento como base de licitud y requiere diseñar o verificar su mecanismo de obtención?",
+  "consent.freedom_assess":
+    "¿El consentimiento previsto para esta finalidad puede considerarse libre en el contexto concreto en que será solicitado?",
+  "consent.proof_design":
+    "¿El mecanismo tiene capacidad real de producir y conservar evidencia suficiente cuando ocurra un consentimiento?",
+  "consent.withdrawal_enable":
+    "¿La finalidad dispone de un mecanismo que permita retirar el consentimiento bajo las condiciones legales aplicables?",
 };
 
 const EXPECTED_TYPES: Record<string, "assessment" | "implementation" | "monitoring"> = {
@@ -420,6 +435,33 @@ describe("contenido canónico D3", () => {
   it("28. D3 sin protocolos: no execution-ready por existir en canon", () => {
     for (const k of D3_ACTIVITY_KEYS) {
       expect(getProtocolForActivity(k), k).toBeUndefined();
+    }
+  });
+
+  it("29. triggers canónicos verbatim (fidelity patch)", () => {
+    for (const a of D03_ACTIVITIES) {
+      expect(a.trigger_question, a.activity_key).toBe(
+        EXPECTED_TRIGGERS[a.activity_key],
+      );
+    }
+  });
+
+  it("30. aplicabilidad final: D3.01/D3.02 vacías, rama consentimiento purpose-scoped", () => {
+    expect(
+      getCanonicalActivity("transparency.policy_assemble")?.conditions_applicability,
+    ).toEqual([]);
+    expect(
+      getCanonicalActivity("transparency.publication_validate")?.conditions_applicability,
+    ).toEqual([]);
+    for (const k of [
+      "consent.mechanism_design",
+      "consent.freedom_assess",
+      "consent.proof_design",
+      "consent.withdrawal_enable",
+    ]) {
+      expect(getCanonicalActivity(k)?.conditions_applicability, k).toEqual([
+        "purpose.lawful_basis = consent",
+      ]);
     }
   });
 });

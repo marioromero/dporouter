@@ -9,6 +9,7 @@ import type {
 } from "./types";
 import { newId, nowIso } from "./types";
 import type { FactMap } from "../../content/protocols/types";
+import { DERIVED_FACT_PREFIX } from "../../content/protocols/types";
 
 /**
  * Identidad + scope Stage 1 (Company → TreatmentContext → TreatmentPurpose).
@@ -491,6 +492,10 @@ export function saveScopedProtocolAnswer(
   source: string,
 ): CompanyState | null {
   if (!resolveExecutionContext(company, ctx)) return null;
+  // Hardening del namespace reservado: las proyecciones read-only no
+  // se escriben por ninguna vía (la validación lo impide en contenido;
+  // esto lo impide en runtime ante escritura programática directa).
+  if (factKey.startsWith(DERIVED_FACT_PREFIX)) return null;
   const current = getScopedProtocolAnswers(company, ctx, protocolKey);
   return setInMaps(company, ctx, protocolKey, {
     ...current,

@@ -72,7 +72,7 @@ describe("motor de ejecución guiada — piloto D1.02", () => {
     expect(
       listProtocols().map((p) => p.activity_key).sort(),
     ).toEqual(
-      ["dpo.annual_plan", "dpo.annual_report", "dpo.confidentiality_duty", "dpo.contact_and_agency_notification", "dpo.designate", "dpo.governance_revalidation", "dpo.infringement_escalation", "dpo.initial_governance_validation", "dpo.need_assessment", "dpo.operating_model", "dpo.terminate_or_replace", "governance.preventive_framework", "mpi.assemble_program", "mpi.certification_lifecycle", "mpi.formalize_adoption", "mpi.internal_disciplinary_framework", "mpi.internal_regulation_integrate", "mpi.internal_reporting_and_whistleblowing", "mpi.lifecycle_review", "mpi.need_assessment"].sort(),
+      ["dpo.annual_plan", "dpo.annual_report", "dpo.confidentiality_duty", "dpo.contact_and_agency_notification", "dpo.designate", "dpo.governance_revalidation", "dpo.infringement_escalation", "dpo.initial_governance_validation", "dpo.need_assessment", "dpo.operating_model", "dpo.terminate_or_replace", "governance.preventive_framework", "mpi.assemble_program", "mpi.certification_lifecycle", "mpi.formalize_adoption", "mpi.internal_disciplinary_framework", "mpi.internal_regulation_integrate", "mpi.internal_reporting_and_whistleblowing", "mpi.lifecycle_review", "mpi.need_assessment", "treatment.actor_roles", "treatment.inventory_create", "treatment.purpose_define"].sort(),
     );
   });
 

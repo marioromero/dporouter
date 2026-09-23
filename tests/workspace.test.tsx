@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { D01_ACTIVITIES } from "../content/domains/d01";
 import { D02_ACTIVITIES } from "../content/domains/d02";
 import { getCanonicalActivity } from "../content/registry";
+import { ALL_ACTIVITIES } from "../content/registry";
 import { getProtocolForActivity } from "../content/protocols/registry";
 import { humanApplicability } from "../src/applicabilityText";
 import { WorkspaceProvider } from "../src/workspace/context";
@@ -431,7 +432,13 @@ describe("Activity View V2", () => {
   });
 
   it("sin protocolo muestra pendiente honesto y sin fingir", () => {
-    renderWorkView("treatment.inventory_create");
+    // Primera actividad canónica sin protocolo: no depende de qué
+    // actividades ya tienen guía (el conjunto crece por batch).
+    const pending = ALL_ACTIVITIES.find(
+      (a) => !getProtocolForActivity(a.activity_key),
+    );
+    if (!pending) throw new Error("sin actividad sin protocolo");
+    renderWorkView(pending.activity_key);
     expect(screen.getByText("Guía operativa pendiente de incorporar")).toBeTruthy();
     const body = document.body.textContent ?? "";
     expect(body).not.toContain("Iniciar evaluación");

@@ -18,6 +18,17 @@ import { loadWorkspace, saveWorkspace, validateCompanyState } from "./store";
 import { getProtocol } from "../../content/protocols/registry";
 import { getCanonicalActivity } from "../../content/registry";
 import {
+  addActor as addActorState,
+  addDataItem as addDataItemState,
+  addSource as addSourceState,
+  deleteActor as deleteActorState,
+  deleteDataItem as deleteDataItemState,
+  deleteSource as deleteSourceState,
+  updateActor as updateActorState,
+  updateDataItem as updateDataItemState,
+  updateSource as updateSourceState,
+} from "./locals";
+import {
   clearScopedProtocolAnswers as clearScopedAnswersState,
   createPurpose as createPurposeState,
   createTreatment as createTreatmentState,
@@ -31,6 +42,11 @@ import {
   selectTreatment as selectTreatmentState,
 } from "./scope";
 import type { ExecutionContext } from "./types";
+import type {
+  ActorInput,
+  DataItemInput,
+  SourceInput,
+} from "./locals";
 import {
   applyFinalization,
   finalizeJudgment,
@@ -111,6 +127,41 @@ interface WorkspaceContextValue {
   selectPurpose: (treatmentId: string, id: string | null) => void;
   renamePurpose: (treatmentId: string, id: string, description: string) => void;
   deletePurpose: (treatmentId: string, id: string) => void;
+  addActor: (treatmentId: string, input: ActorInput) => string | null;
+  updateActor: (
+    treatmentId: string,
+    id: string,
+    patch: {
+      kind?: "organization" | "person";
+      name?: string;
+      role?: "responsible" | "processor" | null;
+      evidenceRef?: string | null;
+    },
+  ) => void;
+  deleteActor: (treatmentId: string, id: string) => void;
+  addDataItem: (treatmentId: string, input: DataItemInput) => string | null;
+  updateDataItem: (
+    treatmentId: string,
+    id: string,
+    patch: {
+      label?: string;
+      category?: string | null;
+      sourceRefs?: string[];
+      note?: string | null;
+    },
+  ) => void;
+  deleteDataItem: (treatmentId: string, id: string) => void;
+  addSource: (treatmentId: string, input: SourceInput) => string | null;
+  updateSource: (
+    treatmentId: string,
+    id: string,
+    patch: {
+      kind?: SourceInput["kind"];
+      description?: string;
+      evidenceRef?: string | null;
+    },
+  ) => void;
+  deleteSource: (treatmentId: string, id: string) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -430,6 +481,148 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     },
     [company, updateCompany],
   );
+
+  /**
+   * CRUD de estructuras locales D2 (actores, datos, fuentes). Operan
+   * sobre objetos del treatment activo; nunca generan facts, outcomes
+   * ni completan actividades.
+   */
+  const addActor = useCallback(
+    (treatmentId: string, input: ActorInput): string | null => {
+      if (!company) return null;
+      let created: string | null = null;
+      updateCompany(company.id, (c) => {
+        const result = addActorState(c, treatmentId, input);
+        if (!result) return c;
+        created = result.id;
+        return result.company;
+      });
+      return created;
+    },
+    [company, updateCompany],
+  );
+
+  const updateActor = useCallback(
+    (
+      treatmentId: string,
+      id: string,
+      patch: {
+        kind?: "organization" | "person";
+        name?: string;
+        role?: "responsible" | "processor" | null;
+        evidenceRef?: string | null;
+      },
+    ) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => updateActorState(c, treatmentId, id, patch) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const deleteActor = useCallback(
+    (treatmentId: string, id: string) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => deleteActorState(c, treatmentId, id) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const addDataItem = useCallback(
+    (treatmentId: string, input: DataItemInput): string | null => {
+      if (!company) return null;
+      let created: string | null = null;
+      updateCompany(company.id, (c) => {
+        const result = addDataItemState(c, treatmentId, input);
+        if (!result) return c;
+        created = result.id;
+        return result.company;
+      });
+      return created;
+    },
+    [company, updateCompany],
+  );
+
+  const updateDataItem = useCallback(
+    (
+      treatmentId: string,
+      id: string,
+      patch: {
+        label?: string;
+        category?: string | null;
+        sourceRefs?: string[];
+        note?: string | null;
+      },
+    ) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => updateDataItemState(c, treatmentId, id, patch) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const deleteDataItem = useCallback(
+    (treatmentId: string, id: string) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => deleteDataItemState(c, treatmentId, id) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const addSource = useCallback(
+    (treatmentId: string, input: SourceInput): string | null => {
+      if (!company) return null;
+      let created: string | null = null;
+      updateCompany(company.id, (c) => {
+        const result = addSourceState(c, treatmentId, input);
+        if (!result) return c;
+        created = result.id;
+        return result.company;
+      });
+      return created;
+    },
+    [company, updateCompany],
+  );
+
+  const updateSource = useCallback(
+    (
+      treatmentId: string,
+      id: string,
+      patch: {
+        kind?: SourceInput["kind"];
+        description?: string;
+        evidenceRef?: string | null;
+      },
+    ) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => updateSourceState(c, treatmentId, id, patch) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const deleteSource = useCallback(
+    (treatmentId: string, id: string) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => deleteSourceState(c, treatmentId, id) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
   const setDiagnosticFact = useCallback(
     (factKey: string, value: string) => {
       if (!company) return;
@@ -675,6 +868,15 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       selectPurpose,
       renamePurpose,
       deletePurpose,
+      addActor,
+      updateActor,
+      deleteActor,
+      addDataItem,
+      updateDataItem,
+      deleteDataItem,
+      addSource,
+      updateSource,
+      deleteSource,
     }),
     [
       data, profile, company, createProfile, selectProfile, createCompany,
@@ -684,7 +886,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       finalizeProfessionalJudgment, finalizeProtocolOutcome, setLastLocation,
       exportCompany, importCompany, addTreatment, selectTreatment,
       renameTreatment, deleteTreatment, addPurpose, selectPurpose,
-      renamePurpose, deletePurpose,
+      renamePurpose, deletePurpose, addActor, updateActor, deleteActor,
+      addDataItem, updateDataItem, deleteDataItem, addSource, updateSource,
+      deleteSource,
     ],
   );
 

@@ -32,7 +32,7 @@ function deriveTreatmentFacts(
   const t = getTreatment(company, treatmentId);
   if (!t) return {};
   const actors = Object.values(t.actors ?? {});
-  const purposes = Object.keys(t.purposes ?? {});
+  const purposes = Object.values(t.purposes ?? {});
   return {
     "derived.treatment.actors_exist": yesNo(actors.length > 0),
     // Vacío → "no": un conjunto vacío nunca cuenta como completo.
@@ -41,6 +41,18 @@ function deriveTreatmentFacts(
       actors.length > 0 && actors.every((a) => a.role !== undefined),
     ),
     "derived.treatment.purposes_exist": yesNo(purposes.length > 0),
+    // Mecánico: todas descritas (no vacías). Nunca especificidad,
+    // explicitud ni licitud: eso es juicio profesional.
+    "derived.treatment.purposes_described_complete": yesNo(
+      purposes.length > 0 &&
+        purposes.every((p) => p.purpose.description.trim() !== ""),
+    ),
+    // Mecánico: identificador canónico asignado (requisito D2.01).
+    // El id local estable siempre existe; esto verifica el acto de
+    // identificación, no corrección.
+    "derived.treatment.identified": yesNo(
+      (t.context.canonicalTreatmentId ?? "").trim() !== "",
+    ),
     "derived.treatment.data_items_exist": yesNo(
       Object.keys(t.dataItems ?? {}).length > 0,
     ),

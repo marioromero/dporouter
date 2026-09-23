@@ -9,6 +9,13 @@ import {
 import { useWorkspace } from "../workspace/context";
 import { statusOf } from "../workspace/store";
 import { summarizeDomain, suggestNextReview } from "../workspace/suggest";
+import {
+  ActorWorkspace,
+  DataWorkspace,
+  PurposeWorkspace,
+  SourceWorkspace,
+  TreatmentWorkspace,
+} from "../components/TreatmentWorkspace";
 
 /**
  * Empresa: vista principal tras seleccionar empresa. Trabajo real por
@@ -300,6 +307,16 @@ export function EmpresaPage() {
           </>
         )}
       </section>
+
+      <TreatmentWorkspace />
+      {company.activeTreatmentId ? (
+        <>
+          <PurposeWorkspace treatmentId={company.activeTreatmentId} />
+          <ActorWorkspace treatmentId={company.activeTreatmentId} />
+          <DataWorkspace treatmentId={company.activeTreatmentId} />
+          <SourceWorkspace treatmentId={company.activeTreatmentId} />
+        </>
+      ) : null}
 
       <h2>Dominios</h2>
       <ul className="domain-rows">

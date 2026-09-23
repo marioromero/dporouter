@@ -6,6 +6,7 @@ import { newCompany } from "../src/workspace/types";
 import { validateCompanyState } from "../src/workspace/store";
 import { blockingScopedConflicts } from "../src/workspace/scope";
 import { createPurpose, createTreatment } from "../src/workspace/scope";
+import { saveScopedProtocolAnswer } from "../src/workspace/scope";
 import { addActor, addDataItem, addSource, updateActor } from "../src/workspace/locals";
 import { deriveSessionFacts } from "../src/workspace/derived";
 
@@ -159,6 +160,8 @@ describe("derived session facts", () => {
       "derived.treatment.actors_exist": "no",
       "derived.treatment.actors_roles_complete": "no",
       "derived.treatment.purposes_exist": "no",
+      "derived.treatment.purposes_described_complete": "no",
+      "derived.treatment.identified": "no",
       "derived.treatment.data_items_exist": "no",
       "derived.treatment.sources_exist": "no",
     });
@@ -199,6 +202,8 @@ describe("derived session facts", () => {
       "derived.treatment.actors_exist": "no",
       "derived.treatment.actors_roles_complete": "no",
       "derived.treatment.purposes_exist": "no",
+      "derived.treatment.purposes_described_complete": "no",
+      "derived.treatment.identified": "no",
       "derived.treatment.data_items_exist": "yes",
       "derived.treatment.sources_exist": "yes",
     });
@@ -298,13 +303,36 @@ describe("derived session facts", () => {
     if (e2.status === "outcome") expect(e2.outcome_key).toBe("pending");
   });
 
-  it("D1 intacto: company no proyecta; ningún protocolo usa derived.*", () => {
+  it("D1 intacto: company no proyecta; solo D2 consume derived.*", () => {
     const c = newCompany("D1 SpA");
     expect(deriveSessionFacts(c, { scope: "company", companyId: c.id })).toEqual({});
     for (const p of listProtocols()) {
       expect(validateProtocolStructure(p)).toEqual([]);
-      const text = JSON.stringify(p);
-      expect(text.includes("derived."), p.protocol_key).toBe(false);
+      const usesDerived = JSON.stringify(p).includes("derived.");
+      if ((p.execution_scope ?? "company") === "company") {
+        expect(usesDerived, p.protocol_key).toBe(false);
+      }
     }
+  });
+
+  it("hardening: escritura directa de derived.* se rechaza", () => {
+    const c = newCompany("H SpA");
+    const made = createTreatment(c, { name: "T" });
+    if (!made) throw new Error("sin treatment");
+    const ctx = {
+      scope: "treatment",
+      companyId: made.company.id,
+      treatmentId: made.treatmentId,
+    } as const;
+    expect(
+      saveScopedProtocolAnswer(
+        made.company,
+        ctx,
+        "fixture.x.v1",
+        "derived.treatment.actors_exist",
+        "yes",
+        "fixture.x.v1",
+      ),
+    ).toBeNull();
   });
 });

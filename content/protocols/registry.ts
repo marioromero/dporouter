@@ -20,6 +20,9 @@ import { DPO_ANNUAL_REPORT_PROTOCOL } from "./dpo.annual_report";
 import { DPO_GOVERNANCE_REVALIDATION_PROTOCOL } from "./dpo.governance_revalidation";
 import { MPI_CERTIFICATION_LIFECYCLE_PROTOCOL } from "./mpi.certification_lifecycle";
 import { MPI_LIFECYCLE_REVIEW_PROTOCOL } from "./mpi.lifecycle_review";
+import { TREATMENT_INVENTORY_CREATE_PROTOCOL } from "./treatment.inventory_create";
+import { TREATMENT_ACTOR_ROLES_PROTOCOL } from "./treatment.actor_roles";
+import { TREATMENT_PURPOSE_DEFINE_PROTOCOL } from "./treatment.purpose_define";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -54,6 +57,9 @@ const PROTOCOLS: ExecutionProtocol[] = [
   DPO_GOVERNANCE_REVALIDATION_PROTOCOL,
   MPI_CERTIFICATION_LIFECYCLE_PROTOCOL,
   MPI_LIFECYCLE_REVIEW_PROTOCOL,
+  TREATMENT_INVENTORY_CREATE_PROTOCOL,
+  TREATMENT_ACTOR_ROLES_PROTOCOL,
+  TREATMENT_PURPOSE_DEFINE_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

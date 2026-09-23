@@ -19,9 +19,13 @@ import { DPO_ANNUAL_REPORT_PROTOCOL as P14 } from "../content/protocols/dpo.annu
 import { DPO_GOVERNANCE_REVALIDATION_PROTOCOL as P16 } from "../content/protocols/dpo.governance_revalidation";
 import { MPI_CERTIFICATION_LIFECYCLE_PROTOCOL as P19 } from "../content/protocols/mpi.certification_lifecycle";
 import { MPI_LIFECYCLE_REVIEW_PROTOCOL as P20 } from "../content/protocols/mpi.lifecycle_review";
+import { TREATMENT_INVENTORY_CREATE_PROTOCOL as PD201 } from "../content/protocols/treatment.inventory_create";
+import { TREATMENT_ACTOR_ROLES_PROTOCOL as PD202 } from "../content/protocols/treatment.actor_roles";
+import { TREATMENT_PURPOSE_DEFINE_PROTOCOL as PD203 } from "../content/protocols/treatment.purpose_define";
 import type { ExecutionProtocol } from "../content/protocols/types";
 import {
   getProtocolForActivity,
+  listProtocols,
   validateProtocolStructure,
 } from "../content/protocols/registry";
 import { evaluateProtocol } from "../src/guidance/engine";
@@ -33,6 +37,7 @@ import {
   validateProcedureFinalization,
 } from "../src/workspace/finalize";
 import { newCompany } from "../src/workspace/types";
+import { finalizeJudgment } from "../src/workspace/reasoning";
 import { validateCompanyState } from "../src/workspace/store";
 import { getCanonicalActivity } from "../content/registry";
 
@@ -2363,5 +2368,227 @@ describe("reconciliación D1.02/D1.04/D1.09", () => {
       outcomeKey: "formalization_complete",
     });
     expect(rejected.ok).toBe(false);
+  });
+});
+
+describe("batch D2: D2.01 procedure treatment-scoped", () => {
+  it("155. D2.01 tiene protocolo treatment con derived prerequisites", () => {
+    expect(getProtocolForActivity("treatment.inventory_create")).toBe(PD201);
+    expect(PD201.mode).toBe("procedure");
+    expect(PD201.execution_scope).toBe("treatment");
+    expect(PD201.entry_node_key).toBe("identify-processes");
+    expect(getCanonicalActivity(PD201.activity_key)?.human_code).toBe("D2.01");
+  });
+
+  it("156. nodos manuales + síntesis; sin preguntas estructurales", () => {
+    expect(PD201.nodes.map((n) => n.node_key)).toEqual([
+      "identify-processes",
+      "review-relations",
+      "assure-traceability",
+      "final-confirmation",
+    ]);
+    for (const n of PD201.nodes) {
+      if (n.node_type === "question" && n.fact_key) {
+        expect(n.fact_key.startsWith("derived."), n.node_key).toBe(false);
+      }
+    }
+    expect(validateProtocolStructure(PD201)).toEqual([]);
+  });
+
+  function fullInventory(over: FactMap = {}): FactMap {
+    return {
+      "derived.treatment.identified": "yes",
+      "derived.treatment.actors_exist": "yes",
+      "derived.treatment.purposes_exist": "yes",
+      "derived.treatment.data_items_exist": "yes",
+      "derived.treatment.sources_exist": "yes",
+      "inventory.processes_identified": "yes",
+      "inventory.relations_reviewed": "yes",
+      "inventory.traceability_assured": "yes",
+      ...over,
+    };
+  }
+
+  it("157. estructura faltante deriva a workspace, no a yes/no", () => {
+    const e = mustOutcomeFor(PD201, fullInventory({ "derived.treatment.sources_exist": "no" }));
+    expect(e.outcome_key).toBe("inventory_incomplete");
+    expect(e.rule_id).toBe("structural-missing");
+  });
+
+  it("158. todo verificado completa y enlaza D2.02", () => {
+    const e = mustOutcomeFor(PD201, fullInventory());
+    expect(e.outcome_key).toBe("inventory_complete");
+    expect(e.rule_id).toBe("all-verified");
+    expect(
+      e.outcome.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("treatment.actor_roles");
+  });
+
+  it("159. pendiente profesional no completa; unknown bloquea", () => {
+    const e = mustOutcomeFor(
+      PD201,
+      fullInventory({ "inventory.relations_reviewed": "no" }),
+    );
+    expect(e.outcome_key).toBe("inventory_in_progress");
+    const u = mustOutcomeFor(
+      PD201,
+      fullInventory({ "inventory.processes_identified": "unknown" }),
+    );
+    expect(u.outcome_key).toBe("inventory_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+  });
+});
+
+describe("batch D2: D2.02 decision con juicio", () => {
+  it("160. D2.02 decision treatment con conclusión profesional", () => {
+    expect(getProtocolForActivity("treatment.actor_roles")).toBe(PD202);
+    expect(PD202.mode).toBe("decision");
+    expect(PD202.execution_scope).toBe("treatment");
+    expect(PD202.entry_node_key).toBe("structural-gate");
+    expect(getCanonicalActivity(PD202.activity_key)?.human_code).toBe("D2.02");
+  });
+
+  it("161. compuerta estructural + conclusión; estructura válida", () => {
+    expect(PD202.nodes.map((n) => n.node_key)).toEqual([
+      "structural-gate",
+      "adopt-conclusion",
+    ]);
+    expect(PD202.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["actors_incomplete", "classification_sound", "remediation_needed"].sort(),
+    );
+    expect(validateProtocolStructure(PD202)).toEqual([]);
+  });
+
+  function actorFacts(over: FactMap = {}): FactMap {
+    return {
+      "derived.treatment.actors_exist": "yes",
+      "derived.treatment.actors_roles_complete": "yes",
+      ...over,
+    };
+  }
+
+  it("162. estructura incompleta deriva a workspace sin juzgar", () => {
+    const e = mustOutcomeFor(
+      PD202,
+      actorFacts({ "derived.treatment.actors_roles_complete": "no" }),
+    );
+    expect(e.outcome_key).toBe("actors_incomplete");
+    expect(e.rule_id).toBe("structural-missing");
+  });
+
+  it("163. estructura completa habilita conclusión, no la deduce", () => {
+    const e = evaluateProtocol(PD202, actorFacts());
+    // La síntesis deriva al nodo de adopción, no a un outcome calculado.
+    expect(e.status).toBe("awaiting_facts");
+  });
+
+  it("164. juicio válido registra conclusión sin efectos", () => {
+    const company = newCompany("Actores SpA");
+    const draft = {
+      conclusion: "classification_sound",
+      legal_question: "¿Clasificación correcta?",
+      evidence_refs: ["Matriz v1"],
+      rationale: "Cada actor con su evidencia contractual.",
+      decided_by: "Abogada",
+      reviewed_by: "",
+      decided_at: new Date().toISOString(),
+    };
+    const result = finalizeJudgment({
+      protocol: PD202,
+      company,
+      facts: actorFacts(),
+      draft,
+      legalBasis: [
+        {
+          source_id: "cl_ley_19628_2026",
+          source_name: "Ley N° 19.628",
+          article_or_provision: "Artículo 2",
+          reference_text: "",
+          source_url: "",
+          basis_type: "law",
+          regulatory_status: "transitional",
+          last_verified_at: "2026-09-21",
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.conclusion).toBe("classification_sound");
+    expect(result.effects).toEqual([]);
+  });
+});
+
+describe("batch D2: D2.03 procedure treatment-scoped", () => {
+  it("165. D2.03 procedure treatment con derived de purposes", () => {
+    expect(getProtocolForActivity("treatment.purpose_define")).toBe(PD203);
+    expect(PD203.mode).toBe("procedure");
+    expect(PD203.execution_scope).toBe("treatment");
+    expect(getCanonicalActivity(PD203.activity_key)?.human_code).toBe("D2.03");
+  });
+
+  it("166. checks profesionales + síntesis; estructura válida", () => {
+    expect(PD203.nodes.map((n) => n.node_key)).toEqual([
+      "verify-specificity",
+      "verify-data-relation",
+      "final-confirmation",
+    ]);
+    expect(PD203.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["purposes_defined", "purposes_incomplete", "purposes_in_progress"].sort(),
+    );
+    expect(validateProtocolStructure(PD203)).toEqual([]);
+  });
+
+  function fullPurposes(over: FactMap = {}): FactMap {
+    return {
+      "derived.treatment.purposes_exist": "yes",
+      "derived.treatment.purposes_described_complete": "yes",
+      "purposes.specific_explicit": "yes",
+      "purposes.data_related": "yes",
+      ...over,
+    };
+  }
+
+  it("167. sin finalidades deriva a workspace", () => {
+    const e = mustOutcomeFor(
+      PD203,
+      fullPurposes({ "derived.treatment.purposes_exist": "no" }),
+    );
+    expect(e.outcome_key).toBe("purposes_incomplete");
+    expect(e.rule_id).toBe("structural-missing");
+  });
+
+  it("168. todo verificado define y enlaza D2.05", () => {
+    const e = mustOutcomeFor(PD203, fullPurposes());
+    expect(e.outcome_key).toBe("purposes_defined");
+    expect(e.rule_id).toBe("all-verified");
+    expect(e.outcome.classification).toBe("legal_requirement");
+  });
+
+  it("169. existencia no equivale a validez jurídica", () => {
+    const e = mustOutcomeFor(
+      PD203,
+      fullPurposes({ "purposes.specific_explicit": "no" }),
+    );
+    expect(e.outcome_key).toBe("purposes_in_progress");
+  });
+});
+
+describe("batch D2: integridad sin redundancia manual", () => {
+  it("170. ningún protocolo registrado pregunta por derived.*", () => {
+    for (const p of listProtocols()) {
+      for (const n of p.nodes) {
+        if (n.node_type === "question" && n.fact_key) {
+          expect(n.fact_key.startsWith("derived."), `${p.protocol_key}/${n.node_key}`).toBe(false);
+        }
+      }
+      expect(validateProtocolStructure(p), p.protocol_key).toEqual([]);
+    }
+  });
+
+  it("171. D2 usa scopes treatment; D1 intacto company", () => {
+    for (const p of [PD201, PD202, PD203]) {
+      expect(p.execution_scope).toBe("treatment");
+    }
+    expect(getProtocolForActivity("dpo.need_assessment")?.execution_scope ?? "company").toBe("company");
   });
 });

@@ -1,4 +1,5 @@
 import type { ExecutionProtocol, GuidanceNode } from "./types";
+import { isDerivedFactKey } from "./types";
 import { DPO_NEED_ASSESSMENT_PROTOCOL } from "./dpo.need_assessment";
 import { MPI_FORMALIZE_ADOPTION_PROTOCOL } from "./mpi.formalize_adoption";
 import { DPO_GOVERNANCE_VALIDATION_PROTOCOL } from "./dpo.initial_governance_validation";
@@ -139,6 +140,13 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
       if (!n.fact_key) {
         errors.push(`${protocol.protocol_key}: nodo ${n.node_key} sin fact_key`);
       }
+      // Redundancia manual prohibida: una verdad objetivamente derivada
+      // no admite pregunta paralela que pueda contradecir el workspace.
+      if (n.fact_key && isDerivedFactKey(n.fact_key)) {
+        errors.push(
+          `${protocol.protocol_key}: nodo ${n.node_key} produce fact derivado ${n.fact_key}`,
+        );
+      }
       if (!n.options || n.options.length === 0) {
         errors.push(`${protocol.protocol_key}: nodo ${n.node_key} sin opciones`);
       }
@@ -198,12 +206,18 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
     }
   }
   // Efectos canónicos: solo pares {fact_key, value} no vacíos.
-  // Sin expresiones, condiciones ni lógica.
+  // Sin expresiones, condiciones ni lógica. Nunca hacia derived facts
+  // (no persistibles ni materializables).
   for (const o of protocol.outcomes) {
     for (const e of o.canonical_fact_effects ?? []) {
       if (e.fact_key.trim() === "" || e.value.trim() === "") {
         errors.push(
           `${protocol.protocol_key}: outcome ${o.outcome_key} con canonical fact effect vacío`,
+        );
+      }
+      if (isDerivedFactKey(e.fact_key)) {
+        errors.push(
+          `${protocol.protocol_key}: outcome ${o.outcome_key} materializa fact derivado ${e.fact_key}`,
         );
       }
     }
@@ -231,6 +245,8 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
     }
   }
   for (const f of protocol.decision_fact_keys) {
+    // Los derived facts los produce la proyección de sesión, no un nodo.
+    if (isDerivedFactKey(f)) continue;
     const producer = protocol.nodes.find(
       (n) => n.node_type === "question" && n.fact_key === f,
     );
@@ -250,6 +266,14 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
   const externalFacts = new Set(protocol.external_fact_keys ?? []);
   for (const n of protocol.nodes) {
     for (const f of n.required_facts ?? []) {
+      // Derived disponible globalmente por scope, pero exigible solo
+      // declarado como externo (dependencia explícita).
+      if (isDerivedFactKey(f) && !externalFacts.has(f)) {
+        errors.push(
+          `${protocol.protocol_key}: nodo ${n.node_key} requiere derived fact sin declarar ${f}`,
+        );
+        continue;
+      }
       if (!producedFacts.has(f) && !externalFacts.has(f)) {
         errors.push(
           `${protocol.protocol_key}: nodo ${n.node_key} requiere fact desconocido ${f}`,

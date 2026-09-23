@@ -3,6 +3,7 @@ import type {
   FactMap,
   ProtocolOutcome,
 } from "../../content/protocols/types";
+import { isDerivedFactKey } from "../../content/protocols/types";
 import { evaluateProtocol } from "../guidance/engine";
 import { blockingConflicts, getFactStatus } from "./facts";
 import type { CompanyState } from "./types";
@@ -98,6 +99,13 @@ export function validateProcedureFinalization(
   }
   const effects = outcome.canonical_fact_effects ?? [];
   if (effects.length === 0) {
+    return {
+      ok: false,
+      errors: ["Este resultado no registra estado canónico."],
+    };
+  }
+  // Las proyecciones read-only nunca se materializan.
+  if (effects.some((e) => isDerivedFactKey(e.fact_key))) {
     return {
       ok: false,
       errors: ["Este resultado no registra estado canónico."],

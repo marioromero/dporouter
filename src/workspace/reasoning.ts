@@ -8,6 +8,7 @@ import { blockingConflicts } from "./facts";
 import { describeFactKey } from "./factLabels";
 import type { CompanyState, ProtocolReasoningRecord } from "./types";
 import type { LegalBasis } from "../types";
+import { isDerivedFactKey } from "../../content/protocols/types";
 import { nowIso } from "./types";
 
 /**
@@ -321,6 +322,10 @@ export function finalizeJudgment(input: FinalizeInput): FinalizeResult {
     fact_key: e.fact_key,
     value: e.value,
   }));
+  // Las proyecciones read-only nunca se materializan, tampoco por juicio.
+  if (effects.some((e) => isDerivedFactKey(e.fact_key))) {
+    return { ok: false, errors: ["La conclusión no registra estado canónico."] };
+  }
   return {
     ok: true,
     record,

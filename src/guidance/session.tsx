@@ -16,6 +16,7 @@ import {
   getScopedProtocolAnswers,
   scopedInjectedRecord,
 } from "../workspace/scope";
+import { deriveSessionFacts } from "../workspace/derived";
 
 /**
  * Sesión de evaluación guiada (Stage 1).
@@ -152,11 +153,24 @@ export function GuidanceSessionProvider({
   );
 
   const answersFor = useCallback(
-    (protocolKey: string, scope: ExecutionScope = "company"): FactMap => ({
-      ...injectedFacts(protocolKey, scope),
-      ...ownAnswers(protocolKey, scope),
-    }),
-    [injectedFacts, ownAnswers],
+    (protocolKey: string, scope: ExecutionScope = "company"): FactMap => {
+      const base: FactMap = {
+        ...injectedFacts(protocolKey, scope),
+        ...ownAnswers(protocolKey, scope),
+      };
+      // Overlay read-only final: proyecciones del namespace reservado.
+      // Nunca se escriben al workspace ni pasan por resolución.
+      if (company) {
+        const ctx = activeExecutionContext(company, scope);
+        if (ctx) {
+          for (const [k, v] of Object.entries(deriveSessionFacts(company, ctx))) {
+            base[k] = v;
+          }
+        }
+      }
+      return base;
+    },
+    [company, injectedFacts, ownAnswers],
   );
 
   const isProvided = useCallback(

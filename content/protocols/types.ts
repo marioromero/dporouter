@@ -17,6 +17,18 @@
 
 export type ProtocolMode = "decision" | "procedure" | "checklist";
 
+/**
+ * Namespace reservado de derived session facts: proyecciones
+ * read-only de structured state, no persistibles, no escribibles
+ * manualmente, no materializables. La validación estructural lo
+ * impone; este módulo lo declara para no acoplar capas.
+ */
+export const DERIVED_FACT_PREFIX = "derived.";
+
+export function isDerivedFactKey(factKey: string): boolean {
+  return factKey.startsWith(DERIVED_FACT_PREFIX);
+}
+
 export type GuidanceNodeType = "question" | "decision" | "result";
 
 export type GuidanceAnswerType = "yes_no_unknown" | "single_select" | "none";

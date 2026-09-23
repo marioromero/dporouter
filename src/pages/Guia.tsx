@@ -64,7 +64,10 @@ function GuiaContent({
   const protocol = getProtocolForActivity(activityKey);
   const def = getCanonicalActivity(activityKey);
   const domain = getDomainForActivity(activityKey);
-  const session = useGuidanceProtocol(protocol?.protocol_key ?? "");
+  const session = useGuidanceProtocol(
+    protocol?.protocol_key ?? "",
+    protocol?.execution_scope ?? "company",
+  );
   const { company } = useWorkspace();
   if (!protocol || !def) {
     return <NotFoundPage />;

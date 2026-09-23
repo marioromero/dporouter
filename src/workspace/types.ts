@@ -74,7 +74,77 @@ export interface FactResolution {
   resolvedAt: string;
   decidedBy: "professional";
   alternatives: FactRecord[];
+  /**
+   * Dirección jurídica adjudicada. Ausente = company (registros
+   * heredados). Una resolución solo rige en su dirección: nunca
+   * resuelve silenciosamente el mismo factKey en otro scope.
+   */
+  scope?: ExecutionScope;
+  treatmentId?: string;
+  purposeId?: string;
 }
+
+/**
+ * Execution scope cerrado Stage 1: el objeto jurídico principal que el
+ * profesional analiza en una ejecución. Unión cerrada, sin strings
+ * arbitrarios ni nesting genérico.
+ */
+export type ExecutionScope = "company" | "treatment" | "purpose";
+
+/**
+ * Objeto jurídico persistente: una operación de tratamiento concreta.
+ * NO representa ejecución de trabajo: sin owner, deadlines, workflow,
+ * historial, reaperturas, timeline ni auditoría longitudinal.
+ */
+export interface TreatmentContext {
+  id: string;
+  companyId: string;
+  /** Identificador canónico D2.01 cuando corresponda asignarlo. */
+  canonicalTreatmentId?: string;
+  name: string;
+  description?: string;
+}
+
+/**
+ * Objeto jurídico hijo: una finalidad individual del tratamiento.
+ * Sin workflow, progreso, owners, deadlines, timestamps de ejecución
+ * ni historial.
+ */
+export interface TreatmentPurpose {
+  id: string;
+  treatmentId: string;
+  description: string;
+}
+
+/** Estado scopeado de un tratamiento: contexto + protocol state propio. */
+export interface TreatmentScopedState {
+  context: TreatmentContext;
+  protocolAnswers: Record<string, Record<string, FactRecord>>;
+  reasoningRecords: Record<string, ProtocolReasoningRecord>;
+  purposes: Record<string, PurposeScopedState>;
+}
+
+/** Estado scopeado de una finalidad: objeto + protocol state propio. */
+export interface PurposeScopedState {
+  purpose: TreatmentPurpose;
+  protocolAnswers: Record<string, Record<string, FactRecord>>;
+  reasoningRecords: Record<string, ProtocolReasoningRecord>;
+}
+
+/**
+ * Contexto de ejecución válido. Unión discriminada: los contextos
+ * incompletos (purpose sin treatment, treatment sin company) son
+ * inexpresables. La pertenencia se verifica por recorrido estructural.
+ */
+export type ExecutionContext =
+  | { scope: "company"; companyId: string }
+  | { scope: "treatment"; companyId: string; treatmentId: string }
+  | {
+      scope: "purpose";
+      companyId: string;
+      treatmentId: string;
+      purposeId: string;
+    };
 
 export interface CompanyState {
   id: string;
@@ -87,6 +157,14 @@ export interface CompanyState {
   factResolutions: Record<string, FactResolution>;
   reasoningRecords: Record<string, ProtocolReasoningRecord>;
   lastLocation?: string;
+  /**
+   * Subárbol jurídico Stage 1. Ausencia = válido (workspaces previos,
+   * D1-only). Nunca se crean treatments automáticamente ni se mueven
+   * facts company. La selección activa es navegación, no fact.
+   */
+  treatments?: Record<string, TreatmentScopedState>;
+  activeTreatmentId?: string;
+  activePurposeId?: string;
 }
 
 export interface LocalProfile {

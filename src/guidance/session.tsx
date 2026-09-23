@@ -7,7 +7,15 @@ import {
 } from "react";
 import type { FactMap } from "../../content/protocols/types";
 import { useWorkspace } from "../workspace/context";
-import { humanSourceName, mergedFactRecords } from "../workspace/facts";
+import { humanSourceName } from "../workspace/facts";
+import type { ExecutionScope } from "../workspace/types";
+import {
+  activeExecutionContext,
+  buildScopedFactMap,
+  excludeScopedProtocol,
+  getScopedProtocolAnswers,
+  scopedInjectedRecord,
+} from "../workspace/scope";
 
 /**
  * Sesión de evaluación guiada (Stage 1).
@@ -28,11 +36,25 @@ import { humanSourceName, mergedFactRecords } from "../workspace/facts";
 interface GuidanceSessionState {
   sessions: Record<string, FactMap>;
   initialFacts: Record<string, FactMap>;
-  answer: (protocolKey: string, factKey: string, value: string) => void;
-  resetProtocol: (protocolKey: string) => void;
-  answersFor: (protocolKey: string) => FactMap;
-  isProvided: (protocolKey: string, factKey: string) => boolean;
-  providedSource: (protocolKey: string, factKey: string) => string | null;
+  answer: (
+    protocolKey: string,
+    factKey: string,
+    value: string,
+    scope?: ExecutionScope,
+  ) => void;
+  resetProtocol: (protocolKey: string, scope?: ExecutionScope) => void;
+  answersFor: (protocolKey: string, scope?: ExecutionScope) => FactMap;
+  ownAnswersFor: (protocolKey: string, scope?: ExecutionScope) => FactMap;
+  isProvided: (
+    protocolKey: string,
+    factKey: string,
+    scope?: ExecutionScope,
+  ) => boolean;
+  providedSource: (
+    protocolKey: string,
+    factKey: string,
+    scope?: ExecutionScope,
+  ) => string | null;
 }
 
 const GuidanceSessionContext =
@@ -53,13 +75,16 @@ export function GuidanceSessionProvider({
   children: React.ReactNode;
   initialFacts?: Record<string, FactMap>;
 }) {
-  const { company, saveProtocolAnswer, clearProtocolAnswers } = useWorkspace();
+  const { company, saveScopedProtocolAnswer, clearScopedProtocolAnswers } =
+    useWorkspace();
   const [memory, setMemory] = useState<Record<string, FactMap>>({});
 
   const ownAnswers = useCallback(
-    (protocolKey: string): FactMap => {
+    (protocolKey: string, scope: ExecutionScope = "company"): FactMap => {
       if (company) {
-        return recordsToFacts(company.protocolAnswers[protocolKey] ?? {});
+        const ctx = activeExecutionContext(company, scope);
+        if (!ctx) return {};
+        return recordsToFacts(getScopedProtocolAnswers(company, ctx, protocolKey));
       }
       return memory[protocolKey] ?? {};
     },
@@ -67,13 +92,19 @@ export function GuidanceSessionProvider({
   );
 
   const injectedFacts = useCallback(
-    (protocolKey: string): FactMap => {
+    (protocolKey: string, scope: ExecutionScope = "company"): FactMap => {
       const merged: FactMap = { ...(initialFacts[protocolKey] ?? {}) };
       if (company) {
-        for (const [k, r] of Object.entries(
-          mergedFactRecords(company, protocolKey),
-        )) {
-          merged[k] = r.value;
+        const ctx = activeExecutionContext(company, scope);
+        if (ctx) {
+          for (const [k, v] of Object.entries(
+            buildScopedFactMap(
+              excludeScopedProtocol(company, ctx, protocolKey),
+              ctx,
+            ),
+          )) {
+            merged[k] = v;
+          }
         }
       }
       return merged;
@@ -82,9 +113,16 @@ export function GuidanceSessionProvider({
   );
 
   const answer = useCallback(
-    (protocolKey: string, factKey: string, value: string) => {
+    (
+      protocolKey: string,
+      factKey: string,
+      value: string,
+      scope: ExecutionScope = "company",
+    ) => {
       if (company) {
-        saveProtocolAnswer(protocolKey, factKey, value, protocolKey);
+        const ctx = activeExecutionContext(company, scope);
+        if (!ctx) return;
+        saveScopedProtocolAnswer(ctx, protocolKey, factKey, value, protocolKey);
         return;
       }
       setMemory((prev) => ({
@@ -92,13 +130,15 @@ export function GuidanceSessionProvider({
         [protocolKey]: { ...(prev[protocolKey] ?? {}), [factKey]: value },
       }));
     },
-    [company, saveProtocolAnswer],
+    [company, saveScopedProtocolAnswer],
   );
 
   const resetProtocol = useCallback(
-    (protocolKey: string) => {
+    (protocolKey: string, scope: ExecutionScope = "company") => {
       if (company) {
-        clearProtocolAnswers(protocolKey);
+        const ctx = activeExecutionContext(company, scope);
+        if (!ctx) return;
+        clearScopedProtocolAnswers(ctx, protocolKey);
         return;
       }
       setMemory((prev) => {
@@ -108,38 +148,51 @@ export function GuidanceSessionProvider({
         return next;
       });
     },
-    [company, clearProtocolAnswers],
+    [company, clearScopedProtocolAnswers],
   );
 
   const answersFor = useCallback(
-    (protocolKey: string): FactMap => ({
-      ...injectedFacts(protocolKey),
-      ...ownAnswers(protocolKey),
+    (protocolKey: string, scope: ExecutionScope = "company"): FactMap => ({
+      ...injectedFacts(protocolKey, scope),
+      ...ownAnswers(protocolKey, scope),
     }),
     [injectedFacts, ownAnswers],
   );
 
   const isProvided = useCallback(
-    (protocolKey: string, factKey: string): boolean => {
-      const injected = injectedFacts(protocolKey);
-      const own = ownAnswers(protocolKey);
+    (
+      protocolKey: string,
+      factKey: string,
+      scope: ExecutionScope = "company",
+    ): boolean => {
+      const injected = injectedFacts(protocolKey, scope);
+      const own = ownAnswers(protocolKey, scope);
       return factKey in injected && !(factKey in own);
     },
     [injectedFacts, ownAnswers],
   );
 
   const providedSource = useCallback(
-    (protocolKey: string, factKey: string): string | null => {
-      if (!isProvided(protocolKey, factKey)) return null;
+    (
+      protocolKey: string,
+      factKey: string,
+      scope: ExecutionScope = "company",
+    ): string | null => {
+      if (!isProvided(protocolKey, factKey, scope)) return null;
       if (factKey in (initialFacts[protocolKey] ?? {})) return "contexto inicial";
       if (!company) return null;
-      const rec = mergedFactRecords(company, protocolKey)[factKey];
+      const ctx = activeExecutionContext(company, scope);
+      if (!ctx) return null;
+      const rec = scopedInjectedRecord(company, ctx, protocolKey, factKey);
       if (!rec) return null;
       return humanSourceName(rec.source);
     },
     [company, initialFacts, isProvided],
   );
 
+  // Mapa company-scope heredado (D1 y compatibilidad). Los protocolos
+  // treatment/purpose usan ownAnswersFor con scope; este mapa nunca
+  // representa vistas scopeadas.
   const sessions = useMemo(() => {
     if (company) {
       const out: Record<string, FactMap> = {};
@@ -152,8 +205,8 @@ export function GuidanceSessionProvider({
   }, [company, memory]);
 
   const value = useMemo(
-    () => ({ sessions, initialFacts, answer, resetProtocol, answersFor, isProvided, providedSource }),
-    [sessions, initialFacts, answer, resetProtocol, answersFor, isProvided, providedSource],
+    () => ({ sessions, initialFacts, answer, resetProtocol, answersFor, ownAnswersFor: ownAnswers, isProvided, providedSource }),
+    [sessions, initialFacts, answer, resetProtocol, answersFor, ownAnswers, isProvided, providedSource],
   );
 
   return (
@@ -172,7 +225,10 @@ function useGuidanceSessionContext(): GuidanceSessionState {
 }
 
 /** Estado de un protocolo: hechos, respuesta y reinicio. */
-export function useGuidanceProtocol(protocolKey: string): {
+export function useGuidanceProtocol(
+  protocolKey: string,
+  scope: ExecutionScope = "company",
+): {
   facts: FactMap;
   started: boolean;
   answer: (factKey: string, value: string) => void;
@@ -181,13 +237,13 @@ export function useGuidanceProtocol(protocolKey: string): {
   providedSource: (factKey: string) => string | null;
 } {
   const ctx = useGuidanceSessionContext();
-  const facts = ctx.answersFor(protocolKey);
+  const facts = ctx.answersFor(protocolKey, scope);
   return {
     facts,
-    started: Object.keys(ctx.sessions[protocolKey] ?? {}).length > 0,
-    answer: (factKey, value) => ctx.answer(protocolKey, factKey, value),
-    reset: () => ctx.resetProtocol(protocolKey),
-    isProvided: (factKey) => ctx.isProvided(protocolKey, factKey),
-    providedSource: (factKey) => ctx.providedSource(protocolKey, factKey),
+    started: Object.keys(ctx.ownAnswersFor(protocolKey, scope)).length > 0,
+    answer: (factKey, value) => ctx.answer(protocolKey, factKey, value, scope),
+    reset: () => ctx.resetProtocol(protocolKey, scope),
+    isProvided: (factKey) => ctx.isProvided(protocolKey, factKey, scope),
+    providedSource: (factKey) => ctx.providedSource(protocolKey, factKey, scope),
   };
 }

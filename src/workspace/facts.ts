@@ -50,7 +50,8 @@ function latestPerSource(records: FactRecord[]): FactRecord[] {
   return [...bySource.values()];
 }
 
-function statusOfCandidates(
+/** Estado por observaciones de una misma dirección jurídica. Exportado para resolución scopeada (scope.ts); misma semántica company. */
+export function statusOfCandidates(
   records: FactRecord[],
   resolution?: FactResolution,
 ): FactStatus {

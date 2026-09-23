@@ -149,7 +149,10 @@ function GuideNodeStrip({
   const protocol = getProtocolForActivity(activityKey);
   // Misma verdad que la sesión: hechos propios + inyectados (Diagnóstico
   // y otras guías) y modo memoria sin empresa.
-  const session = useGuidanceProtocol(protocol?.protocol_key ?? "");
+  const session = useGuidanceProtocol(
+    protocol?.protocol_key ?? "",
+    protocol?.execution_scope ?? "company",
+  );
   if (!protocol || protocol.protocol_key !== protocolKey) return null;
   return (
     <div className="contextnav-row scroll" data-testid="contextnav-nodes">

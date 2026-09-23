@@ -129,6 +129,12 @@ export interface ExecutionProtocol {
   activity_key: string;
   version: number;
   mode: ProtocolMode;
+  /**
+   * Objeto jurídico principal analizado en la ejecución. Unión
+   * cerrada; ausencia significa `company` (todos los protocolos D1
+   * existentes continúan sin editarse).
+   */
+  execution_scope?: "company" | "treatment" | "purpose";
   title: string;
   description: string;
   entry_node_key: string;

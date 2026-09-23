@@ -51,7 +51,10 @@ export function ActivityWorkView({
   protocol?: ExecutionProtocol;
 }) {
   const { company, setActivityStatus } = useWorkspace();
-  const session = useGuidanceProtocol(protocol?.protocol_key ?? "");
+  const session = useGuidanceProtocol(
+    protocol?.protocol_key ?? "",
+    protocol?.execution_scope ?? "company",
+  );
   const status = company ? statusOf(company, def.activity_key) : null;
   const evaluation = protocol ? evaluateProtocol(protocol, session.facts) : null;
   const blocked =

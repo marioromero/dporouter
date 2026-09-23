@@ -18,6 +18,20 @@ import { loadWorkspace, saveWorkspace, validateCompanyState } from "./store";
 import { getProtocol } from "../../content/protocols/registry";
 import { getCanonicalActivity } from "../../content/registry";
 import {
+  clearScopedProtocolAnswers as clearScopedAnswersState,
+  createPurpose as createPurposeState,
+  createTreatment as createTreatmentState,
+  deletePurpose as deletePurposeState,
+  deleteTreatment as deleteTreatmentState,
+  renamePurpose as renamePurposeState,
+  renameTreatment as renameTreatmentState,
+  saveScopedProtocolAnswer as saveScopedAnswerState,
+  scopedAddressAlternatives,
+  selectPurpose as selectPurposeState,
+  selectTreatment as selectTreatmentState,
+} from "./scope";
+import type { ExecutionContext } from "./types";
+import {
   applyFinalization,
   finalizeJudgment,
   type ReasoningDraft,
@@ -49,11 +63,26 @@ interface WorkspaceContextValue {
     value: string,
     source: string,
   ) => void;
+  saveScopedProtocolAnswer: (
+    ctx: ExecutionContext,
+    protocolKey: string,
+    factKey: string,
+    value: string,
+    source: string,
+  ) => void;
+  clearScopedProtocolAnswers: (
+    ctx: ExecutionContext,
+    protocolKey: string,
+  ) => void;
   clearProtocolAnswers: (protocolKey: string) => void;
   clearProtocolFact: (protocolKey: string, factKey: string) => void;
   setDiagnosticFact: (factKey: string, value: string) => void;
   clearDiagnosticFact: (factKey: string) => void;
-  resolveFactConflict: (factKey: string, value: string) => void;
+  resolveFactConflict: (
+    factKey: string,
+    value: string,
+    ctx?: ExecutionContext,
+  ) => void;
   finalizeProfessionalJudgment: (
     protocolKey: string,
     draft: ReasoningDraft,
@@ -67,6 +96,21 @@ interface WorkspaceContextValue {
   setLastLocation: (path: string) => void;
   exportCompany: (id: string) => string | null;
   importCompany: (json: string) => { ok: true } | { ok: false; error: string };
+  addTreatment: (input: {
+    name: string;
+    description?: string;
+    canonicalTreatmentId?: string;
+  }) => string | null;
+  selectTreatment: (id: string | null) => void;
+  renameTreatment: (
+    id: string,
+    input: { name?: string; description?: string; canonicalTreatmentId?: string },
+  ) => void;
+  deleteTreatment: (id: string) => void;
+  addPurpose: (treatmentId: string, description: string) => string | null;
+  selectPurpose: (treatmentId: string, id: string | null) => void;
+  renamePurpose: (treatmentId: string, id: string, description: string) => void;
+  deletePurpose: (treatmentId: string, id: string) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -80,6 +124,13 @@ function pruneResolutions(c: CompanyState): CompanyState {
   const alive = new Set<string>([
     ...Object.keys(c.diagnosticFacts),
     ...Object.values(c.protocolAnswers).flatMap((a) => Object.keys(a)),
+    // Observaciones en scopes jurídicos (tratamientos y finalidades).
+    ...Object.values(c.treatments ?? {}).flatMap((t) => [
+      ...Object.values(t.protocolAnswers).flatMap((a) => Object.keys(a)),
+      ...Object.values(t.purposes).flatMap((p) =>
+        Object.values(p.protocolAnswers).flatMap((a) => Object.keys(a)),
+      ),
+    ]),
   ]);
   const kept: CompanyState["factResolutions"] = {};
   for (const [k, r] of Object.entries(c.factResolutions)) {
@@ -233,6 +284,152 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     },
     [company, updateCompany],
   );
+
+  /**
+   * Escritura scopeada de respuestas (sesión guiada). Company scope usa
+   * el storage actual; treatment/purpose escriben en su subárbol. Misma
+   * forma de observación; el contexto inválido no escribe.
+   */
+  const saveScopedProtocolAnswer = useCallback(
+    (
+      ctx: ExecutionContext,
+      protocolKey: string,
+      factKey: string,
+      value: string,
+      source: string,
+    ) => {
+      if (!company) return;
+      updateCompany(company.id, (c) => {
+        const next = saveScopedAnswerState(
+          c,
+          ctx,
+          protocolKey,
+          factKey,
+          value,
+          source,
+        );
+        return next ?? c;
+      });
+    },
+    [company, updateCompany],
+  );
+
+  const clearScopedProtocolAnswers = useCallback(
+    (ctx: ExecutionContext, protocolKey: string) => {
+      if (!company) return;
+      updateCompany(company.id, (c) => {
+        const next = clearScopedAnswersState(c, ctx, protocolKey);
+        if (!next) return c;
+        return pruneResolutions(next);
+      });
+    },
+    [company, updateCompany],
+  );
+
+  /**
+   * CRUD de objetos jurídicos Stage 1 (tratamientos y finalidades).
+   * Modifican identidad/metadata/navegación; nunca progreso, outcomes
+   * ni completion de actividades.
+   */
+  const addTreatment = useCallback(
+    (input: {
+      name: string;
+      description?: string;
+      canonicalTreatmentId?: string;
+    }): string | null => {
+      if (!company) return null;
+      let created: string | null = null;
+      updateCompany(company.id, (c) => {
+        const result = createTreatmentState(c, input);
+        if (!result) return c;
+        created = result.treatmentId;
+        return result.company;
+      });
+      return created;
+    },
+    [company, updateCompany],
+  );
+
+  const selectTreatment = useCallback(
+    (id: string | null) => {
+      if (!company) return;
+      updateCompany(company.id, (c) => selectTreatmentState(c, id) ?? c);
+    },
+    [company, updateCompany],
+  );
+
+  const renameTreatment = useCallback(
+    (
+      id: string,
+      input: {
+        name?: string;
+        description?: string;
+        canonicalTreatmentId?: string;
+      },
+    ) => {
+      if (!company) return;
+      updateCompany(company.id, (c) => renameTreatmentState(c, id, input) ?? c);
+    },
+    [company, updateCompany],
+  );
+
+  const deleteTreatment = useCallback(
+    (id: string) => {
+      if (!company) return;
+      updateCompany(company.id, (c) => {
+        const next = deleteTreatmentState(c, id);
+        if (!next) return c;
+        return pruneResolutions(next);
+      });
+    },
+    [company, updateCompany],
+  );
+
+  const addPurpose = useCallback(
+    (treatmentId: string, description: string): string | null => {
+      if (!company) return null;
+      let created: string | null = null;
+      updateCompany(company.id, (c) => {
+        const result = createPurposeState(c, treatmentId, description);
+        if (!result) return c;
+        created = result.purposeId;
+        return result.company;
+      });
+      return created;
+    },
+    [company, updateCompany],
+  );
+
+  const selectPurpose = useCallback(
+    (treatmentId: string, id: string | null) => {
+      if (!company) return;
+      updateCompany(company.id, (c) => selectPurposeState(c, treatmentId, id) ?? c);
+    },
+    [company, updateCompany],
+  );
+
+  const renamePurpose = useCallback(
+    (treatmentId: string, id: string, description: string) => {
+      if (!company) return;
+      updateCompany(company.id, (c) => {
+        const next = renamePurposeState(c, treatmentId, id, description);
+        return next ?? c;
+      });
+    },
+    [company, updateCompany],
+  );
+
+  const deletePurpose = useCallback(
+    (treatmentId: string, id: string) => {
+      if (!company) return;
+      updateCompany(company.id, (c) => {
+        const next = deletePurposeState(c, treatmentId, id);
+        if (!next) return c;
+        return pruneResolutions(next);
+      });
+    },
+    [company, updateCompany],
+  );
   const setDiagnosticFact = useCallback(
     (factKey: string, value: string) => {
       if (!company) return;
@@ -262,12 +459,15 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Resolución explícita de un conflicto: el profesional elige qué valor
-   * refleja actualmente a la empresa. Guarda valor, momento, alternativas
+   * refleja actualmente la situación. Guarda valor, momento, alternativas
    * y elección explícita sin borrar las observaciones originales. Una
    * nueva observación contradictoria posterior reabre el conflicto.
+   * Con `ctx` scopeado, las alternativas provienen de esa dirección y la
+   * resolución solo rige allí; sin `ctx` (D1/ConflictResolver actual),
+   * comportamiento company idéntico al histórico.
    */
   const resolveFactConflict = useCallback(
-    (factKey: string, value: string) => {
+    (factKey: string, value: string, ctx?: ExecutionContext) => {
       if (!company) return;
       updateCompany(company.id, (c) => {
         // Alternativas = última observación por fuente (sin duplicar).
@@ -276,11 +476,17 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           source: string;
           updatedAt: string;
         }> = [];
-        const diag = c.diagnosticFacts[factKey];
-        if (diag) alternatives.push({ ...diag });
-        for (const answers of Object.values(c.protocolAnswers)) {
-          const r = answers[factKey];
-          if (r) alternatives.push({ ...r });
+        if (ctx && ctx.companyId === c.id && ctx.scope !== "company") {
+          for (const r of scopedAddressAlternatives(c, ctx, factKey)) {
+            alternatives.push({ ...r });
+          }
+        } else {
+          const diag = c.diagnosticFacts[factKey];
+          if (diag) alternatives.push({ ...diag });
+          for (const answers of Object.values(c.protocolAnswers)) {
+            const r = answers[factKey];
+            if (r) alternatives.push({ ...r });
+          }
         }
         return {
           ...c,
@@ -292,6 +498,16 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
               resolvedAt: nowIso(),
               decidedBy: "professional" as const,
               alternatives,
+              ...(ctx && ctx.scope === "treatment"
+                ? { scope: ctx.scope, treatmentId: ctx.treatmentId }
+                : {}),
+              ...(ctx && ctx.scope === "purpose"
+                ? {
+                    scope: ctx.scope,
+                    treatmentId: ctx.treatmentId,
+                    purposeId: ctx.purposeId,
+                  }
+                : {}),
             },
           },
         };
@@ -439,6 +655,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       selectCompany,
       setActivityStatus,
       saveProtocolAnswer,
+      saveScopedProtocolAnswer,
+      clearScopedProtocolAnswers,
       clearProtocolAnswers,
       clearProtocolFact,
       setDiagnosticFact,
@@ -449,13 +667,24 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       setLastLocation,
       exportCompany,
       importCompany,
+      addTreatment,
+      selectTreatment,
+      renameTreatment,
+      deleteTreatment,
+      addPurpose,
+      selectPurpose,
+      renamePurpose,
+      deletePurpose,
     }),
     [
       data, profile, company, createProfile, selectProfile, createCompany,
-      selectCompany, setActivityStatus, saveProtocolAnswer, clearProtocolAnswers,
+      selectCompany, setActivityStatus, saveProtocolAnswer, saveScopedProtocolAnswer,
+      clearScopedProtocolAnswers, clearProtocolAnswers,
       clearProtocolFact, setDiagnosticFact, clearDiagnosticFact, resolveFactConflict,
       finalizeProfessionalJudgment, finalizeProtocolOutcome, setLastLocation,
-      exportCompany, importCompany,
+      exportCompany, importCompany, addTreatment, selectTreatment,
+      renameTreatment, deleteTreatment, addPurpose, selectPurpose,
+      renamePurpose, deletePurpose,
     ],
   );
 

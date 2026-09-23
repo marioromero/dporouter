@@ -123,11 +123,11 @@ Stage 1 canonical activities:
 
 Guided protocols:
 
-`4`
+`20`
 
 Protocol coverage:
 
-`D1.02, D1.03 (juicio profesional), D1.04, D1.09`
+`D1.01–D1.20 (todas las actividades D1)`
 
 Pending canonical cross-domain targets:
 
@@ -139,7 +139,7 @@ Pending canonical cross-domain targets:
 
 Still not implemented:
 
-* protocols for remaining activities;
+* guided protocols for D03–D12 activities;
 * D03-D12;
 * real characterization UI;
 * persistent client context;

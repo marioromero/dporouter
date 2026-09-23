@@ -164,6 +164,34 @@ export function renderD01(
   });
 }
 
+/** Proyección D03. */
+export function renderD03(
+  activities: ActivityDefinition[],
+  sources: CanonicalSource[],
+  pendingRefs: string[],
+  provenanceNotes: Record<string, string>,
+): string {
+  return renderDomainDoc({
+    sourceFile: "content/domains/d03.ts",
+    title: "# D03 — Transparencia, políticas y consentimiento",
+    domainKey: "d3",
+    humanCode: "D3",
+    name: "Transparencia, políticas y consentimiento",
+    objective:
+      "Asegurar que la información pública de tratamiento cumpla los contenidos y condiciones del artículo 14 ter y que los mecanismos de consentimiento por finalidad sean libres, informados, específicos, previos, inequívocos, demostrables y retirables.",
+    description:
+      "Este dominio verifica la política pública de tratamiento y su publicación efectiva, y diseña el mecanismo de consentimiento por finalidad: obtención válida, libertad, capacidad de prueba y retiro. Stage 1 evalúa el diseño del mecanismo y su evidencia; no registra consentimientos individuales por titular.",
+    review: "2026-09-21",
+    normativeNote: NORMATIVE_NOTE,
+    activities,
+    sources,
+    pendingRefs,
+    provenanceNotes,
+    freezeNote:
+      "D3 está congelado salvo revisión controlada. No inventar, completar ni reinterpretar su contenido jurídico. La aplicación consume la representación estructurada; este documento es la especificación humana canónica.",
+  });
+}
+
 /** Proyección D02. */
 export function renderD02(
   activities: ActivityDefinition[],

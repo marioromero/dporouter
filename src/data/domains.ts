@@ -1,6 +1,7 @@
 import type { DomainDefinition } from "../types";
 import { D1_ACTIVITY_KEYS } from "../../content/domains/d01";
 import { D2_ACTIVITY_KEYS } from "../../content/domains/d02";
+import { D3_ACTIVITY_KEYS } from "../../content/domains/d03";
 import { normalizeText } from "../../content/text";
 
 /** Normalización textual única de la capa canónica (reexportada). */
@@ -10,7 +11,7 @@ export { normalizeText };
  * Registro de aplicación D1-D12 (navegación, búsqueda, rutas).
  * Consume definiciones canónicas de /content; no duplica contenido.
  * Códigos, claves y nombres exactos según la iteración vigente.
- * D2-D12 permanecen sin actividades hasta su importación controlada.
+ * D4-D12 permanecen sin actividades hasta su importación controlada.
  */
 export const DOMAINS: DomainDefinition[] = [
   {
@@ -39,9 +40,11 @@ export const DOMAINS: DomainDefinition[] = [
     domain_key: "d3",
     human_code: "D3",
     name: "Transparencia, políticas y consentimiento",
-    objective: "",
-    description: "",
-    activity_keys: [],
+    objective:
+      "Asegurar que la información pública de tratamiento cumpla los contenidos y condiciones del artículo 14 ter y que los mecanismos de consentimiento por finalidad sean libres, informados, específicos, previos, inequívocos, demostrables y retirables.",
+    description:
+      "Este dominio verifica la política pública de tratamiento y su publicación efectiva, y diseña el mecanismo de consentimiento por finalidad: obtención válida, libertad, capacidad de prueba y retiro. Stage 1 evalúa el diseño del mecanismo y su evidencia; no registra consentimientos individuales por titular.",
+    activity_keys: [...D3_ACTIVITY_KEYS],
     related_domain_keys: [],
   },
   {

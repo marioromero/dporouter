@@ -20,7 +20,9 @@ Completed outside the codebase:
 - Block 5 — activities D1-D12;
 - Block 6 — coverage and integrity review.
 
-The detailed D01-D12 domain files have NOT yet been imported into this repository.
+D01–D03 are imported (`content/domains/d01.ts`, `d02.ts`, `d03.ts`).
+
+D04–D12 have NOT yet been imported into this repository.
 
 Do not invent them.
 
@@ -108,7 +110,7 @@ D2 real state:
 * capture gap pendiente (matrices como vista); D2.11/D2.12
   implementados sin historial ni instancias.
 
-D3 continúa pendiente.
+D3 canonical content imported (6 ActivityDefinitions); guided retrofit pending.
 
 Post-UX-Reset fix (explicit fact conflicts):
 
@@ -169,13 +171,24 @@ Implemented adicionalmente (reconciliación):
   conflictos y export/import validado;
 * D1.03 juicio profesional con ReasoningRecord intacto.
 
+Implemented adicionalmente (D3 canonical import):
+
+* canonical D03 specification (`content/domains/d03.ts`);
+* 6 canonical D3 activities (D3.01–D3.06: política, publicación,
+  mecanismo de consentimiento, libertad, prueba, retiro);
+* D2.05 → `consent.mechanism_design` (D3.03) resuelta; tipo
+  `completion_dependency` y condición intactos;
+* deterministic `docs/domains/D03.md` projection;
+* D3 protocols = 0 (guided retrofit pending; ningún D3
+  execution-ready ni product-ready).
+
 Canonical activity count:
 
-`32`
+`38`
 
 Stage 1 canonical activities:
 
-`32`
+`38`
 
 Guided protocols:
 
@@ -185,18 +198,21 @@ Protocol coverage:
 
 `D1.01–D1.20 (todas las actividades D1)`
 
+D3 canonical coverage:
+
+`D3.01–D3.06 (6 ActivityDefinitions, 0 ExecutionProtocols)`
+
 Pending canonical cross-domain targets:
 
 * `risk.mpi_sync`
 * `mpi.diffusion`
-* `consent.mechanism_design`
 * `sensitive.lawfulness_assess`
 * `financial.titleIII_scope`
 
 Still not implemented:
 
 * guided protocols for D03–D12 activities;
-* D03-D12;
+* D04-D12;
 * real characterization UI;
 * backend persistent client context (local treatment/purpose workspace exists);
 * state-effect engine;

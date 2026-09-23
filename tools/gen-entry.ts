@@ -1,11 +1,15 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { renderD01, renderD02 } from "./domain-doc";
+import { renderD01, renderD02, renderD03 } from "./domain-doc";
 import { D01_ACTIVITIES } from "../content/domains/d01";
 import {
   D02_ACTIVITIES,
   D02_PROVENANCE_NOTES,
 } from "../content/domains/d02";
+import {
+  D03_ACTIVITIES,
+  D03_PROVENANCE_NOTES,
+} from "../content/domains/d03";
 import { SOURCES } from "../content/sources";
 import { getDomainPendingReferences } from "../content/registry";
 
@@ -32,6 +36,14 @@ const d02 = renderD02(
 );
 writeFileSync(join(outDir, "D02.md"), d02, "utf-8");
 
+const d03 = renderD03(
+  D03_ACTIVITIES,
+  SOURCES,
+  getDomainPendingReferences(D03_ACTIVITIES),
+  D03_PROVENANCE_NOTES,
+);
+writeFileSync(join(outDir, "D03.md"), d03, "utf-8");
+
 console.log(
-  `Documentación regenerada: D01 (${D01_ACTIVITIES.length} actividades), D02 (${D02_ACTIVITIES.length} actividades)`,
+  `Documentación regenerada: D01 (${D01_ACTIVITIES.length} actividades), D02 (${D02_ACTIVITIES.length} actividades), D03 (${D03_ACTIVITIES.length} actividades)`,
 );

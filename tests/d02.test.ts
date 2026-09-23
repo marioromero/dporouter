@@ -275,9 +275,8 @@ describe("contenido canónico D2", () => {
     );
   });
 
-  it("23. solo existen las cinco pending refs autorizadas", () => {
+  it("23. solo existen las cuatro pending refs autorizadas (consent resuelta por D3)", () => {
     expect(getUnresolvedReferences()).toEqual([
-      "consent.mechanism_design",
       "financial.titleIII_scope",
       "mpi.diffusion",
       "risk.mpi_sync",
@@ -300,13 +299,14 @@ describe("contenido canónico D2", () => {
     ).toHaveLength(8);
   });
 
-  it("26. registro global contiene exactamente 32 actividades", () => {
-    expect(ALL_ACTIVITIES).toHaveLength(32);
-    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(32);
+  it("26. registro global contiene exactamente 38 actividades", () => {
+    expect(ALL_ACTIVITIES).toHaveLength(38);
+    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(38);
   });
 
-  it("27. D3-D12 contienen cero actividades", () => {
-    for (const key of ["d3","d4","d5","d6","d7","d8","d9","d10","d11","d12"]) {
+  it("27. D3 tiene 6 actividades; D4-D12 contienen cero", () => {
+    expect(getDomain("d3")?.activity_keys).toHaveLength(6);
+    for (const key of ["d4","d5","d6","d7","d8","d9","d10","d11","d12"]) {
       expect(getDomain(key)?.activity_keys, key).toEqual([]);
     }
   });

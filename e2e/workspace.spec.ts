@@ -66,14 +66,14 @@ test("cambio de empresa cambia progreso y guía; reload conserva", async ({ page
   await page.getByLabel("Asociar otra empresa").fill("Empresa Beta");
   await page.getByRole("button", { name: "Agregar empresa" }).click();
   await expect(page.getByRole("heading", { name: "Empresa Beta" })).toBeVisible();
-  await expect(page.getByTestId("empresa-conteo")).toContainText("0 de 32 actividades revisadas");
+  await expect(page.getByTestId("empresa-conteo")).toContainText("0 de 38 actividades revisadas");
   await page.goto("/actividad/governance.preventive_framework");
   await expect(page.getByTestId("actividad-estado")).toContainText("No iniciado");
   await page.goto("/empresa");
   await page.getByLabel("Empresa activa").selectOption({ label: "Empresa Alfa" });
-  await expect(page.getByTestId("empresa-conteo")).toContainText("1 de 32 actividades revisadas");
+  await expect(page.getByTestId("empresa-conteo")).toContainText("1 de 38 actividades revisadas");
   await page.reload();
-  await expect(page.getByTestId("empresa-conteo")).toContainText("1 de 32 actividades revisadas");
+  await expect(page.getByTestId("empresa-conteo")).toContainText("1 de 38 actividades revisadas");
 });
 
 test("exportar e importar JSON recupera estado", async ({ page }) => {
@@ -90,9 +90,9 @@ test("exportar e importar JSON recupera estado", async ({ page }) => {
   await page.goto("/actividad/governance.preventive_framework");
   await page.getByTestId("estado-not_started").click();
   await page.goto("/empresa");
-  await expect(page.getByTestId("empresa-conteo")).toContainText("0 de 32 actividades revisadas");
+  await expect(page.getByTestId("empresa-conteo")).toContainText("0 de 38 actividades revisadas");
   await page.locator('input[aria-label="Archivo de respaldo JSON"]').setInputFiles(path as string);
-  await expect(page.getByTestId("empresa-conteo")).toContainText("1 de 32 actividades revisadas");
+  await expect(page.getByTestId("empresa-conteo")).toContainText("1 de 38 actividades revisadas");
   await expect(page.getByText("No se pudo importar")).toHaveCount(0);
 });
 
@@ -125,7 +125,7 @@ test("empresa muestra continuar, sugerencia y conteo factual", async ({ page }) 
   await page.goto("/empresa");
   await expect(page.getByTestId("empresa-continuar").getByRole("link", { name: "D2.01 · Crear inventario maestro de tratamientos" }).first()).toBeVisible();
   await expect(page.getByText("Siguiente revisión sugerida")).toBeVisible();
-  await expect(page.getByTestId("empresa-conteo")).toContainText("0 de 32 actividades revisadas");
+  await expect(page.getByTestId("empresa-conteo")).toContainText("0 de 38 actividades revisadas");
   await expect(page.getByText("Crear inventario maestro de tratamientos").first()).toBeVisible();
 });
 
@@ -177,7 +177,7 @@ test("empresa heredada sin campos nuevos abre Empresa sin romper", async ({ page
   );
   await page.goto("/empresa");
   await expect(page.getByRole("heading", { name: "Vieja SpA" })).toBeVisible();
-  await expect(page.getByTestId("empresa-conteo")).toContainText("0 de 32 actividades revisadas");
+  await expect(page.getByTestId("empresa-conteo")).toContainText("0 de 38 actividades revisadas");
   // Y la empresa migrada sigue operable: marcar revisión persiste.
   await page.goto("/actividad/governance.preventive_framework");
   await page.getByTestId("estado-reviewed").click();

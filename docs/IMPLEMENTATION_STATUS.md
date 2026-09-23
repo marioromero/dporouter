@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-22
+Last controlled update: 2026-09-23
 
 ## Functional baseline
 
@@ -110,7 +110,7 @@ D2 real state:
 * capture gap pendiente (matrices como vista); D2.11/D2.12
   implementados sin historial ni instancias.
 
-D3 canonical content imported (6 ActivityDefinitions); guided retrofit pending.
+D3 canonical content imported (6 ActivityDefinitions); D3.01/D3.02 guided (execution-ready), D3.03–D3.06 retrofit pending.
 
 Post-UX-Reset fix (explicit fact conflicts):
 
@@ -179,8 +179,15 @@ Implemented adicionalmente (D3 canonical import):
 * D2.05 → `consent.mechanism_design` (D3.03) resuelta; tipo
   `completion_dependency` y condición intactos;
 * deterministic `docs/domains/D03.md` projection;
-* D3 protocols = 0 (guided retrofit pending; ningún D3
-  execution-ready ni product-ready).
+* D3.01 (`transparency.policy_assemble`, procedure, company) y
+  D3.02 (`transparency.publication_validate`, checklist, company)
+  con ExecutionProtocols execution-ready y efectos estáticos
+  materializados por finalización explícita (`policy_status =
+  assembled`, `publication_status = validated`); D3.02 exige D3.01
+  para concluir (completion_dependency operativa vía fact externo),
+  sin bloquear navegación ni revisión preliminar;
+* D3.03–D3.06 sin protocolos (ningún D3 execution-ready adicional
+  ni product-ready declarado).
 
 Canonical activity count:
 
@@ -192,15 +199,15 @@ Stage 1 canonical activities:
 
 Guided protocols:
 
-`20`
+`34`
 
 Protocol coverage:
 
-`D1.01–D1.20 (todas las actividades D1)`
+`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.02`
 
 D3 canonical coverage:
 
-`D3.01–D3.06 (6 ActivityDefinitions, 0 ExecutionProtocols)`
+`D3.01–D3.06 (6 ActivityDefinitions, 2 ExecutionProtocols: D3.01 procedure + D3.02 checklist, ambos company-scope; D3.03–D3.06 sin protocolo)`
 
 Pending canonical cross-domain targets:
 
@@ -211,7 +218,7 @@ Pending canonical cross-domain targets:
 
 Still not implemented:
 
-* guided protocols for D03–D12 activities;
+* guided protocols for D3.03–D12 activities;
 * D04-D12;
 * real characterization UI;
 * backend persistent client context (local treatment/purpose workspace exists);

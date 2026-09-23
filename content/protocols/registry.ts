@@ -32,6 +32,8 @@ import { LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL } from "./legitimate_interest.a
 import { PRECONTRACTUAL_DATA_CLEANUP_PROTOCOL } from "./precontractual_data.cleanup";
 import { TREATMENT_CHANGE_REVIEW_PROTOCOL } from "./treatment.change_review";
 import { INVENTORY_PERIODIC_REVALIDATION_PROTOCOL } from "./inventory.periodic_revalidation";
+import { TRANSPARENCY_POLICY_ASSEMBLE_PROTOCOL } from "./transparency.policy_assemble";
+import { TRANSPARENCY_PUBLICATION_VALIDATE_PROTOCOL } from "./transparency.publication_validate";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -78,6 +80,8 @@ const PROTOCOLS: ExecutionProtocol[] = [
   PRECONTRACTUAL_DATA_CLEANUP_PROTOCOL,
   TREATMENT_CHANGE_REVIEW_PROTOCOL,
   INVENTORY_PERIODIC_REVALIDATION_PROTOCOL,
+  TRANSPARENCY_POLICY_ASSEMBLE_PROTOCOL,
+  TRANSPARENCY_PUBLICATION_VALIDATE_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

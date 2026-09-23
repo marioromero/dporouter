@@ -432,10 +432,21 @@ describe("contenido canónico D3", () => {
     expect(existsSync(join(root, "src/data/d03.ts"))).toBe(false);
   });
 
-  it("28. D3 sin protocolos: no execution-ready por existir en canon", () => {
-    for (const k of D3_ACTIVITY_KEYS) {
+  it("28. D3.03–D3.06 sin protocolos; D3.01/D3.02 con guía", () => {
+    for (const k of [
+      "consent.mechanism_design",
+      "consent.freedom_assess",
+      "consent.proof_design",
+      "consent.withdrawal_enable",
+    ]) {
       expect(getProtocolForActivity(k), k).toBeUndefined();
     }
+    expect(getProtocolForActivity("transparency.policy_assemble")?.mode).toBe(
+      "procedure",
+    );
+    expect(getProtocolForActivity("transparency.publication_validate")?.mode).toBe(
+      "checklist",
+    );
   });
 
   it("29. triggers canónicos verbatim (fidelity patch)", () => {

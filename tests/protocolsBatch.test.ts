@@ -28,9 +28,11 @@ import { RETENTION_SCHEDULE_PROTOCOL as PD208 } from "../content/protocols/reten
 import { DATA_QUALITY_CONTROL_PROTOCOL as PD209 } from "../content/protocols/data.quality_control";
 import { LAWFUL_BASIS_ASSIGN_PROTOCOL as PD205 } from "../content/protocols/lawful_basis.assign";
 import { LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL as PD206 } from "../content/protocols/legitimate_interest.assessment";
+import { PRECONTRACTUAL_DATA_CLEANUP_PROTOCOL as PD210 } from "../content/protocols/precontractual_data.cleanup";
 import type { ExecutionProtocol } from "../content/protocols/types";
 import type { LegalBasis } from "../src/types";
 import {
+  findConclusionNode,
   getProtocolForActivity,
   listProtocols,
   validateProtocolStructure,
@@ -44,6 +46,7 @@ import {
   validateProcedureFinalization,
 } from "../src/workspace/finalize";
 import { newCompany } from "../src/workspace/types";
+import type { CompanyState } from "../src/workspace/types";
 import { finalizeJudgment } from "../src/workspace/reasoning";
 import {
   applyScopedFinalization,
@@ -54,6 +57,12 @@ import {
   blockingScopedConflicts,
   createPurpose,
   createTreatment,
+  deleteTreatment,
+  referenceFactState,
+  saveScopedProtocolAnswer,
+  selectTreatment,
+  treatmentReferenceNode,
+  validateTreatmentReferences,
 } from "../src/workspace/scope";
 import { validateCompanyState } from "../src/workspace/store";
 import { getCanonicalActivity } from "../content/registry";
@@ -3328,5 +3337,384 @@ describe("finalizer scope-aware", () => {
     // Export/import conserva ambos subárboles.
     const checked = validateCompanyState(JSON.parse(JSON.stringify(applied)));
     expect(checked.ok).toBe(true);
+  });
+});
+
+describe("D2.10 depuración precontractual", () => {
+  const T = "precontractual.precontractual_data";
+  const S = "precontractual.scope_reviewed";
+  const A = "precontractual.action_evidenced";
+  const R = "precontractual.posterior_treatment";
+  const STATUS = "treatment.precontractual_cleanup_status";
+  const NONE = "no_posterior";
+
+  function twoTreatments() {
+    let c = newCompany("Limpieza SpA");
+    const a = createTreatment(c, { name: "Captación" });
+    if (!a) throw new Error("sin A");
+    c = a.company;
+    const b = createTreatment(c, { name: "Contratos" });
+    if (!b) throw new Error("sin B");
+    c = b.company;
+    return { c, idA: a.treatmentId, idB: b.treatmentId };
+  }
+
+  function ctxA(c: { id: string }, idA: string) {
+    return { scope: "treatment", companyId: c.id, treatmentId: idA } as const;
+  }
+
+  function pcFacts(ref: string, over: FactMap = {}): FactMap {
+    return { [T]: "yes", [S]: "yes", [A]: "yes", [R]: ref, ...over };
+  }
+
+  function pcDraft(conclusion = "linked_posterior") {
+    return {
+      conclusion,
+      legal_question: "¿Depurado o vinculado?",
+      evidence_refs: ["Registro de depuración v1"],
+      rationale: "Supresión acreditada o vínculo con justificación propia.",
+      decided_by: "DPO",
+      reviewed_by: "",
+      decided_at: new Date().toISOString(),
+    };
+  }
+
+  const PC_BASIS: LegalBasis[] = [
+    {
+      source_id: "cl_ley_19628_2026",
+      source_name: "Ley N° 19.628",
+      article_or_provision: "Artículo 13 letra c)",
+      reference_text: "",
+      source_url: "",
+      basis_type: "law",
+      regulatory_status: "transitional",
+      last_verified_at: "2026-09-21",
+    },
+  ];
+
+  // Flujo real: cada respuesta queda guardada en el subárbol del
+  // tratamiento antes de finalizar (igual que session.answer en UI).
+  function answerAll(
+    c: CompanyState,
+    ctx: { scope: "treatment"; companyId: string; treatmentId: string },
+    facts: FactMap,
+  ): CompanyState {
+    let out = c;
+    for (const [k, v] of Object.entries(facts)) {
+      const next = saveScopedProtocolAnswer(out, ctx, PD210.protocol_key, k, v, PD210.protocol_key);
+      if (!next) throw new Error(`sin guardar ${k}`);
+      out = next;
+    }
+    return out;
+  }
+
+  it("208. D2.10 treatment con juicio y referencia declarada", () => {
+    expect(getProtocolForActivity("precontractual_data.cleanup")).toBe(PD210);
+    expect(PD210.mode).toBe("decision");
+    expect(PD210.execution_scope).toBe("treatment");
+    expect(PD210.entry_node_key).toBe("trigger");
+    expect(getCanonicalActivity(PD210.activity_key)?.human_code).toBe("D2.10");
+    expect(PD210.nodes.map((n) => n.node_key)).toEqual([
+      "trigger",
+      "scope-review",
+      "action-evidence",
+      "posterior-select",
+      "sufficiency-gate",
+      "adopt-conclusion",
+    ]);
+    expect(PD210.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      [
+        "assessment_incomplete",
+        "cleanup_not_required",
+        "cleanup_completed",
+        "linked_posterior",
+      ].sort(),
+    );
+    expect(PD210.decision_fact_keys).toEqual([T, S, A, R]);
+    expect(PD210.reasoning_requirements?.required_fields).toEqual([
+      "conclusion",
+      "legal_question",
+      "facts_considered",
+      "legal_factors",
+      "alternatives_considered",
+      "rationale",
+      "decided_by",
+      "decided_at",
+      "legal_basis",
+    ]);
+    // Solo los outcomes de juicio llevan efectos (precedente D2.06).
+    for (const o of PD210.outcomes) {
+      if (o.outcome_key === "cleanup_completed" || o.outcome_key === "linked_posterior") {
+        expect(o.canonical_fact_effects).toEqual([{ fact_key: STATUS, value: "completed" }]);
+      } else {
+        expect(o.canonical_fact_effects ?? []).toEqual([]);
+      }
+    }
+    // Dependencias canónicas resuelven; sin derived en efectos.
+    expect(getCanonicalActivity("lawful_basis.assign")?.human_code).toBe("D2.05");
+    expect(getCanonicalActivity("retention.schedule")?.human_code).toBe("D2.08");
+    for (const o of PD210.outcomes) {
+      for (const e of o.canonical_fact_effects ?? []) {
+        expect(e.fact_key.startsWith("derived.")).toBe(false);
+      }
+    }
+    expect(findConclusionNode(PD210)?.node_key).toBe("adopt-conclusion");
+    expect(treatmentReferenceNode(PD210, R)?.node_key).toBe("posterior-select");
+    expect(validateProtocolStructure(PD210)).toEqual([]);
+  });
+
+  it("209. sin datos no hay depuración: determinístico sin efectos", () => {
+    const e = mustOutcomeFor(PD210, { [T]: "no", [S]: "yes", [A]: "yes", [R]: NONE });
+    expect(e.outcome_key).toBe("cleanup_not_required");
+    const unknown = mustOutcomeFor(PD210, { [T]: "unknown" });
+    expect(unknown.outcome_key).toBe("assessment_incomplete");
+  });
+
+  it("210. referencia pendiente bloquea sin deducir", () => {
+    const facts = pcFacts("", {});
+    const { [R]: _drop, ...withoutRef } = facts;
+    // Sin referencia el motor espera en el selector, no concluye.
+    const e = evaluateProtocol(PD210, withoutRef);
+    expect(e.status).toBe("awaiting_facts");
+    if (e.status !== "awaiting_facts") return;
+    expect(e.current_node_key).toBe("posterior-select");
+    const { c, idA } = twoTreatments();
+    expect(gatePasses(PD210, c, withoutRef, ctxA(c, idA))).toBe(false);
+    const r = finalizeJudgment({
+      protocol: PD210,
+      company: c,
+      facts: withoutRef,
+      draft: pcDraft(),
+      legalBasis: PC_BASIS,
+      ctx: ctxA(c, idA),
+    });
+    expect(r.ok).toBe(false);
+  });
+
+  it("211. vínculo posterior finaliza con efectos same-treatment", () => {
+    let { c, idA, idB } = twoTreatments();
+    const ctx = ctxA(c, idA);
+    const facts = pcFacts(idB);
+    c = answerAll(c, ctx, facts);
+    expect(
+      referenceFactState(PD210, c, ctx, R, idB),
+    ).toBe("satisfied");
+    expect(gatePasses(PD210, c, facts, ctx)).toBe(true);
+    const result = finalizeJudgment({
+      protocol: PD210,
+      company: c,
+      facts,
+      draft: pcDraft("linked_posterior"),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effects).toEqual([{ fact_key: STATUS, value: "completed" }]);
+    const applied = applyScopedFinalization(c, PD210, ctx, result.record, result.effects);
+    if (!applied) throw new Error("sin aplicación");
+    // Record, efecto y referencia viven en A; B y company intactos.
+    expect(
+      applied.treatments?.[idA]?.reasoningRecords[PD210.protocol_key]?.conclusion,
+    ).toBe("linked_posterior");
+    expect(
+      applied.treatments?.[idA]?.protocolAnswers[PD210.protocol_key]?.[STATUS]?.value,
+    ).toBe("completed");
+    expect(
+      applied.treatments?.[idA]?.protocolAnswers[PD210.protocol_key]?.[R]?.value,
+    ).toBe(idB);
+    expect(applied.treatments?.[idB]?.protocolAnswers[PD210.protocol_key]).toBeUndefined();
+    expect(applied.treatments?.[idB]?.reasoningRecords[PD210.protocol_key]).toBeUndefined();
+    expect(applied.reasoningRecords[PD210.protocol_key]).toBeUndefined();
+    expect(getRecordedJudgment(PD210, applied, facts, ctx).status).toBe("valid");
+    // Idempotente en contenido.
+    const twice = applyScopedFinalization(applied, PD210, ctx, result.record, result.effects);
+    if (!twice) throw new Error("sin segunda aplicación");
+    expect(
+      twice.treatments?.[idA]?.reasoningRecords[PD210.protocol_key]?.conclusion,
+    ).toBe("linked_posterior");
+  });
+
+  it("212. sin posterior la depuración completa igual finaliza", () => {
+    let { c, idA } = twoTreatments();
+    const ctx = ctxA(c, idA);
+    const facts = pcFacts(NONE);
+    c = answerAll(c, ctx, facts);
+    expect(gatePasses(PD210, c, facts, ctx)).toBe(true);
+    const result = finalizeJudgment({
+      protocol: PD210,
+      company: c,
+      facts,
+      draft: pcDraft("cleanup_completed"),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const applied = applyScopedFinalization(c, PD210, ctx, result.record, result.effects);
+    if (!applied) throw new Error("sin aplicación");
+    expect(
+      applied.treatments?.[idA]?.protocolAnswers[PD210.protocol_key]?.[STATUS]?.value,
+    ).toBe("completed");
+    expect(
+      applied.treatments?.[idA]?.protocolAnswers[PD210.protocol_key]?.[R]?.value,
+    ).toBe(NONE);
+  });
+
+  it("213. autorreferencia rechazada en gate e import", () => {
+    const { c, idA } = twoTreatments();
+    const ctx = ctxA(c, idA);
+    expect(referenceFactState(PD210, c, ctx, R, idA)).toBe("invalid");
+    expect(gatePasses(PD210, c, pcFacts(idA), ctx)).toBe(false);
+    const r = finalizeJudgment({
+      protocol: PD210,
+      company: c,
+      facts: pcFacts(idA),
+      draft: pcDraft(),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(r.ok).toBe(false);
+    // Estado persistido con autorreferencia se rechaza en import.
+    const t = c.treatments?.[idA];
+    if (!t) throw new Error("sin T");
+    const bad = {
+      ...c,
+      treatments: {
+        ...c.treatments,
+        [idA]: {
+          ...t,
+          protocolAnswers: {
+            [PD210.protocol_key]: {
+              [R]: { value: idA, source: PD210.protocol_key, updatedAt: new Date().toISOString() },
+            },
+          },
+        },
+      },
+    };
+    expect(validateTreatmentReferences(bad)).not.toEqual([]);
+  });
+
+  it("214. referencia cruzada imposible: gate e import la rechazan", () => {
+    let { c, idA } = twoTreatments();
+    const other = newCompany("Otra SpA");
+    const ot = createTreatment(other, { name: "Externo" });
+    if (!ot) throw new Error("sin externo");
+    const ctx = ctxA(c, idA);
+    expect(
+      referenceFactState(PD210, c, ctx, R, ot.treatmentId),
+    ).toBe("invalid");
+    expect(gatePasses(PD210, c, pcFacts(ot.treatmentId), ctx)).toBe(false);
+  });
+
+  it("215. A/B aislados; conflicto en B no bloquea A", () => {
+    let { c, idA, idB } = twoTreatments();
+    const at = new Date().toISOString();
+    // Conflicto intra-dirección en B sobre un fact de decisión.
+    const tb = c.treatments?.[idB];
+    if (!tb) throw new Error("sin B");
+    c = {
+      ...c,
+      treatments: {
+        ...c.treatments,
+        [idB]: {
+          ...tb,
+          protocolAnswers: {
+            "proto.a.v1": { [S]: { value: "yes", source: "proto.a.v1", updatedAt: at } },
+            "proto.b.v1": { [S]: { value: "no", source: "proto.b.v1", updatedAt: at } },
+          },
+        },
+      },
+    };
+    const ctxB = { scope: "treatment", companyId: c.id, treatmentId: idB } as const;
+    expect(blockingScopedConflicts([T, S, A, R], c, ctxB)).toContain(S);
+    const ctx = ctxA(c, idA);
+    expect(blockingScopedConflicts([T, S, A, R], c, ctx)).toEqual([]);
+    // A finaliza con conclusión distinta sin interferencia.
+    const result = finalizeJudgment({
+      protocol: PD210,
+      company: c,
+      facts: pcFacts(NONE),
+      draft: pcDraft("cleanup_completed"),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("216. cambiar tratamiento activo no altera la dirección finalizada", () => {
+    let { c, idA, idB } = twoTreatments();
+    const ctx = ctxA(c, idA);
+    const facts = pcFacts(idB);
+    const result = finalizeJudgment({
+      protocol: PD210,
+      company: c,
+      facts,
+      draft: pcDraft("linked_posterior"),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const applied = applyScopedFinalization(c, PD210, ctx, result.record, result.effects);
+    if (!applied) throw new Error("sin aplicación");
+    const switched = selectTreatment(applied, idB);
+    if (!switched) throw new Error("sin cambio");
+    // El record sigue en A y válido en su dirección explícita.
+    expect(
+      switched.treatments?.[idA]?.reasoningRecords[PD210.protocol_key]?.conclusion,
+    ).toBe("linked_posterior");
+    expect(getRecordedJudgment(PD210, switched, facts, ctx).status).toBe("valid");
+  });
+
+  it("217. eliminar el target cuelga la referencia sin ocultar", () => {
+    let { c, idA, idB } = twoTreatments();
+    const ctx = ctxA(c, idA);
+    const facts = pcFacts(idB);
+    c = answerAll(c, ctx, facts);
+    expect(gatePasses(PD210, c, facts, ctx)).toBe(true);
+    const pruned = deleteTreatment(c, idB);
+    if (!pruned) throw new Error("sin eliminación");
+    // La referencia cuelga: gate e integridad lo reportan, nada se limpia solo.
+    expect(referenceFactState(PD210, pruned, ctxA(pruned, idA), R, idB)).toBe("invalid");
+    expect(gatePasses(PD210, pruned, facts, ctxA(pruned, idA))).toBe(false);
+    expect(validateTreatmentReferences(pruned)).not.toEqual([]);
+  });
+
+  it("218. export/import conserva referencia y reasoning", () => {
+    let { c, idA, idB } = twoTreatments();
+    const ctx = ctxA(c, idA);
+    const facts = pcFacts(idB);
+    c = answerAll(c, ctx, facts);
+    const result = finalizeJudgment({
+      protocol: PD210,
+      company: c,
+      facts,
+      draft: pcDraft("linked_posterior"),
+      legalBasis: PC_BASIS,
+      ctx,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const applied = applyScopedFinalization(c, PD210, ctx, result.record, result.effects);
+    if (!applied) throw new Error("sin aplicación");
+    const roundTrip = JSON.parse(JSON.stringify(applied));
+    const checked = validateCompanyState(roundTrip);
+    expect(checked.ok).toBe(true);
+    expect(validateTreatmentReferences(roundTrip)).toEqual([]);
+    if (!checked.ok) return;
+    expect(
+      checked.value.treatments?.[idA]?.protocolAnswers[PD210.protocol_key]?.[R]?.value,
+    ).toBe(idB);
+    expect(
+      checked.value.treatments?.[idA]?.reasoningRecords[PD210.protocol_key]?.conclusion,
+    ).toBe("linked_posterior");
+  });
+
+  it("219. D2.01–D2.09 intactos tras D2.10", () => {
+    for (const p of [PD201, PD202, PD203, PD204, PD207, PD208, PD209, PD205, PD206]) {
+      expect(validateProtocolStructure(p)).toEqual([]);
+    }
+    expect(getProtocolForActivity("precontractual_data.cleanup")).toBe(PD210);
   });
 });

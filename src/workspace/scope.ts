@@ -1,4 +1,5 @@
 import { statusOfCandidates } from "./facts";
+import { blockingConflicts, protocolNeededFacts } from "./facts";
 import type {
   CompanyState,
   ExecutionContext,
@@ -11,6 +12,11 @@ import type {
 import { newId, nowIso } from "./types";
 import type { FactMap } from "../../content/protocols/types";
 import { DERIVED_FACT_PREFIX } from "../../content/protocols/types";
+import type {
+  ExecutionProtocol,
+  GuidanceNode,
+} from "../../content/protocols/types";
+import { listProtocols } from "../../content/protocols/registry";
 
 /**
  * Identidad + scope Stage 1 (Company → TreatmentContext → TreatmentPurpose).
@@ -838,6 +844,152 @@ export function blockingScopedConflicts(
   return neededFactKeys.filter(
     (k) => getScopedFactState(company, ctx, k).state === "conflict",
   );
+}
+
+/**
+ * Conflictos del protocolo en la dirección de ejecución activa
+ * (company, treatment o purpose según `execution_scope`). Unifica el
+ * criterio para portadas, listas, progreso y compuertas: con scope
+ * treatment/purpose solo cuentan conflictos intra-dirección.
+ */
+export function scopedConflictKeys(
+  protocol: ExecutionProtocol,
+  company: CompanyState | null,
+): string[] {
+  if (!company) return [];
+  const ctx = activeExecutionContext(
+    company,
+    protocol.execution_scope ?? "company",
+  );
+  if (ctx && ctx.scope !== "company") {
+    return blockingScopedConflicts(protocolNeededFacts(protocol), company, ctx);
+  }
+  return blockingConflicts(protocol, company);
+}
+
+/**
+ * Referencias a tratamientos (Stage 1).
+ *
+ * Un nodo pregunta con `options_source: "same_company_treatments"`
+ * declara que su fact guarda una referencia a un tratamiento de la
+ * misma empresa (valor = treatmentId) o una alternativa estática
+ * explícita del propio nodo (p. ej. ausencia declarada). Genérico y
+ * dirigido por declaración: ningún literal de actividad, protocolo o
+ * fact. Sin grafo, sin workflow, sin nueva entidad.
+ */
+
+export type ReferenceFactState = "satisfied" | "missing" | "invalid";
+
+/** Nodo que declara la referencia para un fact, si existe. */
+export function treatmentReferenceNode(
+  protocol: ExecutionProtocol,
+  factKey: string,
+): GuidanceNode | undefined {
+  return protocol.nodes.find(
+    (n) =>
+      n.node_type === "question" &&
+      n.fact_key === factKey &&
+      n.options_source === "same_company_treatments",
+  );
+}
+
+/**
+ * Validez de una referencia a tratamiento: alternativa estática
+ * explícita del nodo declarante, o treatmentId existente en la misma
+ * empresa y distinto del tratamiento en ejecución (el canon exige un
+ * tratamiento *posterior*, necesariamente otro). Una referencia
+ * colgada (target eliminado) o cruzada (otra empresa) nunca satisface.
+ */
+export function referenceFactState(
+  protocol: ExecutionProtocol,
+  company: CompanyState | null,
+  ctx: ExecutionContext | null,
+  factKey: string,
+  value: string | undefined,
+): ReferenceFactState {
+  const node = treatmentReferenceNode(protocol, factKey);
+  if (!node) return "missing";
+  if (value === undefined || value === "unknown" || value === "") {
+    return "missing";
+  }
+  if ((node.options ?? []).some((o) => o.value === value)) {
+    return "satisfied";
+  }
+  if (!company || company.id !== ctx?.companyId) return "invalid";
+  const target = (company.treatments ?? {})[value];
+  if (!target) return "invalid";
+  if (ctx.scope === "treatment" && value === ctx.treatmentId) return "invalid";
+  if (ctx.scope === "purpose" && value === ctx.treatmentId) return "invalid";
+  return "satisfied";
+}
+
+/** Nombre del tratamiento para un valor que es un treatmentId; null si no aplica. */
+export function treatmentDisplayName(
+  company: CompanyState | null,
+  value: string | undefined,
+): string | null {
+  if (!company || !value) return null;
+  const t = (company.treatments ?? {})[value];
+  const name = t?.context?.name;
+  return typeof name === "string" && name.trim() !== "" ? name : null;
+}
+
+/**
+ * Integridad referencial de referencias a tratamientos en todo el
+ * subárbol (treatments + purposes, todos los protocolos con nodos
+ * declarantes). Vacío = íntegro. Usado en import/export: una
+ * referencia inválida (colgada, cruzada o autorreferente) se reporta
+ * como error explícito, nunca se ignora en silencio ni se limpia sola
+ * (alteraría determinaciones jurídicas registradas). Un valor ausente
+ * o desconocido no es inválido: el gate ya bloquea finalizar y el
+ * motor espera en el selector.
+ */
+export function validateTreatmentReferences(
+  company: CompanyState,
+  protocols: ExecutionProtocol[] = listProtocols(),
+): string[] {
+  const errors: string[] = [];
+  const scoped: Array<{
+    scope: ExecutionContext;
+    answers: Record<string, Record<string, FactRecord>>;
+  }> = [];
+  for (const [treatmentId, t] of Object.entries(company.treatments ?? {})) {
+    scoped.push({
+      scope: { scope: "treatment", companyId: company.id, treatmentId },
+      answers: t.protocolAnswers ?? {},
+    });
+    for (const purposeId of Object.keys(t.purposes ?? {})) {
+      scoped.push({
+        scope: {
+          scope: "purpose",
+          companyId: company.id,
+          treatmentId,
+          purposeId,
+        },
+        answers: t.purposes[purposeId]?.protocolAnswers ?? {},
+      });
+    }
+  }
+  for (const { scope: ctx, answers } of scoped) {
+    for (const [protocolKey, map] of Object.entries(answers)) {
+      const protocol = protocols.find((p) => p.protocol_key === protocolKey);
+      if (!protocol) continue;
+      for (const [factKey, record] of Object.entries(map)) {
+        if (!treatmentReferenceNode(protocol, factKey)) continue;
+        // Solo lo inválido rechaza: lo ausente/desconocido lo frenan el
+        // gate y el motor sin romper un respaldo por lo demás válido.
+        if (
+          referenceFactState(protocol, company, ctx, factKey, record?.value) ===
+          "invalid"
+        ) {
+          errors.push(
+            `Referencia a tratamiento inválida (${factKey}).`,
+          );
+        }
+      }
+    }
+  }
+  return errors;
 }
 
 /**

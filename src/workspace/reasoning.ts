@@ -10,8 +10,10 @@ import {
   getPurpose,
   getScopedReasoningRecord,
   getTreatment,
+  referenceFactState,
   resolveExecutionContext,
   setScopedJudgmentState,
+  treatmentReferenceNode,
 } from "./scope";
 import type { ExecutionContext } from "./types";
 import { describeFactKey } from "./factLabels";
@@ -60,9 +62,12 @@ export function considerationNodes(
 
 /**
  * Base mínima para concluir: todos los decision facts están
- * explícitamente en "yes" y no hay conflictos materiales. No decide QUÉ
- * concluir, solo SI se puede concluir. Un "no" posterior invalida la
- * base igual que un unknown: la conclusión previa queda desactualizada.
+ * satisfechos y no hay conflictos materiales. Un fact de decisión
+ * normal exige "yes" explícito vigente; un fact de referencia a
+ * tratamiento (nodo con `options_source`) exige determinación válida
+ * según `referenceFactState`. No decide QUÉ concluir, solo SI se
+ * puede concluir. Un "no" posterior invalida la base igual que un
+ * unknown: la conclusión previa queda desactualizada.
  *
  * Con `ctx` company (o ausente con company nula, legado) usa el camino
  * histórico idéntico; con treatment/purpose usa resolución scopeada.
@@ -73,8 +78,14 @@ export function gatePasses(
   facts: FactMap,
   ctx?: ExecutionContext | null,
 ): boolean {
-  if (!protocol.decision_fact_keys.every((f) => facts[f] === "yes")) {
-    return false;
+  for (const f of protocol.decision_fact_keys) {
+    if (treatmentReferenceNode(protocol, f)) {
+      if (referenceFactState(protocol, company, ctx ?? null, f, facts[f]) !== "satisfied") {
+        return false;
+      }
+      continue;
+    }
+    if (facts[f] !== "yes") return false;
   }
   if (ctx && ctx.scope !== "company") {
     if (!company || !resolveExecutionContext(company, ctx)) return false;
@@ -216,6 +227,15 @@ export function getRecordedJudgment(
   if (!gatePasses(protocol, company, facts, ctx)) {
     const reasons: string[] = [];
     for (const f of protocol.decision_fact_keys) {
+      if (treatmentReferenceNode(protocol, f)) {
+        const state = referenceFactState(protocol, company, ctx ?? null, f, facts[f]);
+        if (state === "missing") {
+          reasons.push(`${describeFactKey(f)} quedó sin determinar.`);
+        } else if (state === "invalid") {
+          reasons.push(`${describeFactKey(f)} referencia un tratamiento inválido.`);
+        }
+        continue;
+      }
       if (facts[f] === undefined) {
         reasons.push(`${describeFactKey(f)} quedó sin responder.`);
       } else if (facts[f] === "unknown") {

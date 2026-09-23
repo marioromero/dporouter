@@ -5,6 +5,7 @@ import {
   activeExecutionContext,
   getScopedFactState,
   scopedAddressAlternatives,
+  treatmentDisplayName,
 } from "../workspace/scope";
 import type { ExecutionContext, ExecutionScope } from "../workspace/types";
 import { describeFactKey, describeFactValue } from "../workspace/factLabels";
@@ -50,7 +51,8 @@ export function ConflictResolver({
   const options = alternatives.map((r) => ({
     key: `${r.source}:${r.value}`,
     value: r.value,
-    label: describeFactValue(factKey, r.value),
+    // Sin IDs crudos: una referencia a tratamiento muestra su nombre.
+    label: treatmentDisplayName(company, r.value) ?? describeFactValue(factKey, r.value),
     source: humanSourceName(r.source),
     when: r.updatedAt,
   }));

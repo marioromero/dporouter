@@ -86,6 +86,19 @@ export interface GuidanceNode {
   fact_key?: string;
   answer_type: GuidanceAnswerType;
   options?: AnswerOption[];
+  /**
+   * Origen dinámico de opciones para un nodo pregunta `single_select`
+   * cuyos valores dependen del workspace y no pueden enumerarse
+   * estáticamente sin destruir semántica (p. ej. identificadores de
+   * tratamientos de la misma empresa). La UI genérica construye las
+   * opciones en tiempo de ejecución desde ese origen; las `options`
+   * estáticas del nodo (si existen) se ofrecen junto a las dinámicas
+   * (p. ej. una alternativa explícita de ausencia). El valor
+   * seleccionado se registra como respuesta scopeada normal con el
+   * `fact_key` del nodo. Unión cerrada; ausente = solo opciones
+   * estáticas.
+   */
+  options_source?: "same_company_treatments";
   evidence_to_review?: string[];
   help_text?: string[];
   /**

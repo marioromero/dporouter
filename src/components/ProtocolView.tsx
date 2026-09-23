@@ -26,10 +26,12 @@ import { CopyLinkButton, ProvenanceBadge, provenanceHuman } from "./ui";
 import { ConflictResolver } from "./ConflictResolver";
 import { modeStartLabel } from "./ActivityWorkView";
 import { useWorkspace } from "../workspace/context";
-import { getFactStatus, blockingConflicts } from "../workspace/facts";
+import { getFactStatus } from "../workspace/facts";
 import {
   activeExecutionContext,
   getScopedFactState,
+  scopedConflictKeys,
+  treatmentDisplayName,
 } from "../workspace/scope";
 import { findConclusionNode } from "../../content/protocols/registry";
 import { getRecordedJudgment } from "../workspace/reasoning";
@@ -112,12 +114,7 @@ export function ProtocolChrome({
   crumbTail: string;
 }) {
   const { company } = useWorkspace();
-  const conflicted = company
-    ? protocol.nodes
-        .filter((n) => n.node_type === "question" && n.fact_key)
-        .map((n) => n.fact_key as string)
-        .filter((f) => getFactStatus(company, f).state === "conflict")
-    : [];
+  const conflicted = company ? scopedConflictKeys(protocol, company) : [];
   const progress = getProtocolProgress(protocol, session.facts, conflicted);
   // Contexto jurídico activo en lenguaje humano (sin IDs): evita
   // asignar una base a otra finalidad por error. Solo para scopes
@@ -222,17 +219,11 @@ export function ProtocolEntryView({
 }) {
   const evaluation = evaluateProtocol(protocol, session.facts);
   const { company } = useWorkspace();
-  const blocked =
-    company != null ? blockingConflicts(protocol, company) : [];
+  const blocked = company != null ? scopedConflictKeys(protocol, company) : [];
   const progress = getProtocolProgress(
     protocol,
     session.facts,
-    company
-      ? protocol.nodes
-          .filter((n) => n.node_type === "question" && n.fact_key)
-          .map((n) => n.fact_key as string)
-          .filter((f) => getFactStatus(company, f).state === "conflict")
-      : [],
+    company ? scopedConflictKeys(protocol, company) : [],
   );
   const complete = evaluation.status === "outcome";
   const recorded = getRecordedJudgment(
@@ -315,7 +306,7 @@ export function ProtocolEntryView({
               const inConflict =
                 company != null &&
                 n.fact_key != null &&
-                getFactStatus(company, n.fact_key).state === "conflict";
+                scopedConflictKeys(protocol, company).includes(n.fact_key);
               return (
                 <li key={n.node_key}>
                   <Link to={nodeHref(activity.activityKey, n.node_key)}>
@@ -326,7 +317,7 @@ export function ProtocolEntryView({
                     "En conflicto"
                   ) : isFactResolved(value) ? (
                     <>
-                      {answerLabel(n, value)}
+                      {responseLabel(company, n, value)}
                       {n.fact_key && session.isProvided(n.fact_key) ? (
                         <> · Dato ya disponible</>
                       ) : null}
@@ -340,6 +331,116 @@ export function ProtocolEntryView({
         </ul>
       </section>
     </>
+  );
+}
+
+/**
+ * Etiqueta de respuesta sin IDs crudos: un valor que es un treatmentId
+ * de la empresa se muestra con el nombre del tratamiento; el resto usa
+ * la etiqueta canónica de la opción.
+ */
+function responseLabel(
+  company: ReturnType<typeof useWorkspace>["company"],
+  node: GuidanceNode,
+  value: string | undefined,
+): string {
+  if (value === undefined) return "Sin responder";
+  const name = treatmentDisplayName(company, value);
+  if (name) return name;
+  return answerLabel(node, value);
+}
+
+/**
+ * Selector de referencia a tratamiento (Stage 1).
+ *
+ * Control genérico dirigido por declaración (`options_source:
+ * "same_company_treatments"`): lista los TreatmentContexts de la
+ * misma empresa como opciones junto a las estáticas del nodo. Sin
+ * grafo, sin workflow. Reglas:
+ * - cross-company imposible (la lista nace del propio objeto empresa);
+ * - el tratamiento en ejecución no se ofrece como su propio posterior
+ *   (el canon exige un tratamiento posterior, necesariamente otro):
+ *   solo se muestra la nota que lo excluye;
+ * - un valor guardado cuyo target ya no existe se advierte como
+ *   referencia obsoleta y puede re-elegirse (la respuesta sobrescribe).
+ */
+function TreatmentReferenceSelector({
+  protocol,
+  session,
+  node,
+}: {
+  protocol: ExecutionProtocol;
+  session: ProtocolSession;
+  node: GuidanceNode;
+}) {
+  const { company } = useWorkspace();
+  const entries = Object.entries(company?.treatments ?? {});
+  const ctx = company
+    ? activeExecutionContext(company, protocol.execution_scope ?? "company")
+    : null;
+  const selfId =
+    ctx && (ctx.scope === "treatment" || ctx.scope === "purpose")
+      ? ctx.treatmentId
+      : null;
+  const current = node.fact_key ? session.facts[node.fact_key] : undefined;
+  const staticValues = new Set((node.options ?? []).map((o) => o.value));
+  const stale =
+    current !== undefined &&
+    !staticValues.has(current) &&
+    !entries.some(([id]) => id === current);
+  const others = entries.filter(([id]) => id !== selfId);
+  return (
+    <div className="actions" role="group" aria-label={node.title} data-testid="guia-reference-select">
+      {others.length === 0 ? (
+        <p data-testid="guia-reference-empty">
+          No existe otro tratamiento en esta empresa: solo puedes declarar
+          la ausencia de tratamiento posterior.
+        </p>
+      ) : (
+        others.map(([id, t]) => (
+          <button
+            key={id}
+            type="button"
+            data-testid="guia-reference-treatment"
+            className={current === id ? "btn" : "btn secondary"}
+            aria-pressed={current === id}
+            title={`Tratamiento posterior: ${t.context.name}`}
+            onClick={() =>
+              node.fact_key && session.answer(node.fact_key, id)
+            }
+          >
+            {t.context.name}
+          </button>
+        ))
+      )}
+      {(node.options ?? []).map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          data-testid={`guia-option-${o.value}`}
+          className={current === o.value ? "btn" : "btn secondary"}
+          aria-pressed={current === o.value}
+          title={o.description ?? o.label}
+          onClick={() =>
+            node.fact_key &&
+            session.answer(node.fact_key, o.fact_effect?.value ?? o.value)
+          }
+        >
+          {o.label}
+        </button>
+      ))}
+      {selfId ? (
+        <p data-testid="guia-reference-self">
+          El tratamiento en evaluación no puede ser su propio posterior.
+        </p>
+      ) : null}
+      {stale ? (
+        <p data-testid="guia-reference-stale" role="alert">
+          La referencia guardada apunta a un tratamiento que ya no existe.
+          Selecciona nuevamente.
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -479,7 +580,13 @@ export function ProtocolNodeView({
         {node.help_text && node.help_text.length > 0
           ? node.help_text.map((h, i) => <p key={i}>{h}</p>)
           : null}
-        {node.options && node.options.length > 0 && node.fact_key ? (
+        {node.options_source === "same_company_treatments" && node.fact_key ? (
+          <TreatmentReferenceSelector
+            protocol={protocol}
+            session={session}
+            node={node}
+          />
+        ) : node.options && node.options.length > 0 && node.fact_key ? (
           <div className="actions" role="group" aria-label="Respuestas">
             {node.options.map((o) => (
               <button
@@ -567,18 +674,18 @@ function AnsweredFactsPanel({
     <section className="activity-section" aria-label="Antecedentes ya respondidos">
       <h2>Antecedentes ya respondidos</h2>
       <ul>
-        {answered.map((n) => {
+          {answered.map((n) => {
           const inConflict =
             company != null &&
             n.fact_key != null &&
-            getFactStatus(company, n.fact_key).state === "conflict";
+            scopedConflictKeys(protocol, company).includes(n.fact_key);
           return (
             <li key={n.node_key}>
               <Link to={nodeHref(activity.activityKey, n.node_key)}>{n.title}</Link>{" "}
               ·{" "}
               {inConflict
                 ? "En conflicto"
-                : answerLabel(n, n.fact_key ? session.facts[n.fact_key] : undefined)}
+                : responseLabel(company, n, n.fact_key ? session.facts[n.fact_key] : undefined)}
               {!inConflict && n.fact_key && session.isProvided(n.fact_key) ? (
                 <> · Dato ya disponible</>
               ) : null}
@@ -606,7 +713,13 @@ export function ProtocolOutcomeView({
   ruleDescription: string;
   explanation: string;
 }) {
-  const factors = buildOutcomeFactors(protocol, session.facts);
+  const nature = provenanceHuman(outcome.classification);
+  const { company, finalizeProtocolOutcome } = useWorkspace();
+  const factors = buildOutcomeFactors(protocol, session.facts).map((f) => ({
+    ...f,
+    // Sin IDs crudos: una referencia a tratamiento muestra su nombre.
+    answer: treatmentDisplayName(company, session.facts[f.fact_key]) ?? f.answer,
+  }));
   // Pendientes: nodos pregunta con hecho sin resolver, en orden canónico.
   // La sección solo se muestra cuando al menos un pendiente fue marcado
   // explícitamente (unknown): un resultado definitivo por otra vía (p. ej.
@@ -623,8 +736,6 @@ export function ProtocolOutcomeView({
   const visibleActions = outcome.next_actions.filter((a) =>
     a.show_when ? evaluateCondition(a.show_when, session.facts) : true,
   );
-  const nature = provenanceHuman(outcome.classification);
-  const { company, finalizeProtocolOutcome } = useWorkspace();
   const [finalizeErrors, setFinalizeErrors] = useState<string[]>([]);
   const canonicalEffects = outcome.canonical_fact_effects ?? [];
   // Solo procedure/checklist con efectos declarados ofrecen registro

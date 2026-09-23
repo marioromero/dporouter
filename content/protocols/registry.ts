@@ -29,6 +29,7 @@ import { RETENTION_SCHEDULE_PROTOCOL } from "./retention.schedule";
 import { DATA_QUALITY_CONTROL_PROTOCOL } from "./data.quality_control";
 import { LAWFUL_BASIS_ASSIGN_PROTOCOL } from "./lawful_basis.assign";
 import { LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL } from "./legitimate_interest.assessment";
+import { PRECONTRACTUAL_DATA_CLEANUP_PROTOCOL } from "./precontractual_data.cleanup";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -72,6 +73,7 @@ const PROTOCOLS: ExecutionProtocol[] = [
   DATA_QUALITY_CONTROL_PROTOCOL,
   LAWFUL_BASIS_ASSIGN_PROTOCOL,
   LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL,
+  PRECONTRACTUAL_DATA_CLEANUP_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

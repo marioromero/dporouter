@@ -746,6 +746,7 @@ why_it_matters
 fact_key
 answer_type
 options[]
+options_source
 evidence_to_review[]
 help_text[]
 required_facts[]
@@ -771,6 +772,12 @@ single_select
 none
 ```
 
+Allowed baseline `options_source` values:
+
+```text
+same_company_treatments
+```
+
 Rules:
 
 * Do not force irrelevant fields on nodes that do not need them.
@@ -784,6 +791,16 @@ Rules:
   `external_fact_keys[]`; facts may originate outside the current protocol.
 * A decision rule may route either to another node (`goto_node_key`) or to
   an outcome (`goto_outcome_key`).
+* `options_source` (absent by default) declares runtime-generated
+  options for a `single_select` question whose values cannot be
+  enumerated statically without destroying semantics.
+  `same_company_treatments` offers the company's TreatmentContexts
+  alongside the node's static `options` (e.g. an explicit absence
+  alternative); the selected value is recorded as a normal scoped
+  answer under the node's `fact_key`. A resolved treatment reference
+  is valid only as an existing same-company treatment distinct from
+  the executing treatment; import rejects dangling, cross-company or
+  self references explicitly.
 
 ## 35. AnswerOption
 

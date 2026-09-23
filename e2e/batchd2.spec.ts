@@ -237,6 +237,7 @@ test("D2.09 controla calidad sin score ni frecuencia", async ({ page }) => {
 });
 
 const D205 = "/actividad/lawful_basis.assign";
+const D210 = "/actividad/precontractual_data.cleanup";
 
 async function crearTratamientoConPurposes(page: import("@playwright/test").Page) {
   await page.goto("/empresa");
@@ -310,4 +311,68 @@ test("D2.06 evalúa solo la purpose candidata con juicio documentado", async ({ 
   // Recarga: el record persiste en la purpose.
   await page.reload();
   await expect(page.getByTestId("juicio-conclusion-label")).toContainText("Sostiene la base");
+});
+
+async function seleccionarTratamiento(page: import("@playwright/test").Page, nombre: string) {
+  await page.goto("/empresa");
+  await page.getByTestId("workspace-treatments").getByRole("button", { name: nombre, exact: true }).click();
+}
+
+async function adoptarConclusion(page: import("@playwright/test").Page, opcion: string) {
+  await expect(page.getByTestId("juicio-conclusion")).toBeVisible();
+  await page.getByTestId(`juicio-opcion-${opcion}`).click();
+  await page.getByLabel("Referencias de evidencia (una por línea)").fill("Registro de depuración v1");
+  await page.getByLabel("Razonamiento").fill("Revisión con respaldo y vínculo documentado.");
+  await page.getByLabel("Quien adopta la conclusión").fill("DPO");
+  await page.getByRole("button", { name: "Adoptar conclusión profesional" }).click();
+}
+
+test("D2.10 sin datos no requiere depuración", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamiento(page, "Captación");
+  await page.goto(`${D210}/guia/trigger`);
+  await expect(page.getByTestId("guia-scope")).toContainText("Tratamiento: Captación");
+  await answerAndContinue(page, "no");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText("Sin depuración requerida");
+});
+
+test("D2.10 vincula tratamiento posterior con juicio documentado", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamiento(page, "Captación");
+  await crearTratamiento(page, "Contratos");
+  await seleccionarTratamiento(page, "Captación");
+  await page.goto(`${D210}/guia/trigger`);
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  // Selector: el propio tratamiento no puede elegirse como posterior.
+  await expect(page.getByTestId("guia-reference-select")).toBeVisible();
+  await expect(page.getByTestId("guia-reference-self")).toBeVisible();
+  await page.getByTestId("guia-reference-select").getByRole("button", { name: "Contratos" }).click();
+  await page.getByTestId("guia-continue").click();
+  await expect(page).toHaveURL(new RegExp("/guia/adopt-conclusion$"));
+  await adoptarConclusion(page, "linked_posterior");
+  await expect(page.getByTestId("juicio-conclusion-label")).toContainText("Vinculado a tratamiento posterior");
+  // Recarga: el record persiste en el tratamiento.
+  await page.reload();
+  await expect(page.getByTestId("juicio-conclusion-label")).toContainText("Vinculado a tratamiento posterior");
+  // El otro tratamiento no hereda la conclusión.
+  await seleccionarTratamiento(page, "Contratos");
+  await page.goto(`${D210}/guia/adopt-conclusion`);
+  await expect(page.getByRole("button", { name: "Adoptar conclusión profesional" })).toBeVisible();
+});
+
+test("D2.10 depuración completa sin posterior", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamiento(page, "Captación");
+  await page.goto(`${D210}/guia/trigger`);
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  // Sin otro tratamiento solo cabe declarar la ausencia.
+  await expect(page.getByTestId("guia-reference-empty")).toBeVisible();
+  await answerAndContinue(page, "no_posterior");
+  await expect(page).toHaveURL(new RegExp("/guia/adopt-conclusion$"));
+  await adoptarConclusion(page, "cleanup_completed");
+  await expect(page.getByTestId("juicio-conclusion-label")).toContainText("Depuración completada");
 });

@@ -491,3 +491,43 @@ decision-outcome materialization and temporal operators remain gaps.
 
 Stage 1 boundary: single-write persistence with provenance, never
 longitudinal history or versioning.
+
+---
+
+## ADR-048 — Treatment references as declared scoped facts
+
+Status: ACCEPTED
+
+A protocol question may declare `options_source:
+"same_company_treatments"`: the generic UI offers the company's live
+TreatmentContexts next to the node's static options, and the choice
+persists as a normal scoped answer under the node's `fact_key`. No new
+scope, no graph engine, no workflow, no new entity, no new answer
+type, no new operator.
+
+Value contract: the selected value is a `treatmentId`, or one of the
+node's own static options (e.g. an explicit absence alternative).
+Validity is mechanical — existing treatment, same company, distinct
+from the executing treatment — and enforced at the gate, at
+finalization and at import. Self-reference is rejected because the
+canon requires a *posterior* treatment, necessarily another one
+(D2.10 step 3: "tratamiento posterior con finalidad y fuente de
+licitud diferente").
+
+Discarded: static `single_select` options for dynamic IDs (destroys
+semantics); a parallel link store next to the fact (would store one
+relation in two places); silent cleanup of references when the target
+treatment is deleted (would alter recorded juridical determinations).
+
+Deleting a referenced treatment leaves a dangling reference that the
+UI flags as stale (re-pick overwrites) and import rejects with an
+explicit error. Blocking deletion would invent workflow; silent
+cleanup would rewrite history. Reported as known Stage 1 behavior.
+
+The static engine routes optimistically on any resolved reference
+value (no operator can test id existence); validity is enforced on
+the safe side at the gate, at finalization, in the panel and at
+import — all blocks, never silent passes.
+
+Stage 1 boundary: single-target references only; no chains, no
+traversal, no history/tombstones.

@@ -10,6 +10,9 @@ import { blockingConflicts } from "../workspace/facts";
 import {
   activeExecutionContext,
   blockingScopedConflicts,
+  referenceFactState,
+  treatmentDisplayName,
+  treatmentReferenceNode,
 } from "../workspace/scope";
 import { ConflictResolver } from "./ConflictResolver";
 import { describeFactKey } from "../workspace/factLabels";
@@ -338,6 +341,7 @@ function KnownFacts({
   protocol: ExecutionProtocol;
   facts: Record<string, string>;
 }) {
+  const { company } = useWorkspace();
   const items = protocol.nodes.filter(
     (n) => n.node_type === "question" && n.fact_key && facts[n.fact_key] !== undefined,
   );
@@ -348,7 +352,7 @@ function KnownFacts({
     <ul>
       {items.map((n) => (
         <li key={n.node_key}>
-          {n.title}: {optionLabel(n, facts[n.fact_key as string])}
+          {n.title}: {optionLabel(n, facts[n.fact_key as string], company)}
         </li>
       ))}
     </ul>
@@ -358,9 +362,13 @@ function KnownFacts({
 function optionLabel(
   node: { options?: Array<{ value: string; label: string }> },
   value: string | undefined,
+  company?: ReturnType<typeof useWorkspace>["company"],
 ): string {
   if (value === undefined) return "Sin responder";
   if (value === "unknown") return "Desconocido";
+  // Sin IDs crudos: una referencia a tratamiento muestra su nombre.
+  const name = treatmentDisplayName(company ?? null, value);
+  if (name) return name;
   return node.options?.find((o) => o.value === value)?.label ?? "Valor registrado";
 }
 
@@ -378,7 +386,19 @@ function MissingFacts({
   // misma dirección del protocolo.
   const scope = protocol.execution_scope ?? "company";
   const ctx = company ? activeExecutionContext(company, scope) : null;
-  const missing = protocol.decision_fact_keys.filter((f) => facts[f] !== "yes");
+  // Misma semántica que el gate: solo "yes" vigente cuenta como base;
+  // una referencia a tratamiento cuenta cuando está válidamente
+  // determinada. "no" explícito también bloquea (factor no
+  // considerado). Los conflictos se listan sin filtrar para no ocultar
+  // ninguno, en la misma dirección del protocolo.
+  const missing = protocol.decision_fact_keys.filter((f) => {
+    if (treatmentReferenceNode(protocol, f)) {
+      return (
+        referenceFactState(protocol, company, ctx, f, facts[f]) !== "satisfied"
+      );
+    }
+    return facts[f] !== "yes";
+  });
   const blocked: string[] =
     company != null
       ? ctx && ctx.scope !== "company"
@@ -395,11 +415,15 @@ function MissingFacts({
           {missing.map((f) => (
             <li key={f}>
               {describeFactKey(f)}:{" "}
-              {facts[f] === undefined
-                ? "pendiente de responder"
-                : facts[f] === "unknown"
-                  ? "registrado como desconocido"
-                  : "marcado como no considerado: debe considerarse con respaldo para concluir"}
+              {treatmentReferenceNode(protocol, f)
+                ? referenceFactState(protocol, company, ctx, f, facts[f]) === "invalid"
+                  ? "referencia inválida: vuelve a seleccionar el tratamiento posterior"
+                  : "pendiente de determinar el tratamiento posterior"
+                : facts[f] === undefined
+                  ? "pendiente de responder"
+                  : facts[f] === "unknown"
+                    ? "registrado como desconocido"
+                    : "marcado como no considerado: debe considerarse con respaldo para concluir"}
             </li>
           ))}
         </ul>

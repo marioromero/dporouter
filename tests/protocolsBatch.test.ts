@@ -26,6 +26,7 @@ import { TREATMENT_SOURCE_TRACEABILITY_PROTOCOL as PD204 } from "../content/prot
 import { DATA_MINIMIZATION_REVIEW_PROTOCOL as PD207 } from "../content/protocols/data.minimization_review";
 import { RETENTION_SCHEDULE_PROTOCOL as PD208 } from "../content/protocols/retention.schedule";
 import { DATA_QUALITY_CONTROL_PROTOCOL as PD209 } from "../content/protocols/data.quality_control";
+import { LAWFUL_BASIS_ASSIGN_PROTOCOL as PD205 } from "../content/protocols/lawful_basis.assign";
 import type { ExecutionProtocol } from "../content/protocols/types";
 import {
   getProtocolForActivity,
@@ -2870,5 +2871,138 @@ describe("batch D2: integridad sin redundancia ni efectos", () => {
         seen.set(f, p.protocol_key);
       }
     }
+  });
+});
+
+function basisFacts(over: FactMap = {}): FactMap {
+  return {
+    "lawful.consent_applies": "consent_no",
+    "lawful.art13_source": "legal_obligation",
+    ...over,
+  };
+}
+
+describe("batch D2: D2.05 decision purpose-scoped", () => {
+  it("192. D2.05 decision purpose sin base global", () => {
+    expect(getProtocolForActivity("lawful_basis.assign")).toBe(PD205);
+    expect(PD205.mode).toBe("decision");
+    expect(PD205.execution_scope).toBe("purpose");
+    expect(PD205.entry_node_key).toBe("consent-basis");
+    expect(getCanonicalActivity(PD205.activity_key)?.human_code).toBe("D2.05");
+  });
+
+  it("193. nodos de determinación + síntesis; estructura válida", () => {
+    expect(PD205.nodes.map((n) => n.node_key)).toEqual([
+      "consent-basis",
+      "art13-source",
+      "basis-synthesis",
+    ]);
+    expect(
+      PD205.outcomes.map((o) => o.outcome_key).sort(),
+    ).toEqual(
+      [
+        "basis_consent",
+        "basis_legal_obligation",
+        "basis_contract",
+        "basis_legitimate_interest",
+        "basis_rights_defense",
+        "basis_financial",
+        "basis_unassigned",
+        "assessment_incomplete",
+      ].sort(),
+    );
+    expect(validateProtocolStructure(PD205)).toEqual([]);
+  });
+
+  it("194. cada base diverge a su outcome sin efectos", () => {
+    const cases: Array<[FactMap, string, string]> = [
+      [basisFacts({ "lawful.consent_applies": "consent_yes" }), "basis_consent", "basis-consent"],
+      [basisFacts(), "basis_legal_obligation", "basis-legal-obligation"],
+      [basisFacts({ "lawful.art13_source": "contract_precontractual" }), "basis_contract", "basis-contract"],
+      [basisFacts({ "lawful.art13_source": "legitimate_interest" }), "basis_legitimate_interest", "basis-legitimate-interest"],
+      [basisFacts({ "lawful.art13_source": "rights_defense" }), "basis_rights_defense", "basis-rights-defense"],
+      [basisFacts({ "lawful.art13_source": "financial_titleIII" }), "basis_financial", "basis-financial"],
+      [basisFacts({ "lawful.art13_source": "none_identified" }), "basis_unassigned", "basis-unassigned"],
+    ];
+    for (const [facts, outcomeKey, ruleId] of cases) {
+      const e = mustOutcomeFor(PD205, facts);
+      expect(e.outcome_key, outcomeKey).toBe(outcomeKey);
+      expect(e.rule_id, outcomeKey).toBe(ruleId);
+      expect(e.outcome.canonical_fact_effects ?? [], outcomeKey).toEqual([]);
+    }
+  });
+
+  it("195. interés legítimo deriva a D2.06 para la misma purpose", () => {
+    const e = mustOutcomeFor(
+      PD205,
+      basisFacts({ "lawful.art13_source": "legitimate_interest" }),
+    );
+    expect(e.outcome_key).toBe("basis_legitimate_interest");
+    expect(
+      e.outcome.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("legitimate_interest.assessment");
+  });
+
+  it("196. incompleto sin determinar; unknown bloquea", () => {
+    const e = mustOutcomeFor(
+      PD205,
+      basisFacts({ "lawful.art13_source": "unknown" }),
+    );
+    expect(e.outcome_key).toBe("assessment_incomplete");
+    expect(e.rule_id).toBe("pending-determination");
+    // Sin determinación de consentimiento no hay veredicto definitivo.
+    const u = mustOutcomeFor(
+      PD205,
+      basisFacts({
+        "lawful.consent_applies": "unknown",
+        "lawful.art13_source": "none_identified",
+      }),
+    );
+    expect(u.outcome_key).toBe("assessment_incomplete");
+  });
+
+  it("197. namespace propio purpose-scoped", () => {
+    for (const f of protocolFactKeys(PD205)) {
+      expect(f.startsWith("lawful."), f).toBe(true);
+    }
+  });
+});
+
+describe("batch D2: D2.06 bloqueado por judgment scopeado", () => {
+  it("198. sin protocolo D2.06: scoped judgment persistence pendiente", () => {
+    // finalizeJudgment persiste a nivel company (reasoning.ts): un
+    // protocolo purpose con juicio contaminaría purposes hermanas.
+    // Extenderlo exige cambio de contrato, prohibido en este batch.
+    expect(getProtocolForActivity("legitimate_interest.assessment")).toBeUndefined();
+  });
+
+  it("199. multi-purpose A1/A2 coexisten en D2.05", () => {
+    const a1 = mustOutcomeFor(
+      PD205,
+      basisFacts({ "lawful.art13_source": "contract_precontractual" }),
+    );
+    const a2 = mustOutcomeFor(
+      PD205,
+      basisFacts({ "lawful.art13_source": "legitimate_interest" }),
+    );
+    expect(a1.outcome_key).toBe("basis_contract");
+    expect(a2.outcome_key).toBe("basis_legitimate_interest");
+    // Sin base global: ningún fact ni outcome treatment-level.
+    const text = JSON.stringify(PD205);
+    expect(text).not.toContain("treatment.lawfulness_status");
+  });
+
+  it("200. D2.05 sin efectos: gap de finalización determinista", () => {
+    for (const o of PD205.outcomes) {
+      expect(o.canonical_fact_effects ?? []).toEqual([]);
+    }
+    const rejected = validateProcedureFinalization({
+      protocol: PD205,
+      company: newCompany("D205 SpA"),
+      facts: basisFacts(),
+      outcomeKey: "basis_legal_obligation",
+    });
+    // Vía genérica cubre solo procedure/checklist (contrato congelado).
+    expect(rejected.ok).toBe(false);
   });
 });

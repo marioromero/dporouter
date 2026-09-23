@@ -27,6 +27,7 @@ import { TREATMENT_SOURCE_TRACEABILITY_PROTOCOL } from "./treatment.source_trace
 import { DATA_MINIMIZATION_REVIEW_PROTOCOL } from "./data.minimization_review";
 import { RETENTION_SCHEDULE_PROTOCOL } from "./retention.schedule";
 import { DATA_QUALITY_CONTROL_PROTOCOL } from "./data.quality_control";
+import { LAWFUL_BASIS_ASSIGN_PROTOCOL } from "./lawful_basis.assign";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -68,6 +69,7 @@ const PROTOCOLS: ExecutionProtocol[] = [
   DATA_MINIMIZATION_REVIEW_PROTOCOL,
   RETENTION_SCHEDULE_PROTOCOL,
   DATA_QUALITY_CONTROL_PROTOCOL,
+  LAWFUL_BASIS_ASSIGN_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

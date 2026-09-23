@@ -235,3 +235,45 @@ test("D2.09 controla calidad sin score ni frecuencia", async ({ page }) => {
   );
   await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
 });
+
+const D205 = "/actividad/lawful_basis.assign";
+
+async function crearTratamientoConPurposes(page: import("@playwright/test").Page) {
+  await page.goto("/empresa");
+  await page.getByLabel("Nombre del tratamiento").fill("Gestión de clientes");
+  await page.getByRole("button", { name: "Agregar tratamiento" }).click();
+  await page.getByLabel("Descripción de la finalidad").fill("Facturación");
+  await page.getByRole("button", { name: "Agregar finalidad" }).click();
+  await page.getByLabel("Descripción de la finalidad").fill("Marketing");
+  await page.getByRole("button", { name: "Agregar finalidad" }).click();
+}
+
+async function seleccionarPurpose(page: import("@playwright/test").Page, desc: string) {
+  await page.goto("/empresa");
+  await page.getByRole("button", { name: desc, exact: true }).click();
+}
+
+test("D2.05 muestra contexto purpose y determina por finalidad", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamientoConPurposes(page);
+  await seleccionarPurpose(page, "Facturación");
+  await page.goto(`${D205}/guia/consent-basis`);
+  await expect(page.getByTestId("guia-scope")).toContainText("Finalidad: Facturación");
+  await answerAndContinue(page, "consent_no");
+  await answerAndContinue(page, "contract_precontractual");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText("Base: contrato o precontrato");
+  // A2 independiente: sin respuestas heredadas de A1.
+  await seleccionarPurpose(page, "Marketing");
+  await page.goto(`${D205}/guia/consent-basis`);
+  await expect(page.getByTestId("guia-scope")).toContainText("Finalidad: Marketing");
+  await answerAndContinue(page, "consent_no");
+  await answerAndContinue(page, "legitimate_interest");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText("Candidata: interés legítimo");
+  await page
+    .getByTestId("guia-next-actions")
+    .getByRole("link", { name: "Evaluar el interés legítimo de esta finalidad en D2.06" })
+    .click();
+  // D2.06 sin protocolo: pendiente honesto, sin fingir.
+  await expect(page.getByRole("heading", { name: "Evaluar interés legítimo" })).toBeVisible();
+  await expect(page.getByText("Guía operativa pendiente de incorporar")).toBeVisible();
+});

@@ -115,6 +115,34 @@ export function ProtocolChrome({
         .filter((f) => getFactStatus(company, f).state === "conflict")
     : [];
   const progress = getProtocolProgress(protocol, session.facts, conflicted);
+  // Contexto jurídico activo en lenguaje humano (sin IDs): evita
+  // asignar una base a otra finalidad por error. Solo para scopes
+  // treatment/purpose; company no muestra nada adicional.
+  const scopeLabel = (() => {
+    if (!company || (protocol.execution_scope ?? "company") === "company") {
+      return null;
+    }
+    const treatment = company.activeTreatmentId
+      ? company.treatments?.[company.activeTreatmentId]
+      : undefined;
+    if (!treatment) {
+      return "Sin tratamiento seleccionado: selecciona uno en Tratamientos para evaluar.";
+    }
+    if (
+      protocol.execution_scope === "purpose" &&
+      (!company.activePurposeId ||
+        !treatment.purposes[company.activePurposeId])
+    ) {
+      return `Tratamiento: ${treatment.context.name}. Sin finalidad seleccionada: selecciona una en Tratamientos para evaluar.`;
+    }
+    const purpose =
+      protocol.execution_scope === "purpose" && company.activePurposeId
+        ? treatment.purposes[company.activePurposeId]
+        : undefined;
+    return purpose
+      ? `Tratamiento: ${treatment.context.name} · Finalidad: ${purpose.purpose.description}`
+      : `Tratamiento: ${treatment.context.name}`;
+  })();
   return (
     <>
       <p className="breadcrumb">
@@ -144,6 +172,11 @@ export function ProtocolChrome({
         </div>
       </div>
       <div className="panel muted" data-testid="guia-progress">
+        {scopeLabel ? (
+          <p style={{ margin: "0 0 6px" }} data-testid="guia-scope">
+            <strong>{scopeLabel}</strong>
+          </p>
+        ) : null}
         <p style={{ margin: 0 }}>
           <strong>
             {progress.resolved} de {progress.total} antecedentes resueltos

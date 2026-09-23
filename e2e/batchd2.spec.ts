@@ -273,7 +273,41 @@ test("D2.05 muestra contexto purpose y determina por finalidad", async ({ page }
     .getByTestId("guia-next-actions")
     .getByRole("link", { name: "Evaluar el interés legítimo de esta finalidad en D2.06" })
     .click();
-  // D2.06 sin protocolo: pendiente honesto, sin fingir.
+  // D2.06 con protocolo: la derivación llega a guía real.
   await expect(page.getByRole("heading", { name: "Evaluar interés legítimo" })).toBeVisible();
-  await expect(page.getByText("Guía operativa pendiente de incorporar")).toBeVisible();
+  await expect(page.getByText("Guía operativa pendiente de incorporar")).toHaveCount(0);
+});
+
+test("D2.06 evalúa solo la purpose candidata con juicio documentado", async ({ page }) => {
+  await crearEmpresa(page, "Perfil D2", "Empresa D2");
+  await crearTratamientoConPurposes(page);
+  // A1 sin candidatura: prerrequisito honesto, sin finalización.
+  await seleccionarPurpose(page, "Facturación");
+  await page.goto("/actividad/legitimate_interest.assessment/guia/resultado");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Sin candidatura vigente",
+  );
+  // A2 con candidatura LI vía D2.05: factores + conclusión + registro.
+  await seleccionarPurpose(page, "Marketing");
+  await page.goto(`${D205}/guia/consent-basis`);
+  await answerAndContinue(page, "consent_no");
+  await answerAndContinue(page, "legitimate_interest");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Candidata: interés legítimo",
+  );
+  await page.goto("/actividad/legitimate_interest.assessment/guia/factor-interest");
+  for (const value of ["yes", "yes", "yes", "yes", "yes"]) {
+    await answerAndContinue(page, value);
+  }
+  await expect(page).toHaveURL(new RegExp("/guia/adopt-conclusion$"));
+  await expect(page.getByTestId("juicio-conclusion")).toBeVisible();
+  await page.getByTestId("juicio-opcion-supports_basis").click();
+  await page.getByLabel("Referencias de evidencia (una por línea)").fill("Análisis LI v1");
+  await page.getByLabel("Razonamiento").fill("Necesario y proporcionado con salvaguardas.");
+  await page.getByLabel("Quien adopta la conclusión").fill("Abogada");
+  await page.getByRole("button", { name: "Adoptar conclusión profesional" }).click();
+  await expect(page.getByTestId("juicio-conclusion-label")).toContainText("Sostiene la base");
+  // Recarga: el record persiste en la purpose.
+  await page.reload();
+  await expect(page.getByTestId("juicio-conclusion-label")).toContainText("Sostiene la base");
 });

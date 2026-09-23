@@ -1,6 +1,6 @@
 # Guided Execution
 
-Status: STAGE 1 CANONICAL LAYER — D1.01–D1.20
+Status: STAGE 1 CANONICAL LAYER — D1.01–D1.20, D2.01–D2.09 (D2.06 con juicio purpose-scoped)
 
 `The guidance engine assists professional execution; it does not silently create new legal obligations.`
 
@@ -212,4 +212,6 @@ across scopes.
 Protocols that require a documented professional conclusion use a
 `ReasoningRecord` with an explicit adoption act. The system verifies a
 sufficient basis but never deduces the conclusion: it belongs to the
-professional, with gating fields declared per protocol.
+professional, with gating fields declared per protocol. Records persist
+in their execution scope (company, treatment or purpose) with
+same-scope effects; re-finalizing is idempotent.

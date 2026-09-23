@@ -13,7 +13,12 @@ import {
   ACTIVITY_WORK_STATUS_LABELS,
   newCompany,
 } from "../src/workspace/types";
-import { validateCompanyState } from "../src/workspace/store";
+import {
+  STORAGE_KEY,
+  loadWorkspace,
+  migrateWorkspaceData,
+  validateCompanyState,
+} from "../src/workspace/store";
 import { companyFacts, suggestNextReview, summarizeDomain } from "../src/workspace/suggest";
 import {
   blockingConflicts,
@@ -483,5 +488,162 @@ describe("Activity View V2", () => {
     const body = document.body.textContent ?? "";
     expect(body).not.toContain("strong-A");
     expect(body).not.toContain("dpo_assessment.");
+  });
+});
+
+describe("migración de workspace heredado", () => {
+  const at = new Date().toISOString();
+
+  function legacyStoredCompany() {
+    // Empresa guardada por una versión anterior: sin protocolAnswers,
+    // diagnosticFacts, factResolutions ni reasoningRecords.
+    return {
+      id: "emp-vieja",
+      name: "Vieja SpA",
+      createdAt: at,
+      updatedAt: at,
+      activityStates: {},
+    };
+  }
+
+  function legacyStoredData() {
+    return {
+      version: 1,
+      profiles: [
+        {
+          id: "p1",
+          name: "P",
+          createdAt: at,
+          companyIds: ["emp-vieja", "emp-fantasma"],
+          activeCompanyId: "emp-vieja",
+        },
+      ],
+      activeProfileId: "p1",
+      companies: { "emp-vieja": legacyStoredCompany() },
+    };
+  }
+
+  it("normaliza empresas viejas en lugar de romper lecturas", () => {
+    const migrated = migrateWorkspaceData(legacyStoredData());
+    expect(migrated.companies["emp-vieja"]).toBeDefined();
+    expect(migrated.companies["emp-vieja"].protocolAnswers).toEqual({});
+    expect(migrated.companies["emp-vieja"].factResolutions).toEqual({});
+    expect(migrated.companies["emp-vieja"].reasoningRecords).toEqual({});
+    // Referencia huérfana podada; resto intacto.
+    expect(migrated.profiles[0].companyIds).toEqual(["emp-vieja"]);
+    expect(migrated.activeProfileId).toBe("p1");
+  });
+
+  it("descarta empresas inválidas y repara perfiles huérfanos", () => {
+    const migrated = migrateWorkspaceData({
+      version: 1,
+      profiles: [
+        { id: "p1", name: "P", createdAt: at, companyIds: ["x"], activeCompanyId: "x" },
+      ],
+      activeProfileId: "inexistente",
+      companies: { x: { id: "", name: "" } },
+    });
+    expect(Object.keys(migrated.companies)).toEqual([]);
+    expect(migrated.profiles[0].companyIds).toEqual([]);
+    expect(migrated.profiles[0].activeCompanyId).toBeUndefined();
+    expect(migrated.activeProfileId).toBeUndefined();
+  });
+
+  it("loadWorkspace tolera datos heredados corruptos", () => {
+    localStorage.clear();
+    try {
+      expect(loadWorkspace().companies).toEqual({});
+      localStorage.setItem(STORAGE_KEY, "no-json{{{");
+      expect(loadWorkspace().companies).toEqual({});
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(legacyStoredData()));
+      const loaded = loadWorkspace();
+      expect(loaded.companies["emp-vieja"].diagnosticFacts).toEqual({});
+      expect(loaded.companies["emp-vieja"].factResolutions).toEqual({});
+      expect(loaded.companies["emp-vieja"].protocolAnswers).toEqual({});
+      expect(loaded.companies["emp-vieja"].reasoningRecords).toEqual({});
+    } finally {
+      localStorage.clear();
+    }
+  });
+
+  it("la empresa migrada no rompe Empresa (regresión del crash)", () => {
+    const migrated = migrateWorkspaceData(legacyStoredData());
+    const company = migrated.companies["emp-vieja"];
+    // Exactamente la cadena que fallaba: suggestNextReview → blockingConflicts → getFactStatus.
+    expect(() => getFactStatus(company, "dpo_assessment.high_impact_data")).not.toThrow();
+    const suggestion = suggestNextReview(
+      [...D01_ACTIVITIES, ...D02_ACTIVITIES],
+      () => "d1",
+      ["d1", "d2"],
+      company,
+    );
+    expect(suggestion).not.toBeNull();
+    expect(typeof suggestion?.activityKey).toBe("string");
+    expect(mergedFactRecords(company)).toEqual({});
+  });
+
+  it("poda por entrada: conserva lo válido y descarta solo lo corrupto", () => {
+    const migrated = migrateWorkspaceData({
+      version: 1,
+      profiles: [],
+      activeProfileId: undefined,
+      companies: {
+        "emp-mixta": {
+          ...legacyStoredCompany(),
+          id: "emp-mixta",
+          activityStates: {
+            ok: { status: "reviewed", updatedAt: at },
+            mala: { status: "cumple", updatedAt: at },
+          },
+          diagnosticFacts: {
+            bueno: { value: "yes", source: "diagnostico", updatedAt: at },
+            malo: { value: 42, source: "diagnostico", updatedAt: at },
+          },
+        },
+      },
+    });
+    const kept = migrated.companies["emp-mixta"];
+    expect(kept).toBeDefined();
+    expect(Object.keys(kept.activityStates)).toEqual(["ok"]);
+    expect(Object.keys(kept.diagnosticFacts)).toEqual(["bueno"]);
+    expect(kept.protocolAnswers).toEqual({});
+  });
+
+  it("rechaza claves peligrosas y conserva la clave almacenada", () => {
+    // "__proto__" como clave propia solo existe vía JSON.parse: en un
+    // literal crearía prototipo en vez de clave.
+    const raw = JSON.parse(
+      `{"version":1,"profiles":[{"id":"p1","name":"P","createdAt":"${at}","companyIds":["toString","k1","__proto__"],"activeCompanyId":"k1"}],"activeProfileId":"p1","companies":{"k1":{"id":"otro-id","name":"K1","createdAt":"${at}","updatedAt":"${at}","activityStates":{}},"__proto__":{"id":"__proto__","name":"X","createdAt":"${at}","updatedAt":"${at}","activityStates":{}}}}`,
+    );
+    expect(Object.prototype.hasOwnProperty.call(raw.companies, "__proto__")).toBe(true);
+    const migrated = migrateWorkspaceData(raw);
+    // "toString" no es clave propia: podada. "__proto__" nunca se escribe.
+    expect(migrated.profiles[0].companyIds).toEqual(["k1"]);
+    expect(Object.prototype.hasOwnProperty.call(migrated.companies, "__proto__")).toBe(false);
+    // Sin bifurcación: la clave almacenada manda sobre el id interno.
+    expect(migrated.companies["k1"].id).toBe("k1");
+    expect(migrated.companies["k1"].name).toBe("K1");
+  });
+
+  it("tolera formas adversariales de nivel superior y duplicados", () => {
+    for (const bad of [[], null, 42, "x", { version: "1" }, { version: 1 }]) {
+      expect(migrateWorkspaceData(bad).companies).toEqual({});
+    }
+    expect(
+      migrateWorkspaceData({ version: 1, profiles: null, companies: [] }).companies,
+    ).toEqual({});
+    const duped = migrateWorkspaceData({
+      version: 1,
+      profiles: [
+        { id: "p1", name: "A", createdAt: at, companyIds: [] },
+        { id: "p1", name: "B", createdAt: at, companyIds: [] },
+        null,
+        7,
+      ],
+      activeProfileId: "p1",
+      companies: {},
+    });
+    expect(duped.profiles.map((p) => p.name)).toEqual(["A"]);
+    expect(duped.activeProfileId).toBe("p1");
   });
 });

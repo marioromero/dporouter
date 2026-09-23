@@ -247,9 +247,10 @@ describe("finalización genérica procedure/checklist", () => {
     });
     expect(rejected.ok).toBe(false);
     // La finalización propia sigue operativa con su semántica aprobada.
+    const d03company = newCompany("D03b SpA");
     const gateFail = finalizeJudgment({
       protocol: P03,
-      company: newCompany("D03b SpA"),
+      company: d03company,
       facts: {},
       draft: {
         conclusion: "recommended",
@@ -261,6 +262,7 @@ describe("finalización genérica procedure/checklist", () => {
         decided_at: new Date().toISOString(),
       },
       legalBasis: [],
+      ctx: { scope: "company", companyId: d03company.id },
     });
     expect(gateFail.ok).toBe(false);
   });

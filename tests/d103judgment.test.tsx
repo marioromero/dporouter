@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { MPI_NEED_ASSESSMENT_PROTOCOL as P03 } from "../content/protocols/mpi.need_assessment";
+import { LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL as PD206 } from "../content/protocols/legitimate_interest.assessment";
 import {
   findConclusionNode,
   getProtocolForActivity,
@@ -29,6 +30,11 @@ import {
   validateReasoningDraft,
 } from "../src/workspace/reasoning";
 import { JudgmentPanel } from "../src/components/JudgmentPanel";
+import {
+  createPurpose,
+  createTreatment,
+  selectPurpose,
+} from "../src/workspace/scope";
 
 const F = {
   voluntary: "mpi_assessment.voluntary",
@@ -544,6 +550,7 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
       facts: fullFacts(),
       draft: validDraft(),
       legalBasis: TEST_LEGAL_BASIS,
+      ctx: { scope: "company", companyId: company.id },
     });
     expect(ok.ok).toBe(true);
     if (ok.ok) {
@@ -566,6 +573,7 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
       facts: fullFacts({ [F.capacity]: "unknown" }),
       draft: validDraft(),
       legalBasis: TEST_LEGAL_BASIS,
+      ctx: { scope: "company", companyId: company.id },
     });
     expect(noGate.ok).toBe(false);
     const badDraft = finalizeJudgment({
@@ -574,6 +582,7 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
       facts: fullFacts(),
       draft: validDraft({ conclusion: "invented" }),
       legalBasis: TEST_LEGAL_BASIS,
+      ctx: { scope: "company", companyId: company.id },
     });
     expect(badDraft.ok).toBe(false);
     const noCompany = finalizeJudgment({
@@ -582,6 +591,7 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
       facts: fullFacts(),
       draft: validDraft(),
       legalBasis: TEST_LEGAL_BASIS,
+      ctx: { scope: "company", companyId: "sin-empresa" },
     });
     expect(noCompany.ok).toBe(false);
   });
@@ -604,6 +614,7 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
       facts: fullFacts(),
       draft: validDraft({ conclusion: "recommended" }),
       legalBasis: TEST_LEGAL_BASIS,
+      ctx: { scope: "company", companyId: company.id },
     });
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("debió finalizar");
@@ -615,5 +626,100 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
     expect(
       applied.protocolAnswers[P03.protocol_key]["mpi.recommendation_outcome"].value,
     ).toBe("recommended");
+  });
+
+  it("panel purpose muestra conflicto de su dirección, no silencio company", () => {
+    const at = new Date().toISOString();
+    let company = newCompany("Test SpA");
+    const t = createTreatment(company, { name: "T1" });
+    if (!t) throw new Error("sin tratamiento");
+    company = t.company;
+    const p = createPurpose(company, t.treatmentId, "F1");
+    if (!p) throw new Error("sin purpose");
+    company = p.company;
+    const sel = selectPurpose(company, t.treatmentId, p.purposeId);
+    if (!sel) throw new Error("sin selección");
+    company = sel;
+    // Conflicto intra-dirección en la purpose sobre un fact de decisión;
+    // a nivel company no hay registros (silencio company).
+    const trt = company.treatments?.[t.treatmentId];
+    if (!trt) throw new Error("sin T");
+    company = {
+      ...company,
+      treatments: {
+        ...company.treatments,
+        [t.treatmentId]: {
+          ...trt,
+          purposes: {
+            ...trt.purposes,
+            [p.purposeId]: {
+              ...trt.purposes[p.purposeId],
+              protocolAnswers: {
+                "proto.a.v1": {
+                  "li_assessment.interest_defined": { value: "yes", source: "proto.a.v1", updatedAt: at },
+                },
+                "proto.b.v1": {
+                  "li_assessment.interest_defined": { value: "no", source: "proto.b.v1", updatedAt: at },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    localStorage.clear();
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        profiles: [
+          {
+            id: "p1",
+            name: "P",
+            createdAt: at,
+            companyIds: [company.id],
+            activeCompanyId: company.id,
+          },
+        ],
+        activeProfileId: "p1",
+        companies: { [company.id]: company },
+      }),
+    );
+    const facts: FactMap = {
+      "li_assessment.interest_defined": "yes",
+      "li_assessment.necessity_reviewed": "yes",
+      "li_assessment.rights_reviewed": "yes",
+      "li_assessment.alternatives_reviewed": "yes",
+      "li_assessment.safeguards_reviewed": "yes",
+      "li_assessment.candidate_identified": "yes",
+      "lawful.art13_source": "legitimate_interest",
+    };
+    const node = findConclusionNode(PD206);
+    if (!node) throw new Error("sin nodo conclusión");
+    render(
+      <MemoryRouter>
+        <WorkspaceProvider>
+          <GuidanceSessionProvider>
+            <JudgmentPanel
+              protocol={PD206}
+              activityDef={getCanonicalActivity("legitimate_interest.assessment")!}
+              activity={{
+                activityKey: "legitimate_interest.assessment",
+                humanCode: "D2.06",
+                name: "Evaluar interés legítimo",
+              }}
+              session={panelSession(facts)}
+              node={node}
+            />
+          </GuidanceSessionProvider>
+        </WorkspaceProvider>
+      </MemoryRouter>,
+    );
+    const body = document.body.textContent ?? "";
+    // El conflicto de la purpose aparece con su mecanismo de resolución…
+    expect(body).toContain("en conflicto");
+    // …y el panel nunca declara base suficiente mientras el conflicto vive.
+    expect(body).not.toContain("No faltan antecedentes");
+    localStorage.clear();
   });
 });

@@ -7,6 +7,10 @@ import type {
 import type { ActivityDefinition } from "../types";
 import { useWorkspace } from "../workspace/context";
 import { blockingConflicts } from "../workspace/facts";
+import {
+  activeExecutionContext,
+  blockingScopedConflicts,
+} from "../workspace/scope";
 import { ConflictResolver } from "./ConflictResolver";
 import { describeFactKey } from "../workspace/factLabels";
 import type {
@@ -54,8 +58,11 @@ export function JudgmentPanel({
 }) {
   const { company, finalizeProfessionalJudgment } = useWorkspace();
   const facts = session.facts;
-  const ready = gatePasses(protocol, company, facts);
-  const recorded = getRecordedJudgment(protocol, company, facts);
+  const judgmentCtx = company
+    ? activeExecutionContext(company, protocol.execution_scope ?? "company")
+    : null;
+  const ready = gatePasses(protocol, company, facts, judgmentCtx);
+  const recorded = getRecordedJudgment(protocol, company, facts, judgmentCtx);
   const options = node.options ?? [];
 
   const [conclusion, setConclusion] = useState(() => {
@@ -367,9 +374,17 @@ function MissingFacts({
   const { company } = useWorkspace();
   // Misma semántica que el gate: solo "yes" vigente cuenta como base.
   // "no" explícito también bloquea (factor no considerado). Los
-  // conflictos se listan sin filtrar para no ocultar ninguno.
+  // conflictos se listan sin filtrar para no ocultar ninguno, en la
+  // misma dirección del protocolo.
+  const scope = protocol.execution_scope ?? "company";
+  const ctx = company ? activeExecutionContext(company, scope) : null;
   const missing = protocol.decision_fact_keys.filter((f) => facts[f] !== "yes");
-  const blocked = company != null ? blockingConflicts(protocol, company) : [];
+  const blocked: string[] =
+    company != null
+      ? ctx && ctx.scope !== "company"
+        ? blockingScopedConflicts(protocol.decision_fact_keys, company, ctx)
+        : blockingConflicts(protocol, company)
+      : [];
   if (missing.length === 0 && blocked.length === 0) {
     return <p>No faltan antecedentes: existe base suficiente para concluir.</p>;
   }
@@ -395,7 +410,7 @@ function MissingFacts({
             {describeFactKey(f)} en conflicto: usa el mecanismo normal de
             resolución.
           </p>
-          <ConflictResolver factKey={f} />
+          <ConflictResolver factKey={f} scope={scope} />
         </div>
       ))}
     </>

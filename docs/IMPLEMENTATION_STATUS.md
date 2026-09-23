@@ -70,12 +70,15 @@ D1.03 usa juicio profesional documentado (sin deducción automática).
 
 D2 real state:
 
-* 12 ActivityDefinitions canónicas, sin protocolos productivos;
+* 12 ActivityDefinitions canónicas;
+* 8 protocolos guiados (D2.01–D2.05, D2.07–D2.09), todos execution-ready;
+* D2.06 con juicio purpose-scoped y efectos same-scope (product-ready);
+* D2.05 purpose-scoped con deterministic decision gap (sin materializar);
 * scope infrastructure Company → TreatmentContext → TreatmentPurpose
   (scopes cerrados, addressing con ancestry, resolución scopeada,
-  export/import validado);
-* capture gaps pendientes (listas, relaciones, matrices, fechas) y
-  temporales (D2.11/D2.12).
+  finalización de juicio scope-aware, export/import validado);
+* capture gaps pendientes (matrices como vista, fechas) y temporales
+  (D2.11/D2.12); D2.10 pendiente (fuera de scope).
 
 D3 continúa pendiente.
 

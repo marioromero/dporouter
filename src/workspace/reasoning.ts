@@ -4,7 +4,16 @@ import type {
   ProtocolOutcome,
 } from "../../content/protocols/types";
 import { findConclusionNode } from "../../content/protocols/registry";
-import { blockingConflicts } from "./facts";
+import { blockingConflicts, protocolNeededFacts } from "./facts";
+import {
+  blockingScopedConflicts,
+  getPurpose,
+  getScopedReasoningRecord,
+  getTreatment,
+  resolveExecutionContext,
+  setScopedJudgmentState,
+} from "./scope";
+import type { ExecutionContext } from "./types";
 import { describeFactKey } from "./factLabels";
 import type { CompanyState, ProtocolReasoningRecord } from "./types";
 import type { LegalBasis } from "../types";
@@ -54,14 +63,25 @@ export function considerationNodes(
  * explícitamente en "yes" y no hay conflictos materiales. No decide QUÉ
  * concluir, solo SI se puede concluir. Un "no" posterior invalida la
  * base igual que un unknown: la conclusión previa queda desactualizada.
+ *
+ * Con `ctx` company (o ausente con company nula, legado) usa el camino
+ * histórico idéntico; con treatment/purpose usa resolución scopeada.
  */
 export function gatePasses(
   protocol: ExecutionProtocol,
   company: CompanyState | null,
   facts: FactMap,
+  ctx?: ExecutionContext | null,
 ): boolean {
   if (!protocol.decision_fact_keys.every((f) => facts[f] === "yes")) {
     return false;
+  }
+  if (ctx && ctx.scope !== "company") {
+    if (!company || !resolveExecutionContext(company, ctx)) return false;
+    return (
+      blockingScopedConflicts(protocolNeededFacts(protocol), company, ctx)
+        .length === 0
+    );
   }
   return blockingConflicts(protocol, company).length === 0;
 }
@@ -175,8 +195,13 @@ export function getRecordedJudgment(
   protocol: ExecutionProtocol,
   company: CompanyState | null,
   facts: FactMap,
+  ctx?: ExecutionContext | null,
 ): RecordedJudgment {
-  const record = company?.reasoningRecords[protocol.protocol_key];
+  const record = getScopedReasoningRecord(
+    company,
+    ctx ?? (company ? { scope: "company", companyId: company.id } : null),
+    protocol.protocol_key,
+  );
   if (!record) return { status: "none" };
   const fieldIssues = validateReasoningRecord(protocol, record);
   if (fieldIssues.length > 0) {
@@ -188,7 +213,7 @@ export function getRecordedJudgment(
   if (!outcome) {
     return { status: "invalid", reasons: ["La conclusión no es válida."] };
   }
-  if (!gatePasses(protocol, company, facts)) {
+  if (!gatePasses(protocol, company, facts, ctx)) {
     const reasons: string[] = [];
     for (const f of protocol.decision_fact_keys) {
       if (facts[f] === undefined) {
@@ -199,7 +224,10 @@ export function getRecordedJudgment(
         reasons.push(`${describeFactKey(f)} ya no está considerado con respaldo.`);
       }
     }
-    const blocked = blockingConflicts(protocol, company);
+    const blocked =
+      ctx && ctx.scope !== "company"
+        ? blockingScopedConflicts(protocolNeededFacts(protocol), company, ctx)
+        : blockingConflicts(protocol, company);
     for (const f of blocked) {
       reasons.push(`${describeFactKey(f)} entró en conflicto.`);
     }
@@ -228,17 +256,23 @@ export function resolveGuideResult(
   protocol: ExecutionProtocol,
   company: CompanyState | null,
   facts: FactMap,
+  ctx?: ExecutionContext | null,
 ): GuideResolution {
-  const blocks = blockingConflicts(protocol, company);
+  const effective =
+    ctx ?? (company ? { scope: "company", companyId: company.id } : null);
+  const blocks =
+    effective && effective.scope !== "company"
+      ? blockingScopedConflicts(protocolNeededFacts(protocol), company, effective)
+      : blockingConflicts(protocol, company);
   if (blocks.length > 0) {
     return { kind: "conflict", facts: blocks };
   }
-  const recorded = getRecordedJudgment(protocol, company, facts);
+  const recorded = getRecordedJudgment(protocol, company, facts, effective);
   if (recorded.status === "valid") {
     return { kind: "recorded", record: recorded.record, outcome: recorded.outcome };
   }
   const conclusion = findConclusionNode(protocol);
-  if (conclusion && gatePasses(protocol, company, facts)) {
+  if (conclusion && gatePasses(protocol, company, facts, effective)) {
     return { kind: "continue", nodeKey: conclusion.node_key };
   }
   return { kind: "evaluation" };
@@ -250,6 +284,8 @@ export interface FinalizeInput {
   facts: FactMap;
   draft: ReasoningDraft;
   legalBasis: LegalBasis[];
+  /** Execution context explícito: determina answers, facts, record y effects. */
+  ctx: ExecutionContext;
 }
 
 export type FinalizeResult =
@@ -273,11 +309,15 @@ export type FinalizeResult =
  * decide el estado resultante.
  */
 export function finalizeJudgment(input: FinalizeInput): FinalizeResult {
-  const { protocol, company, facts, draft, legalBasis } = input;
+  const { protocol, company, facts, draft, legalBasis, ctx } = input;
   if (!company) {
     return { ok: false, errors: ["Requiere empresa activa."] };
   }
-  if (!gatePasses(protocol, company, facts)) {
+  // Ancestry primero: un contexto cruzado nunca finaliza.
+  if (!resolveExecutionContext(company, ctx)) {
+    return { ok: false, errors: ["Contexto de ejecución inválido."] };
+  }
+  if (!gatePasses(protocol, company, facts, ctx)) {
     return {
       ok: false,
       errors: ["Sin base suficiente para concluir: revisa los antecedentes pendientes."],
@@ -334,10 +374,47 @@ export function finalizeJudgment(input: FinalizeInput): FinalizeResult {
 }
 
 /**
- * Aplica una finalización al estado de empresa: registro + efectos
- * canónicos en una sola transformación pura (el contexto la persiste
- * en una única escritura).
+ * Aplica una finalización al estado de empresa en el scope indicado:
+ * registro + efectos canónicos same-scope en una sola transformación
+ * pura. Company delega al camino histórico idéntico.
  */
+export function applyScopedFinalization(
+  company: CompanyState,
+  protocol: ExecutionProtocol,
+  ctx: ExecutionContext,
+  record: ProtocolReasoningRecord,
+  effects: Array<{ fact_key: string; value: string }>,
+): CompanyState | null {
+  if (ctx.scope === "company") {
+    return applyFinalization(company, protocol, record, effects);
+  }
+  if (!resolveExecutionContext(company, ctx)) return null;
+  const at = nowIso();
+  let current: CompanyState["protocolAnswers"][string] = {};
+  if (ctx.scope === "treatment") {
+    current =
+      getTreatment(company, ctx.treatmentId)?.protocolAnswers[
+        protocol.protocol_key
+      ] ?? {};
+  } else {
+    current =
+      getPurpose(company, ctx.treatmentId, ctx.purposeId)?.protocolAnswers[
+        protocol.protocol_key
+      ] ?? {};
+  }
+  const answers = { ...current };
+  for (const e of effects) {
+    answers[e.fact_key] = {
+      value: e.value,
+      source: protocol.protocol_key,
+      updatedAt: at,
+    };
+  }
+  return setScopedJudgmentState(company, ctx, protocol.protocol_key, answers, {
+    ...record,
+    updatedAt: at,
+  });
+}
 export function applyFinalization(
   company: CompanyState,
   protocol: ExecutionProtocol,

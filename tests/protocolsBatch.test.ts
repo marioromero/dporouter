@@ -27,7 +27,9 @@ import { DATA_MINIMIZATION_REVIEW_PROTOCOL as PD207 } from "../content/protocols
 import { RETENTION_SCHEDULE_PROTOCOL as PD208 } from "../content/protocols/retention.schedule";
 import { DATA_QUALITY_CONTROL_PROTOCOL as PD209 } from "../content/protocols/data.quality_control";
 import { LAWFUL_BASIS_ASSIGN_PROTOCOL as PD205 } from "../content/protocols/lawful_basis.assign";
+import { LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL as PD206 } from "../content/protocols/legitimate_interest.assessment";
 import type { ExecutionProtocol } from "../content/protocols/types";
+import type { LegalBasis } from "../src/types";
 import {
   getProtocolForActivity,
   listProtocols,
@@ -43,6 +45,16 @@ import {
 } from "../src/workspace/finalize";
 import { newCompany } from "../src/workspace/types";
 import { finalizeJudgment } from "../src/workspace/reasoning";
+import {
+  applyScopedFinalization,
+  gatePasses,
+  getRecordedJudgment,
+} from "../src/workspace/reasoning";
+import {
+  blockingScopedConflicts,
+  createPurpose,
+  createTreatment,
+} from "../src/workspace/scope";
 import { validateCompanyState } from "../src/workspace/store";
 import { getCanonicalActivity } from "../content/registry";
 
@@ -2491,8 +2503,7 @@ describe("batch D2: D2.02 decision con juicio", () => {
     const company = newCompany("Actores SpA");
     const draft = {
       conclusion: "classification_sound",
-      legal_question: "¿Clasificación correcta?",
-      evidence_refs: ["Matriz v1"],
+      legal_question: "¿Clasificación correcta?",      evidence_refs: ["Matriz v1"],
       rationale: "Cada actor con su evidencia contractual.",
       decided_by: "Abogada",
       reviewed_by: "",
@@ -2515,6 +2526,7 @@ describe("batch D2: D2.02 decision con juicio", () => {
           last_verified_at: "2026-09-21",
         },
       ],
+      ctx: { scope: "company", companyId: company.id },
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -2969,11 +2981,11 @@ describe("batch D2: D2.05 decision purpose-scoped", () => {
 });
 
 describe("batch D2: D2.06 bloqueado por judgment scopeado", () => {
-  it("198. sin protocolo D2.06: scoped judgment persistence pendiente", () => {
-    // finalizeJudgment persiste a nivel company (reasoning.ts): un
-    // protocolo purpose con juicio contaminaría purposes hermanas.
-    // Extenderlo exige cambio de contrato, prohibido en este batch.
-    expect(getProtocolForActivity("legitimate_interest.assessment")).toBeUndefined();
+  it("198. D2.06 implementado con juicio purpose-scoped", () => {
+    // El blocker scoped-judgment quedó resuelto por el finalizer
+    // scope-aware: el protocolo existe y persiste por purpose.
+    expect(getProtocolForActivity("legitimate_interest.assessment")).toBe(PD206);
+    expect(PD206.execution_scope).toBe("purpose");
   });
 
   it("199. multi-purpose A1/A2 coexisten en D2.05", () => {
@@ -3004,5 +3016,317 @@ describe("batch D2: D2.06 bloqueado por judgment scopeado", () => {
     });
     // Vía genérica cubre solo procedure/checklist (contrato congelado).
     expect(rejected.ok).toBe(false);
+  });
+});
+
+describe("finalizer scope-aware", () => {
+  function treatmentCompany() {
+    let c = newCompany("Scope SpA");
+    const t = createTreatment(c, { name: "A" });
+    if (!t) throw new Error("sin treatment");
+    c = t.company;
+    return { c, idA: t.treatmentId };
+  }
+
+  function liFacts(over: FactMap = {}): FactMap {
+    return {
+      "li_assessment.interest_defined": "yes",
+      "li_assessment.necessity_reviewed": "yes",
+      "li_assessment.rights_identified": "yes",
+      "li_assessment.alternatives_reviewed": "yes",
+      "li_assessment.safeguards_identified": "yes",
+      ...over,
+    };
+  }
+
+  function liDraft(conclusion = "supports_basis") {
+    return {
+      conclusion,
+      legal_question: "¿Sostiene el interés?",
+      evidence_refs: ["Análisis v1"],
+      rationale: "Necesario y proporcionado con salvaguardas.",
+      decided_by: "Abogada",
+      reviewed_by: "",
+      decided_at: new Date().toISOString(),
+    };
+  }
+
+  const LI_BASIS: LegalBasis[] = [
+    {
+      source_id: "cl_ley_19628_2026",
+      source_name: "Ley N° 19.628",
+      article_or_provision: "Artículo 13 letra d)",
+      reference_text: "",
+      source_url: "",
+      basis_type: "law",
+      regulatory_status: "transitional",
+      last_verified_at: "2026-09-21",
+    },
+  ];
+
+  it("201. D2.06 purpose con prerrequisito y juicio", () => {
+    expect(getProtocolForActivity("legitimate_interest.assessment")).toBe(PD206);
+    expect(PD206.mode).toBe("decision");
+    expect(PD206.execution_scope).toBe("purpose");
+    expect(PD206.entry_node_key).toBe("prerequisite-gate");
+    expect(getCanonicalActivity(PD206.activity_key)?.human_code).toBe("D2.06");
+    expect(PD206.nodes.map((n) => n.node_key)).toEqual([
+      "prerequisite-gate",
+      "factor-interest",
+      "factor-necessity",
+      "factor-rights",
+      "factor-alternatives",
+      "factor-safeguards",
+      "sufficiency-gate",
+      "adopt-conclusion",
+    ]);
+    expect(PD206.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      [
+        "assessment_incomplete",
+        "supports_basis",
+        "remediation_required",
+        "does_not_support_basis",
+        "prerequisite_missing",
+      ].sort(),
+    );
+    expect(validateProtocolStructure(PD206)).toEqual([]);
+  });
+
+  it("202. sin candidatura no entra en evaluación", () => {
+    const e = mustOutcomeFor(PD206, {
+      "lawful.art13_source": "contract_precontractual",
+      ...liFacts(),
+    });
+    expect(e.outcome_key).toBe("prerequisite_missing");
+    expect(e.rule_id).toBe("fallback-prerequisite");
+    const missing = mustOutcomeFor(PD206, liFacts());
+    expect(missing.outcome_key).toBe("prerequisite_missing");
+  });
+
+  it("203. base completa habilita conclusión sin deducirla", () => {
+    const e = evaluateProtocol(PD206, {
+      "lawful.art13_source": "legitimate_interest",
+      ...liFacts(),
+    });
+    // La puerta deriva al primer factor; la conclusión queda pendiente.
+    expect(e.status).toBe("awaiting_facts");
+  });
+
+  it("204. juicio en purpose persiste y se reanuda en su scope", () => {
+    let { c, idA } = treatmentCompany();
+    const p1 = createPurpose(c, idA, "A1");
+    if (!p1) throw new Error("sin A1");
+    c = p1.company;
+    const ctx = {
+      scope: "purpose",
+      companyId: c.id,
+      treatmentId: idA,
+      purposeId: p1.purposeId,
+    } as const;
+    const facts = {
+      "lawful.art13_source": "legitimate_interest",
+      ...liFacts(),
+    };
+    const result = finalizeJudgment({
+      protocol: PD206,
+      company: c,
+      facts,
+      draft: liDraft(),
+      legalBasis: LI_BASIS,
+      ctx,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effects).toEqual([
+      { fact_key: "purpose.legitimate_interest_outcome", value: "supports_basis" },
+    ]);
+    const applied = applyScopedFinalization(c, PD206, ctx, result.record, result.effects);
+    if (!applied) throw new Error("sin aplicación");
+    // Record y efecto viven en el purpose, no en company ni treatment.
+    expect(
+      applied.treatments?.[idA]?.purposes[p1.purposeId]?.reasoningRecords[PD206.protocol_key]?.conclusion,
+    ).toBe("supports_basis");
+    expect(
+      applied.treatments?.[idA]?.purposes[p1.purposeId]?.protocolAnswers[PD206.protocol_key]?.["purpose.legitimate_interest_outcome"]?.value,
+    ).toBe("supports_basis");
+    expect(applied.reasoningRecords[PD206.protocol_key]).toBeUndefined();
+    expect(applied.treatments?.[idA]?.protocolAnswers[PD206.protocol_key]).toBeUndefined();
+    // Reanudación: el mismo contexto lee su record como válido.
+    const recorded = getRecordedJudgment(PD206, applied, facts, ctx);
+    expect(recorded.status).toBe("valid");
+    // Repetir es idempotente en contenido.
+    const twice = applyScopedFinalization(applied, PD206, ctx, result.record, result.effects);
+    if (!twice) throw new Error("sin segunda aplicación");
+    expect(
+      twice.treatments?.[idA]?.purposes[p1.purposeId]?.reasoningRecords[PD206.protocol_key]?.conclusion,
+    ).toBe("supports_basis");
+  });
+
+  it("205. A1/A2 independientes; ancestry cruzada rechazada", () => {
+    let { c, idA } = treatmentCompany();
+    const p1 = createPurpose(c, idA, "A1");
+    if (!p1) throw new Error("sin A1");
+    c = p1.company;
+    const p2 = createPurpose(c, idA, "A2");
+    if (!p2) throw new Error("sin A2");
+    c = p2.company;
+    const ctx1 = {
+      scope: "purpose",
+      companyId: c.id,
+      treatmentId: idA,
+      purposeId: p1.purposeId,
+    } as const;
+    const facts = {
+      "lawful.art13_source": "legitimate_interest",
+      ...liFacts(),
+    };
+    const r1 = finalizeJudgment({
+      protocol: PD206,
+      company: c,
+      facts,
+      draft: liDraft("does_not_support_basis"),
+      legalBasis: LI_BASIS,
+      ctx: ctx1,
+    });
+    expect(r1.ok).toBe(true);
+    if (!r1.ok) return;
+    const applied = applyScopedFinalization(c, PD206, ctx1, r1.record, r1.effects);
+    if (!applied) throw new Error("sin aplicación");
+    // A2 no ve el record de A1.
+    const ctx2 = {
+      scope: "purpose",
+      companyId: c.id,
+      treatmentId: idA,
+      purposeId: p2.purposeId,
+    } as const;
+    expect(getRecordedJudgment(PD206, applied, facts, ctx2).status).toBe("none");
+    // Ancestry cruzada: purpose de otro treatment.
+    const other = createTreatment(applied, { name: "B" });
+    if (!other) throw new Error("sin B");
+    const cross = finalizeJudgment({
+      protocol: PD206,
+      company: other.company,
+      facts,
+      draft: liDraft(),
+      legalBasis: LI_BASIS,
+      ctx: {
+        scope: "purpose",
+        companyId: other.company.id,
+        treatmentId: other.treatmentId,
+        purposeId: p1.purposeId,
+      },
+    });
+    expect(cross.ok).toBe(false);
+  });
+
+  it("206. conflicto local bloquea solo su purpose", () => {
+    let { c, idA } = treatmentCompany();
+    const p1 = createPurpose(c, idA, "A1");
+    if (!p1) throw new Error("sin A1");
+    c = p1.company;
+    const p2 = createPurpose(c, idA, "A2");
+    if (!p2) throw new Error("sin A2");
+    c = p2.company;
+    const at = new Date().toISOString();
+    // Conflicto intra-dirección en A1 sobre un fact de decisión.
+    const t = c.treatments?.[idA];
+    if (!t) throw new Error("sin T");
+    c = {
+      ...c,
+      treatments: {
+        ...c.treatments,
+        [idA]: {
+          ...t,
+          purposes: {
+            ...t.purposes,
+            [p1.purposeId]: {
+              ...t.purposes[p1.purposeId],
+              protocolAnswers: {
+                "proto.a.v1": {
+                  "li_assessment.interest_defined": { value: "yes", source: "proto.a.v1", updatedAt: at },
+                },
+                "proto.b.v1": {
+                  "li_assessment.interest_defined": { value: "no", source: "proto.b.v1", updatedAt: at },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const ctx1 = {
+      scope: "purpose",
+      companyId: c.id,
+      treatmentId: idA,
+      purposeId: p1.purposeId,
+    } as const;
+    const ctx2 = {
+      scope: "purpose",
+      companyId: c.id,
+      treatmentId: idA,
+      purposeId: p2.purposeId,
+    } as const;
+    expect(
+      blockingScopedConflicts(PD206.decision_fact_keys, c, ctx1),
+    ).toContain("li_assessment.interest_defined");
+    expect(
+      blockingScopedConflicts(PD206.decision_fact_keys, c, ctx2),
+    ).not.toContain("li_assessment.interest_defined");
+    expect(gatePasses(PD206, c, { ...liFacts(), "li_assessment.interest_defined": "yes" }, ctx2)).toBe(true);
+  });
+
+  it("207. D2.02 reconciliado: judgment treatment-scoped con A/B", () => {
+    let { c, idA } = treatmentCompany();
+    const b = createTreatment(c, { name: "B" });
+    if (!b) throw new Error("sin B");
+    c = b.company;
+    const idB = b.treatmentId;
+    const facts = {
+      "derived.treatment.actors_exist": "yes",
+      "derived.treatment.actors_roles_complete": "yes",
+    };
+    const draft = {
+      conclusion: "classification_sound",
+      legal_question: "¿Correcto?",
+      evidence_refs: ["M"],
+      rationale: "R",
+      decided_by: "A",
+      reviewed_by: "",
+      decided_at: new Date().toISOString(),
+    };
+    const ctxA = { scope: "treatment", companyId: c.id, treatmentId: idA } as const;
+    const rA = finalizeJudgment({
+      protocol: PD202,
+      company: c,
+      facts,
+      draft,
+      legalBasis: [
+        {
+          source_id: "cl_ley_19628_2026",
+          source_name: "Ley N° 19.628",
+          article_or_provision: "Artículo 2",
+          reference_text: "",
+          source_url: "",
+          basis_type: "law",
+          regulatory_status: "transitional",
+          last_verified_at: "2026-09-21",
+        },
+      ],
+      ctx: ctxA,
+    });
+    // Con requirements completos, el juicio treatment-scoped finaliza.
+    expect(rA.ok).toBe(true);
+    if (!rA.ok) return;
+    const applied = applyScopedFinalization(c, PD202, ctxA, rA.record, rA.effects);
+    if (!applied) throw new Error("sin aplicación");
+    expect(
+      applied.treatments?.[idA]?.reasoningRecords[PD202.protocol_key]?.conclusion,
+    ).toBe("classification_sound");
+    // B independiente: sin record.
+    const ctxB = { scope: "treatment", companyId: c.id, treatmentId: idB } as const;
+    expect(getRecordedJudgment(PD202, applied, facts, ctxB).status).toBe("none");
+    // Export/import conserva ambos subárboles.
+    const checked = validateCompanyState(JSON.parse(JSON.stringify(applied)));
+    expect(checked.ok).toBe(true);
   });
 });

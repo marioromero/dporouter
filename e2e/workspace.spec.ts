@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { STORAGE_KEY } from "../src/workspace/store";
 
 async function crearEmpresa(page: import("@playwright/test").Page, perfil: string, empresa: string) {
   await page.goto("/empresa");
@@ -137,4 +138,50 @@ test("workspace sin overflow en desktop y tablet", async ({ page }) => {
     );
     expect(overflow, `overflow en ${path}`).toBeLessThanOrEqual(1);
   }
+});
+
+test("empresa heredada sin campos nuevos abre Empresa sin romper", async ({ page }) => {
+  const at = new Date().toISOString();
+  // Siembra única (addInitScript re-ejecutaría en cada recarga y pisaría
+  // el estado guardado por la app).
+  await page.goto("/");
+  await page.evaluate(
+    ({ key, value }) => {
+      window.localStorage.setItem(key, value);
+    },
+    {
+      key: STORAGE_KEY,
+      value: JSON.stringify({
+        version: 1,
+        profiles: [
+          {
+            id: "p1",
+            name: "P",
+            createdAt: at,
+            companyIds: ["emp-vieja"],
+            activeCompanyId: "emp-vieja",
+          },
+        ],
+        activeProfileId: "p1",
+        companies: {
+          "emp-vieja": {
+            id: "emp-vieja",
+            name: "Vieja SpA",
+            createdAt: at,
+            updatedAt: at,
+            activityStates: {},
+          },
+        },
+      }),
+    },
+  );
+  await page.goto("/empresa");
+  await expect(page.getByRole("heading", { name: "Vieja SpA" })).toBeVisible();
+  await expect(page.getByTestId("empresa-conteo")).toContainText("0 de 32 actividades revisadas");
+  // Y la empresa migrada sigue operable: marcar revisión persiste.
+  await page.goto("/actividad/governance.preventive_framework");
+  await page.getByTestId("estado-reviewed").click();
+  await expect(page.getByTestId("actividad-estado")).toContainText("Revisado");
+  await page.reload();
+  await expect(page.getByTestId("actividad-estado")).toContainText("Revisado");
 });

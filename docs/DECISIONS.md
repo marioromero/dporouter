@@ -467,3 +467,27 @@ identity/containment remains a separate architectural decision.
 Stage 1 boundary: per-period instances, event history, dynamic dates
 and lifecycle transitions stay deferred; `ClientActivityInstance`
 remains a Stage 2 concept.
+
+---
+
+## ADR-047 — Scoped professional-judgment finalization
+
+Status: ACCEPTED
+
+`finalizeProfessionalJudgment` operates on an explicit
+`ExecutionContext` (company, treatment or purpose). It reads answers,
+facts and the prior record from that address, validates ancestry
+before touching state, and persists record plus same-scope canonical
+effects in one logical write. Re-finalizing is idempotent; failure
+writes nothing.
+
+Discarded: duplicating the finalizer per scope (one model serves all
+three) and company-fallback writes for scoped executions (they would
+contaminate sibling contexts).
+
+No cross-scope effects exist: an effect without target metadata
+materializes only in its execution scope. Child-target writes,
+decision-outcome materialization and temporal operators remain gaps.
+
+Stage 1 boundary: single-write persistence with provenance, never
+longitudinal history or versioning.

@@ -28,6 +28,7 @@ import { DATA_MINIMIZATION_REVIEW_PROTOCOL } from "./data.minimization_review";
 import { RETENTION_SCHEDULE_PROTOCOL } from "./retention.schedule";
 import { DATA_QUALITY_CONTROL_PROTOCOL } from "./data.quality_control";
 import { LAWFUL_BASIS_ASSIGN_PROTOCOL } from "./lawful_basis.assign";
+import { LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL } from "./legitimate_interest.assessment";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -70,6 +71,7 @@ const PROTOCOLS: ExecutionProtocol[] = [
   RETENTION_SCHEDULE_PROTOCOL,
   DATA_QUALITY_CONTROL_PROTOCOL,
   LAWFUL_BASIS_ASSIGN_PROTOCOL,
+  LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

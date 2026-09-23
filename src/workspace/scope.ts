@@ -4,6 +4,7 @@ import type {
   ExecutionContext,
   ExecutionScope,
   FactRecord,
+  ProtocolReasoningRecord,
   PurposeScopedState,
   TreatmentScopedState,
 } from "./types";
@@ -723,6 +724,89 @@ export function buildScopedFactMap(
   return out;
 }
 
+/**
+ * ReasoningRecord del scope indicado. Company usa el mapa actual;
+ * treatment/purpose sus subárboles. Misma forma, sin variantes.
+ */
+export function getScopedReasoningRecord(
+  company: CompanyState | null,
+  ctx: ExecutionContext | null,
+  protocolKey: string,
+): CompanyState["reasoningRecords"][string] | undefined {
+  if (!company || !ctx || company.id !== ctx.companyId) return undefined;
+  if (ctx.scope === "company") return company.reasoningRecords[protocolKey];
+  if (ctx.scope === "treatment") {
+    return getTreatment(company, ctx.treatmentId)?.reasoningRecords[protocolKey];
+  }
+  return getPurpose(company, ctx.treatmentId, ctx.purposeId)?.reasoningRecords[
+    protocolKey
+  ];
+}
+
+/**
+ * Escribe answers + record de un protocolo en su scope, en una sola
+ * transformación pura. Company delega al camino histórico idéntico.
+ */
+export function setScopedJudgmentState(
+  company: CompanyState,
+  ctx: ExecutionContext,
+  protocolKey: string,
+  answers: Record<string, FactRecord>,
+  record: ProtocolReasoningRecord,
+): CompanyState | null {
+  if (company.id !== ctx.companyId) return null;
+  const at = record.updatedAt;
+  if (ctx.scope === "company") {
+    return touchCompany({
+      ...company,
+      protocolAnswers: { ...company.protocolAnswers, [protocolKey]: answers },
+      reasoningRecords: {
+        ...company.reasoningRecords,
+        [protocolKey]: { ...record, updatedAt: at },
+      },
+    });
+  }
+  const t = getTreatment(company, ctx.treatmentId);
+  if (!t) return null;
+  if (ctx.scope === "treatment") {
+    return touchCompany({
+      ...company,
+      treatments: {
+        ...(company.treatments ?? {}),
+        [ctx.treatmentId]: {
+          ...t,
+          protocolAnswers: { ...t.protocolAnswers, [protocolKey]: answers },
+          reasoningRecords: {
+            ...t.reasoningRecords,
+            [protocolKey]: { ...record, updatedAt: at },
+          },
+        },
+      },
+    });
+  }
+  const p = t.purposes[ctx.purposeId];
+  if (!p) return null;
+  return touchCompany({
+    ...company,
+    treatments: {
+      ...(company.treatments ?? {}),
+      [ctx.treatmentId]: {
+        ...t,
+        purposes: {
+          ...t.purposes,
+          [ctx.purposeId]: {
+            ...p,
+            protocolAnswers: { ...p.protocolAnswers, [protocolKey]: answers },
+            reasoningRecords: {
+              ...p.reasoningRecords,
+              [protocolKey]: { ...record, updatedAt: at },
+            },
+          },
+        },
+      },
+    },
+  });
+}
 /**
  * Última observación por fuente en la dirección propia del contexto.
  * Base para resoluciones explícitas scopeadas.

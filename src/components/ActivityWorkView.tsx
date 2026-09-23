@@ -10,6 +10,7 @@ import { evaluateCondition, evaluateProtocol } from "../guidance/engine";
 import { useGuidanceProtocol } from "../guidance/session";
 import { useWorkspace } from "../workspace/context";
 import { blockingConflicts } from "../workspace/facts";
+import { activeExecutionContext } from "../workspace/scope";
 import { findConclusionNode } from "../../content/protocols/registry";
 import { getRecordedJudgment } from "../workspace/reasoning";
 import { statusOf } from "../workspace/store";
@@ -63,9 +64,13 @@ export function ActivityWorkView({
     evaluation?.status === "outcome" && blocked.length === 0
       ? evaluation.outcome
       : null;
+  const judgmentCtx =
+    protocol != null && company
+      ? activeExecutionContext(company, protocol.execution_scope ?? "company")
+      : null;
   const recorded =
     protocol != null
-      ? getRecordedJudgment(protocol, company, session.facts)
+      ? getRecordedJudgment(protocol, company, session.facts, judgmentCtx)
       : { status: "none" as const };
   const conclusionNode =
     protocol != null ? findConclusionNode(protocol) : undefined;

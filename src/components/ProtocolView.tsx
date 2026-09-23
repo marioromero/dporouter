@@ -27,6 +27,10 @@ import { ConflictResolver } from "./ConflictResolver";
 import { modeStartLabel } from "./ActivityWorkView";
 import { useWorkspace } from "../workspace/context";
 import { getFactStatus, blockingConflicts } from "../workspace/facts";
+import {
+  activeExecutionContext,
+  getScopedFactState,
+} from "../workspace/scope";
 import { findConclusionNode } from "../../content/protocols/registry";
 import { getRecordedJudgment } from "../workspace/reasoning";
 import { describeFactKey } from "../workspace/factLabels";
@@ -231,7 +235,14 @@ export function ProtocolEntryView({
       : [],
   );
   const complete = evaluation.status === "outcome";
-  const recorded = getRecordedJudgment(protocol, company, session.facts);
+  const recorded = getRecordedJudgment(
+    protocol,
+    company,
+    session.facts,
+    company
+      ? activeExecutionContext(company, protocol.execution_scope ?? "company")
+      : null,
+  );
   const conclusionNode = findConclusionNode(protocol);
   const targetNode =
     evaluation.status === "awaiting_facts"
@@ -381,10 +392,16 @@ export function ProtocolNodeView({
       ? protocol.nodes.find((n) => n.node_key === route.node_key)
       : undefined;
   const { company } = useWorkspace();
+  const nodeCtx =
+    company != null
+      ? activeExecutionContext(company, protocol.execution_scope ?? "company")
+      : null;
   const ownConflict =
     company != null &&
     node.fact_key != null &&
-    getFactStatus(company, node.fact_key).state === "conflict";
+    (nodeCtx && nodeCtx.scope !== "company"
+      ? getScopedFactState(company, nodeCtx, node.fact_key).state === "conflict"
+      : getFactStatus(company, node.fact_key).state === "conflict");
 
   return (
     <>
@@ -404,7 +421,7 @@ export function ProtocolNodeView({
               refleja actualmente la situación de la empresa antes de
               continuar.
             </p>
-            <ConflictResolver factKey={node.fact_key} />
+            <ConflictResolver factKey={node.fact_key} scope={protocol.execution_scope ?? "company"} />
           </div>
         ) : null}
         {missingRequired.length > 0 ? (
@@ -893,7 +910,7 @@ export function ProtocolConflictView({
         {conflictedFacts.map((f) => (
           <div key={f}>
             <h3>{describeFactKey(f)}</h3>
-            <ConflictResolver factKey={f} />
+            <ConflictResolver factKey={f} scope={protocol.execution_scope ?? "company"} />
           </div>
         ))}
       </section>

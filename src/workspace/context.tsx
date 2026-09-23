@@ -34,6 +34,7 @@ import {
   updateSource as updateSourceState,
 } from "./locals";
 import {
+  activeExecutionContext,
   clearScopedProtocolAnswers as clearScopedAnswersState,
   createPurpose as createPurposeState,
   createTreatment as createTreatmentState,
@@ -54,7 +55,7 @@ import type {
   SourceInput,
 } from "./locals";
 import {
-  applyFinalization,
+  applyScopedFinalization,
   finalizeJudgment,
   type ReasoningDraft,
 } from "./reasoning";
@@ -823,6 +824,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
    * y coherencia, y persiste el ReasoningRecord junto a los
    * canonical_fact_effects del outcome en una única escritura. Nunca
    * deja un registro sin su fact ni un fact sin su registro.
+   * El execution context se resuelve explícitamente desde la selección
+   * activa y el scope del protocolo en el momento de la acción.
    */
   const finalizeProfessionalJudgment = useCallback(
     (
@@ -833,6 +836,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       if (!company) return { ok: false, errors: ["Requiere empresa activa."] };
       const protocol = getProtocol(protocolKey);
       if (!protocol) return { ok: false, errors: ["Protocolo desconocido."] };
+      const ctx = activeExecutionContext(
+        company,
+        protocol.execution_scope ?? "company",
+      );
+      if (!ctx) {
+        return { ok: false, errors: ["Requiere selección válida para finalizar."] };
+      }
       const activity = getCanonicalActivity(protocol.activity_key);
       const result = finalizeJudgment({
         protocol,
@@ -840,11 +850,19 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         facts,
         draft,
         legalBasis: activity?.legal_basis ?? [],
+        ctx,
       });
       if (!result.ok) return result;
-      updateCompany(company.id, (c) =>
-        applyFinalization(c, protocol, result.record, result.effects),
-      );
+      updateCompany(company.id, (c) => {
+        const next = applyScopedFinalization(
+          c,
+          protocol,
+          ctx,
+          result.record,
+          result.effects,
+        );
+        return next ?? c;
+      });
       return { ok: true };
     },
     [company, updateCompany],

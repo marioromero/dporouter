@@ -10,7 +10,11 @@ import {
 } from "../guidance/engine";
 import { useGuidanceProtocol } from "../guidance/session";
 import { useWorkspace } from "../workspace/context";
-import { blockingConflicts } from "../workspace/facts";
+import { blockingConflicts, protocolNeededFacts } from "../workspace/facts";
+import {
+  activeExecutionContext,
+  blockingScopedConflicts,
+} from "../workspace/scope";
 import { ContextNav } from "../components/ContextNav";
 import {
   ProtocolChrome,
@@ -80,8 +84,15 @@ function GuiaContent({
     domainCode: domain?.domainCode,
   };
   // Un fact necesario en conflicto bloquea cualquier conclusión definitiva
-  // (no equivale a pendiente ni a desconocido).
-  const blocks = blockingConflicts(protocol, company);
+  // (no equivale a pendiente ni a desconocido). En scopes treatment y
+  // purpose solo cuentan conflictos intra-dirección efectiva.
+  const judgmentCtx = company
+    ? activeExecutionContext(company, protocol.execution_scope ?? "company")
+    : null;
+  const blocks =
+    judgmentCtx && judgmentCtx.scope !== "company"
+      ? blockingScopedConflicts(protocolNeededFacts(protocol), company, judgmentCtx)
+      : blockingConflicts(protocol, company);
 
   if (!nodeKey) {
     return (
@@ -100,7 +111,7 @@ function GuiaContent({
         />
       );
     }
-    const resolved = resolveGuideResult(protocol, company, session.facts);
+    const resolved = resolveGuideResult(protocol, company, session.facts, judgmentCtx);
     if (resolved.kind === "recorded") {
       return (
         <RecordedJudgmentView

@@ -551,6 +551,8 @@ test("D1.07 con condicionales descartados finaliza integración", async ({ page 
   await answerAndContinue(page, "yes");
   await expect(page).toHaveURL(new RegExp("/guia/incorporate-obligations$"));
   await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/bylaws-applicability$"));
+  await answerAndContinue(page, "not_applies");
   await expect(page).toHaveURL(new RegExp("/guia/update-bylaws$"));
   await answerAndContinue(page, "na");
   await expect(page).toHaveURL(new RegExp("/guia/verify-publicity$"));

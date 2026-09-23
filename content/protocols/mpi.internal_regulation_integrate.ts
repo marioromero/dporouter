@@ -16,14 +16,25 @@ import type { ExecutionProtocol, FactCondition } from "./types";
  * por D1.02, D1.04 o Diagnóstico (`mpi.lifecycle_status` declarado en
  * `external_fact_keys`): es prerrequisito de entrada, nunca una
  * re-evaluación de adopción.
+ *
+ * La expresión "según corresponda" del canon introduce una única
+ * condición real de aplicabilidad: la sujeción al Reglamento Interno
+ * de los artículos 153 y siguientes del Código del Trabajo. Se resuelve
+ * explícitamente en `bylaws-applicability`: solo cuando aplica son
+ * exigibles `update-bylaws` y `verify-publicity`; cuando no aplica,
+ * ambos se cierran legítimamente como No aplica sin constituir brecha.
+ * No aplica es distinto de Pendiente y de Sin información, y nunca
+ * puede omitir los requisitos contractuales generales.
  */
 
 const LIFECYCLE_FACT = "mpi.lifecycle_status";
+const APPLICABILITY_FACT = "mpi.regulation.bylaws_applicable";
 
 const COMPONENT_FACTS = [
   "mpi.regulation.subjects_identified",
   "mpi.regulation.instruments_identified",
   "mpi.regulation.obligations_incorporated",
+  APPLICABILITY_FACT,
   "mpi.regulation.bylaws_updated",
   "mpi.regulation.publicity_verified",
 ];
@@ -164,6 +175,58 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
         "evidencia de incorporación",
       ],
       required_facts: [],
+      default_next_node_key: "bylaws-applicability",
+      provenance: "legal_requirement",
+    },
+    {
+      node_key: "bylaws-applicability",
+      node_type: "question",
+      title: "Aplicabilidad del Reglamento Interno",
+      prompt:
+        "¿Está la organización sujeta al Reglamento Interno de los artículos 153 y siguientes del Código del Trabajo?",
+      why_it_matters:
+        "De esta determinación depende la exigibilidad de la rama de reglamento y publicidad: solo cuando aplica deben incorporarse y publicarse.",
+      fact_key: "mpi.regulation.bylaws_applicable",
+      answer_type: "single_select",
+      options: [
+        {
+          value: "applies",
+          label: "Sí, sujeta",
+          description:
+            "La organización está sujeta al Reglamento Interno: la rama es exigible.",
+          fact_effect: {
+            fact_key: "mpi.regulation.bylaws_applicable",
+            value: "applies",
+          },
+        },
+        {
+          value: "not_applies",
+          label: "No sujeta",
+          description:
+            "La organización no está sujeta: la rama puede cerrarse como No aplica.",
+          fact_effect: {
+            fact_key: "mpi.regulation.bylaws_applicable",
+            value: "not_applies",
+          },
+        },
+        {
+          value: "unknown",
+          label: "Sin información",
+          description: "No es posible determinarlo con respaldo disponible.",
+          fact_effect: {
+            fact_key: "mpi.regulation.bylaws_applicable",
+            value: "unknown",
+          },
+        },
+      ],
+      evidence_to_review: [
+        "revisión de reglamento interno",
+        "revisión documental",
+      ],
+      help_text: [
+        "Resuelve explícitamente la sujeción antes de verificar la rama: de ello depende qué resulta exigible.",
+      ],
+      required_facts: [],
       default_next_node_key: "update-bylaws",
       provenance: "legal_requirement",
     },
@@ -179,11 +242,11 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: conditionalOptions(
         "mpi.regulation.bylaws_updated",
-        "El reglamento interno no requiere incorporación en este caso.",
+        "La organización no está sujeta al Reglamento Interno: la rama queda legítimamente fuera.",
       ),
       evidence_to_review: ["reglamento interno actualizado cuando corresponda"],
       help_text: [
-        "Solo cuando resulte aplicable. En caso contrario marca No aplica en este caso.",
+        "Exigible solo cuando la organización está sujeta al Reglamento Interno. En caso contrario marca No aplica en este caso.",
       ],
       required_facts: [],
       default_next_node_key: "verify-publicity",
@@ -201,11 +264,11 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: conditionalOptions(
         "mpi.regulation.publicity_verified",
-        "Este caso no exige medidas de publicidad.",
+        "La organización no está sujeta al Reglamento Interno: la rama queda legítimamente fuera.",
       ),
       evidence_to_review: ["evidencia de publicidad cuando corresponda"],
       help_text: [
-        "Solo cuando corresponda. En caso contrario marca No aplica en este caso.",
+        "Exigible solo cuando la organización está sujeta al Reglamento Interno. En caso contrario marca No aplica en este caso.",
       ],
       required_facts: [],
       default_next_node_key: "final-confirmation",
@@ -239,9 +302,67 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
             "Existen verificaciones pendientes o sin información suficiente. La integración aún no queda incorporada.",
         },
         {
+          rule_id: "branch-required-but-skipped",
+          description:
+            "La rama aplica pero se marcó No aplica: no omite requisitos exigibles.",
+          when: {
+            op: "all",
+            conditions: [
+              {
+                op: "fact_equals",
+                fact_key: APPLICABILITY_FACT,
+                value: "applies",
+              },
+              {
+                op: "any",
+                conditions: [
+                  {
+                    op: "fact_equals",
+                    fact_key: "mpi.regulation.bylaws_updated",
+                    value: "na",
+                  },
+                  {
+                    op: "fact_equals",
+                    fact_key: "mpi.regulation.publicity_verified",
+                    value: "na",
+                  },
+                ],
+              },
+            ],
+          },
+          goto_outcome_key: "integration_in_progress",
+          explanation:
+            "La organización está sujeta al Reglamento Interno: la rama de reglamento y publicidad es exigible y No aplica no la omite.",
+        },
+        {
+          rule_id: "branch-dismissed-but-verified",
+          description:
+            "Determinación contradictoria entre aplicabilidad y verificación.",
+          when: {
+            op: "all",
+            conditions: [
+              {
+                op: "fact_equals",
+                fact_key: APPLICABILITY_FACT,
+                value: "not_applies",
+              },
+              {
+                op: "any",
+                conditions: [
+                  isDone("mpi.regulation.bylaws_updated"),
+                  isDone("mpi.regulation.publicity_verified"),
+                ],
+              },
+            ],
+          },
+          goto_outcome_key: "integration_in_progress",
+          explanation:
+            "La rama se declaró no aplicable pero figura como verificada: revisa la determinación de sujeción o la verificación.",
+        },
+        {
           rule_id: "all-verified",
           description:
-            "Adopción vigente e integración verificada o descartada fundadamente.",
+            "Adopción vigente, requisitos contractuales verificados y rama resuelta según su aplicabilidad.",
           when: {
             op: "all",
             conditions: [
@@ -249,13 +370,18 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
               isDone("mpi.regulation.subjects_identified"),
               isDone("mpi.regulation.instruments_identified"),
               isDone("mpi.regulation.obligations_incorporated"),
+              {
+                op: "fact_in",
+                fact_key: APPLICABILITY_FACT,
+                values: ["applies", "not_applies"],
+              },
               verifiedOrNa("mpi.regulation.bylaws_updated"),
               verifiedOrNa("mpi.regulation.publicity_verified"),
             ],
           },
           goto_outcome_key: "integration_complete",
           explanation:
-            "Todas las verificaciones del procedimiento están realizadas y respaldadas.",
+            "Todas las verificaciones exigibles están realizadas y respaldadas; la rama no aplicable quedó legítimamente fuera sin constituir brecha.",
         },
         {
           rule_id: "fallback-in-progress",

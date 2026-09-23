@@ -1321,11 +1321,12 @@ describe("batch D1: D1.07 procedure", () => {
     expect(getCanonicalActivity(P07.activity_key)?.human_code).toBe("D1.07");
   });
 
-  it("94. cinco verificaciones con condicionales explícitos más síntesis", () => {
+  it("94. aplicabilidad explícita más cinco verificaciones y síntesis", () => {
     expect(P07.nodes.map((n) => n.node_key)).toEqual([
       "identify-subjects",
       "identify-instruments",
       "incorporate-obligations",
+      "bylaws-applicability",
       "update-bylaws",
       "verify-publicity",
       "final-confirmation",
@@ -1352,13 +1353,14 @@ describe("batch D1: D1.07 procedure", () => {
       "mpi.regulation.subjects_identified": "yes",
       "mpi.regulation.instruments_identified": "yes",
       "mpi.regulation.obligations_incorporated": "yes",
-      "mpi.regulation.bylaws_updated": "na",
-      "mpi.regulation.publicity_verified": "na",
+      "mpi.regulation.bylaws_applicable": "applies",
+      "mpi.regulation.bylaws_updated": "yes",
+      "mpi.regulation.publicity_verified": "yes",
       ...over,
     };
   }
 
-  it("96. integración con condicionales descartados produce efecto", () => {
+  it("96. rama aplicable completa produce efecto", () => {
     const e = mustOutcomeFor(P07, fullIntegration());
     expect(e.outcome_key).toBe("integration_complete");
     expect(e.rule_id).toBe("all-verified");
@@ -1389,6 +1391,121 @@ describe("batch D1: D1.07 procedure", () => {
         f,
       ).toBe(true);
     }
+  });
+
+  it("109. rama aplicable con incorporación pendiente no finaliza", () => {
+    const e = mustOutcomeFor(
+      P07,
+      fullIntegration({ "mpi.regulation.bylaws_updated": "na" }),
+    );
+    expect(e.outcome_key).toBe("integration_in_progress");
+    expect(e.rule_id).toBe("branch-required-but-skipped");
+  });
+
+  it("110. rama aplicable con publicidad pendiente no finaliza", () => {
+    const e = mustOutcomeFor(
+      P07,
+      fullIntegration({ "mpi.regulation.publicity_verified": "na" }),
+    );
+    expect(e.outcome_key).toBe("integration_in_progress");
+    expect(e.rule_id).toBe("branch-required-but-skipped");
+  });
+
+  it("111. rama no aplicable se cierra sin brecha", () => {
+    const e = mustOutcomeFor(
+      P07,
+      fullIntegration({
+        "mpi.regulation.bylaws_applicable": "not_applies",
+        "mpi.regulation.bylaws_updated": "na",
+        "mpi.regulation.publicity_verified": "na",
+      }),
+    );
+    expect(e.outcome_key).toBe("integration_complete");
+    expect(e.rule_id).toBe("all-verified");
+  });
+
+  it("112. No aplica es distinto de Pendiente y de Sin información", () => {
+    // unknown en la rama bloquea aunque el resto esté verificado.
+    const u = mustOutcomeFor(
+      P07,
+      fullIntegration({
+        "mpi.regulation.bylaws_applicable": "not_applies",
+        "mpi.regulation.bylaws_updated": "unknown",
+        "mpi.regulation.publicity_verified": "na",
+      }),
+    );
+    expect(u.outcome_key).toBe("integration_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+    // na con rama aplicable no equivale a verificado.
+    const skip = mustOutcomeFor(
+      P07,
+      fullIntegration({ "mpi.regulation.publicity_verified": "na" }),
+    );
+    expect(skip.outcome_key).toBe("integration_in_progress");
+  });
+
+  it("113. No aplica no omite requisitos contractuales", () => {
+    // Los tres requisitos contractuales no ofrecen No aplica.
+    for (const key of [
+      "identify-subjects",
+      "identify-instruments",
+      "incorporate-obligations",
+    ]) {
+      const node = P07.nodes.find((n) => n.node_key === key);
+      expect(node?.options?.map((o) => o.value).sort()).toEqual(
+        ["no", "unknown", "yes"].sort(),
+      );
+    }
+    // Determinación contradictoria tampoco finaliza.
+    const e = mustOutcomeFor(
+      P07,
+      fullIntegration({
+        "mpi.regulation.bylaws_applicable": "not_applies",
+        "mpi.regulation.bylaws_updated": "yes",
+        "mpi.regulation.publicity_verified": "na",
+      }),
+    );
+    expect(e.outcome_key).toBe("integration_in_progress");
+    expect(e.rule_id).toBe("branch-dismissed-but-verified");
+  });
+
+  it("114. solo requisitos aplicables satisfechos materializan", () => {
+    const company = newCompany("Reglamento SpA");
+    const facts = fullIntegration({
+      "mpi.regulation.bylaws_applicable": "not_applies",
+      "mpi.regulation.bylaws_updated": "na",
+      "mpi.regulation.publicity_verified": "na",
+    });
+    const validated = validateProcedureFinalization({
+      protocol: P07,
+      company,
+      facts,
+      outcomeKey: "integration_complete",
+    });
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const { company: next, applied } = applyProcedureFinalization(
+      company,
+      P07,
+      validated.effects,
+    );
+    expect(applied).toEqual(["mpi.internal_regulation_status"]);
+    expect(
+      next.protocolAnswers[P07.protocol_key]?.["mpi.internal_regulation_status"]?.value,
+    ).toBe("integrated");
+  });
+
+  it("115. aplicabilidad sin resolver bloquea aunque la rama esté marcada", () => {
+    const e = mustOutcomeFor(
+      P07,
+      fullIntegration({
+        "mpi.regulation.bylaws_applicable": "unknown",
+        "mpi.regulation.bylaws_updated": "na",
+        "mpi.regulation.publicity_verified": "na",
+      }),
+    );
+    expect(e.outcome_key).toBe("integration_in_progress");
+    expect(e.rule_id).toBe("pending-verification");
   });
 });
 
@@ -1547,8 +1664,9 @@ describe("batch D1: integridad del cuarto batch", () => {
           "mpi.regulation.subjects_identified": "yes",
           "mpi.regulation.instruments_identified": "yes",
           "mpi.regulation.obligations_incorporated": "yes",
+          "mpi.regulation.bylaws_applicable": "applies",
           "mpi.regulation.bylaws_updated": "yes",
-          "mpi.regulation.publicity_verified": "na",
+          "mpi.regulation.publicity_verified": "yes",
         },
         outcomeKey: "integration_complete",
         effect: { fact_key: "mpi.internal_regulation_status", value: "integrated" },

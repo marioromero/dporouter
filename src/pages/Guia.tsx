@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { getProtocolForActivity, getProtocolNode } from "../../content/protocols/registry";
+import { findConclusionNode, getProtocolForActivity, getProtocolNode } from "../../content/protocols/registry";
 import { getCanonicalActivity, getDomainForActivity } from "../../content/registry";
 import {
   evaluateProtocol,
@@ -20,6 +20,8 @@ import {
   ProtocolOutcomeView,
   ProtocolPendingView,
 } from "../components/ProtocolView";
+import { RecordedJudgmentView, JudgmentPanel } from "../components/JudgmentPanel";
+import { resolveGuideResult } from "../workspace/reasoning";
 import { NotFoundPage } from "./NotFound";
 
 /**
@@ -95,6 +97,26 @@ function GuiaContent({
         />
       );
     }
+    const resolved = resolveGuideResult(protocol, company, session.facts);
+    if (resolved.kind === "recorded") {
+      return (
+        <RecordedJudgmentView
+          protocol={protocol}
+          activity={activity}
+          session={session}
+          record={resolved.record}
+          outcomeKey={resolved.outcome.outcome_key}
+        />
+      );
+    }
+    if (resolved.kind === "continue") {
+      return (
+        <Navigate
+          to={`/actividad/${activityKey}/guia/${resolved.nodeKey}`}
+          replace
+        />
+      );
+    }
     const evaluation = evaluateProtocol(protocol, session.facts);
     if (evaluation.status === "outcome") {
       return (
@@ -134,6 +156,27 @@ function GuiaContent({
   const node = getProtocolNode(protocol, nodeKey);
   if (!node) {
     return <NotFoundPage />;
+  }
+
+  const conclusionNode = findConclusionNode(protocol);
+  if (conclusionNode && node.node_key === conclusionNode.node_key) {
+    return (
+      <>
+        <ProtocolNodeView
+          protocol={protocol}
+          activity={activity}
+          session={session}
+          node={node}
+        />
+        <JudgmentPanel
+          protocol={protocol}
+          activityDef={def}
+          activity={activity}
+          session={session}
+          node={node}
+        />
+      </>
+    );
   }
 
   if (node.node_type === "decision") {

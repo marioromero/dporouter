@@ -21,8 +21,8 @@ test("V2 muestra CTA correcto según mode y D1.03 pendiente honesto", async ({ p
     page.getByTestId("guia-entry").getByRole("link", { name: "Iniciar procedimiento" }),
   ).toBeVisible();
   await page.goto(D103);
-  await expect(page.getByText("Guía operativa pendiente de incorporar")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Iniciar (evaluación|procedimiento|revisión)/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Iniciar evaluación" })).toBeVisible();
+  await expect(page.getByText("Guía operativa pendiente de incorporar")).toHaveCount(0);
 });
 
 test("D1.04 completo deriva a designación sin reformular DPO", async ({ page }) => {

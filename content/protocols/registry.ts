@@ -1,7 +1,8 @@
-import type { ExecutionProtocol } from "./types";
+import type { ExecutionProtocol, GuidanceNode } from "./types";
 import { DPO_NEED_ASSESSMENT_PROTOCOL } from "./dpo.need_assessment";
 import { MPI_FORMALIZE_ADOPTION_PROTOCOL } from "./mpi.formalize_adoption";
 import { DPO_GOVERNANCE_VALIDATION_PROTOCOL } from "./dpo.initial_governance_validation";
+import { MPI_NEED_ASSESSMENT_PROTOCOL } from "./mpi.need_assessment";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -19,6 +20,7 @@ const PROTOCOLS: ExecutionProtocol[] = [
   DPO_NEED_ASSESSMENT_PROTOCOL,
   MPI_FORMALIZE_ADOPTION_PROTOCOL,
   DPO_GOVERNANCE_VALIDATION_PROTOCOL,
+  MPI_NEED_ASSESSMENT_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(
@@ -194,7 +196,73 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
   // Navegación acíclica: el grafo de destinos (opciones, defecto,
   // goto_node) no debe contener ciclos infinitos.
   errors.push(...detectNavigationCycles(protocol, nodeKeys));
+  // Nodo conclusión (juicio profesional): como máximo uno por protocolo.
+  // Es el nodo pregunta cuyas opciones coinciden todas con outcome keys;
+  // sus efectos escriben un único fact de trabajo que ningún otro nodo
+  // escribe y que no pertenece a decision_fact_keys.
+  const conclusionNodes = protocol.nodes.filter(
+    (n) =>
+      n.node_type === "question" &&
+      (n.options?.length ?? 0) > 0 &&
+      (n.options ?? []).every((o) =>
+        outcomeKeys.has(o.value),
+      ),
+  );
+  if (conclusionNodes.length > 1) {
+    errors.push(
+      `${protocol.protocol_key}: múltiples nodos conclusión (${conclusionNodes.map((n) => n.node_key).join(", ")})`,
+    );
+  }
+  for (const n of conclusionNodes) {
+    const written = new Set(
+      (n.options ?? [])
+        .map((o) => o.fact_effect?.fact_key)
+        .filter((f): f is string => f !== undefined),
+    );
+    if (written.size !== 1) {
+      errors.push(
+        `${protocol.protocol_key}: nodo conclusión ${n.node_key} debe escribir un único fact de trabajo`,
+      );
+    }
+    const draft = [...written][0];
+    if (draft && protocol.decision_fact_keys.includes(draft)) {
+      errors.push(
+        `${protocol.protocol_key}: fact de trabajo ${draft} no pertenece a decision_fact_keys`,
+      );
+    }
+    if (draft) {
+      for (const m of protocol.nodes) {
+        if (m === n) continue;
+        for (const o of m.options ?? []) {
+          if (o.fact_effect?.fact_key === draft) {
+            errors.push(
+              `${protocol.protocol_key}: fact de trabajo ${draft} escrito también por ${m.node_key}`,
+            );
+          }
+        }
+      }
+    }
+  }
   return errors;
+}
+
+/**
+ * Nodo conclusión de juicio profesional, si existe: el nodo pregunta
+ * cuyas opciones coinciden todas con outcome keys del protocolo. Deriva
+ * de la estructura canónica (sin literales de actividad); como máximo
+ * uno por protocolo (ver validación).
+ */
+export function findConclusionNode(
+  protocol: ExecutionProtocol,
+): GuidanceNode | undefined {
+  return protocol.nodes.find(
+    (n) =>
+      n.node_type === "question" &&
+      (n.options?.length ?? 0) > 0 &&
+      (n.options ?? []).every((o) =>
+        protocol.outcomes.some((out) => out.outcome_key === o.value),
+      ),
+  );
 }
 
 /** Aristas de navegación salientes de un nodo. */

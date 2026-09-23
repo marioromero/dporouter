@@ -4,6 +4,7 @@ import type {
   CompanyState,
   FactRecord,
   FactResolution,
+  ProtocolReasoningRecord,
   WorkspaceData,
 } from "./types";
 import { ACTIVITY_WORK_STATUSES, emptyWorkspace } from "./types";
@@ -53,6 +54,30 @@ function checkActivityState(v: unknown): v is ActivityWorkState {
   );
 }
 
+function isStringArray(v: unknown): v is string[] {
+  return Array.isArray(v) && v.every((x) => typeof x === "string");
+}
+
+function checkReasoningRecord(v: unknown): v is ProtocolReasoningRecord {
+  return (
+    isRecord(v) &&
+    typeof v.protocolKey === "string" &&
+    typeof v.activityKey === "string" &&
+    typeof v.conclusion === "string" &&
+    typeof v.legal_question === "string" &&
+    isStringArray(v.facts_considered) &&
+    isStringArray(v.legal_factors) &&
+    isStringArray(v.evidence_refs) &&
+    isStringArray(v.alternatives_considered) &&
+    typeof v.rationale === "string" &&
+    typeof v.decided_by === "string" &&
+    typeof v.reviewed_by === "string" &&
+    typeof v.decided_at === "string" &&
+    Array.isArray(v.legal_basis) &&
+    isIsoDate(v.updatedAt)
+  );
+}
+
 function checkStringMap(
   v: unknown,
   checkValue: (item: unknown) => boolean,
@@ -89,6 +114,9 @@ export function validateCompanyState(
   if (!checkStringMap(data.factResolutions ?? {}, checkFactResolution)) {
     return { ok: false, error: "factResolutions contiene resoluciones inválidas." };
   }
+  if (!checkStringMap(data.reasoningRecords ?? {}, checkReasoningRecord)) {
+    return { ok: false, error: "reasoningRecords contiene registros inválidos." };
+  }
   if (data.lastLocation !== undefined && typeof data.lastLocation !== "string") {
     return { ok: false, error: "lastLocation inválida." };
   }
@@ -101,6 +129,7 @@ export function validateCompanyState(
     protocolAnswers: (data.protocolAnswers ?? {}) as CompanyState["protocolAnswers"],
     diagnosticFacts: (data.diagnosticFacts ?? {}) as CompanyState["diagnosticFacts"],
     factResolutions: (data.factResolutions ?? {}) as CompanyState["factResolutions"],
+    reasoningRecords: (data.reasoningRecords ?? {}) as CompanyState["reasoningRecords"],
     ...(typeof data.lastLocation === "string" ? { lastLocation: data.lastLocation } : {}),
   };
   return { ok: true, value };

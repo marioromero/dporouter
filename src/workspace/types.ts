@@ -1,3 +1,5 @@
+import type { ReasoningRecord } from "../types";
+
 /**
  * Modelo del workspace local Stage 1.
  *
@@ -5,7 +7,7 @@
  * autenticación real ni Stage 2: perfiles y empresas los crea el usuario,
  * nada es ficticio, y todo es JSON-serializable para futura migración.
  * `ActivityDefinition` y el motor guiado permanecen intactos; este modelo
- * solo registra trabajo (estados, respuestas, ubicación).
+ * solo registra trabajo (estados, respuestas, ubicación, razonamientos).
  */
 
 export type ActivityWorkStatus =
@@ -47,6 +49,19 @@ export interface ActivityWorkState {
 }
 
 /**
+ * Registro de razonamiento profesional por protocolo y empresa.
+ * Reutiliza íntegro el contrato canónico ReasoningRecord y añade solo
+ * asociación (protocolo, actividad) y momento de registro. Todo es
+ * JSON-serializable; la base jurídica se guarda como snapshot de la
+ * actividad. No es historial Stage 2: una nueva adopción reemplaza.
+ */
+export interface ProtocolReasoningRecord extends ReasoningRecord {
+  protocolKey: string;
+  activityKey: string;
+  updatedAt: string;
+}
+
+/**
  * Resolución explícita Stage 1 de un fact en conflicto.
  * Decisión humana registrada con lo mínimo auditable: fact, valor
  * elegido, cuándo, qué alternativas existían y elección explícita.
@@ -70,6 +85,7 @@ export interface CompanyState {
   protocolAnswers: Record<string, Record<string, FactRecord>>;
   diagnosticFacts: Record<string, FactRecord>;
   factResolutions: Record<string, FactResolution>;
+  reasoningRecords: Record<string, ProtocolReasoningRecord>;
   lastLocation?: string;
 }
 
@@ -115,6 +131,7 @@ export function newCompany(name: string): CompanyState {
     protocolAnswers: {},
     diagnosticFacts: {},
     factResolutions: {},
+    reasoningRecords: {},
   };
 }
 

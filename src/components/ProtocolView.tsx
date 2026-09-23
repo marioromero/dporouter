@@ -26,6 +26,8 @@ import { ConflictResolver } from "./ConflictResolver";
 import { modeStartLabel } from "./ActivityWorkView";
 import { useWorkspace } from "../workspace/context";
 import { getFactStatus, blockingConflicts } from "../workspace/facts";
+import { findConclusionNode } from "../../content/protocols/registry";
+import { getRecordedJudgment } from "../workspace/reasoning";
 import { describeFactKey } from "../workspace/factLabels";
 
 /**
@@ -195,6 +197,8 @@ export function ProtocolEntryView({
       : [],
   );
   const complete = evaluation.status === "outcome";
+  const recorded = getRecordedJudgment(protocol, company, session.facts);
+  const conclusionNode = findConclusionNode(protocol);
   const targetNode =
     evaluation.status === "awaiting_facts"
       ? evaluation.current_node_key
@@ -211,7 +215,14 @@ export function ProtocolEntryView({
         <h2>Evaluación guiada</h2>
         <p>{protocol.description}</p>
         <div className="actions">
-          {complete && blocked.length === 0 ? (
+          {recorded.status === "valid" && conclusionNode ? (
+            <Link
+              className="btn"
+              to={nodeHref(activity.activityKey, conclusionNode.node_key)}
+            >
+              Ver conclusión documentada
+            </Link>
+          ) : complete && blocked.length === 0 ? (
             <Link
               className="btn"
               to={`${guideBase(activity.activityKey)}/resultado`}
@@ -666,8 +677,7 @@ export function ProtocolOutcomeView({
     </>
   );
 }
-
-function NextActionView({
+export function NextActionView({
   action,
   activity,
   session,

@@ -10,6 +10,8 @@ import { evaluateCondition, evaluateProtocol } from "../guidance/engine";
 import { useGuidanceProtocol } from "../guidance/session";
 import { useWorkspace } from "../workspace/context";
 import { blockingConflicts } from "../workspace/facts";
+import { findConclusionNode } from "../../content/protocols/registry";
+import { getRecordedJudgment } from "../workspace/reasoning";
 import { statusOf } from "../workspace/store";
 import {
   ACTIVITY_WORK_STATUSES,
@@ -58,6 +60,12 @@ export function ActivityWorkView({
     evaluation?.status === "outcome" && blocked.length === 0
       ? evaluation.outcome
       : null;
+  const recorded =
+    protocol != null
+      ? getRecordedJudgment(protocol, company, session.facts)
+      : { status: "none" as const };
+  const conclusionNode =
+    protocol != null ? findConclusionNode(protocol) : undefined;
   const appliesWhen = humanApplicability(def.conditions_applicability);
   const grounds =
     def.legal_basis.length > 0
@@ -81,9 +89,11 @@ export function ActivityWorkView({
 
   const guideBase = `/actividad/${def.activity_key}/guia`;
   const primaryGuide = protocol
-    ? outcome
+    ? recorded.status === "valid"
       ? { label: "Revisar resultado", to: `${guideBase}/resultado` }
-      : { label: modeStartLabel(protocol.mode, session.started), to: guideBase }
+      : outcome
+        ? { label: "Revisar resultado", to: `${guideBase}/resultado` }
+        : { label: modeStartLabel(protocol.mode, session.started), to: guideBase }
     : null;
   const incomplete =
     evaluation?.status === "outcome" &&
@@ -212,6 +222,41 @@ export function ActivityWorkView({
           <div className="actions">
             <Link className="btn" to={guideBase}>
               Resolver en la guía
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      {recorded.status === "valid" && conclusionNode ? (
+        <section className="activity-section" aria-label="Conclusión profesional" data-testid="actividad-juicio">
+          <h2>Conclusión profesional</h2>
+          <p>
+            <strong>{recorded.outcome.label}</strong>
+          </p>
+          <p className="result-count">Juicio profesional documentado</p>
+          <div className="actions">
+            <Link className="btn secondary" to={`${guideBase}/${conclusionNode.node_key}`}>
+              Ver conclusión documentada
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      {recorded.status === "stale" && conclusionNode ? (
+        <section className="activity-section" aria-label="Conclusión desactualizada">
+          <h2>Conclusión desactualizada</h2>
+          <p>
+            La conclusión registrada ya no refleja los antecedentes
+            actuales. Revísala antes de continuar:
+          </p>
+          <ul>
+            {recorded.reasons.map((r, i) => (
+              <li key={i}>{r}</li>
+            ))}
+          </ul>
+          <div className="actions">
+            <Link className="btn secondary" to={`${guideBase}/${conclusionNode.node_key}`}>
+              Reevaluar conclusión
             </Link>
           </div>
         </section>

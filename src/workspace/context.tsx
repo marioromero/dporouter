@@ -11,10 +11,13 @@ import type {
   CompanyState,
   FactRecord,
   LocalProfile,
+  ProtocolReasoningRecord,
   WorkspaceData,
 } from "./types";
 import { newCompany, newProfile, nowIso } from "./types";
 import { loadWorkspace, saveWorkspace, validateCompanyState } from "./store";
+import { getProtocol } from "../../content/protocols/registry";
+import { canPersistRecord } from "./reasoning";
 
 /**
  * Workspace local Stage 1: perfiles y empresas creados por el usuario,
@@ -42,6 +45,7 @@ interface WorkspaceContextValue {
   setDiagnosticFact: (factKey: string, value: string) => void;
   clearDiagnosticFact: (factKey: string) => void;
   resolveFactConflict: (factKey: string, value: string) => void;
+  saveReasoningRecord: (entry: ProtocolReasoningRecord) => void;
   setLastLocation: (path: string) => void;
   exportCompany: (id: string) => string | null;
   importCompany: (json: string) => { ok: true } | { ok: false; error: string };
@@ -286,6 +290,32 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     [company, updateCompany],
   );
 
+  /**
+   * Adopción atómica de conclusión profesional + ReasoningRecord.
+   * Una sola escritura: la conclusión persistente y su respaldo nunca
+   * pueden divergir silenciosamente.
+   */
+  const saveReasoningRecord = useCallback(
+    (entry: ProtocolReasoningRecord) => {
+      if (!company) return;
+      // Defensa en profundidad: la UI ya valida, pero la escritura
+      // rechaza borradores inválidos o de protocolo desconocido. La
+      // validez viva (gate/conflictos) se reevalúa al leer.
+      const protocol = getProtocol(entry.protocolKey);
+      if (!canPersistRecord(protocol, entry)) {
+        return;
+      }
+      updateCompany(company.id, (c) => ({
+        ...c,
+        reasoningRecords: {
+          ...c.reasoningRecords,
+          [entry.protocolKey]: { ...entry, updatedAt: nowIso() },
+        },
+      }));
+    },
+    [company, updateCompany],
+  );
+
   const exportCompany = useCallback(
     (id: string): string | null => {
       const c = data.companies[id];
@@ -356,6 +386,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       setDiagnosticFact,
       clearDiagnosticFact,
       resolveFactConflict,
+      saveReasoningRecord,
       setLastLocation,
       exportCompany,
       importCompany,
@@ -364,7 +395,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       data, profile, company, createProfile, selectProfile, createCompany,
       selectCompany, setActivityStatus, saveProtocolAnswer, clearProtocolAnswers,
       clearProtocolFact, setDiagnosticFact, clearDiagnosticFact, resolveFactConflict,
-      setLastLocation,
+      saveReasoningRecord, setLastLocation,
       exportCompany, importCompany,
     ],
   );

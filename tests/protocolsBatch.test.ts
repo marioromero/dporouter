@@ -276,8 +276,8 @@ describe("batch D1: D1.09 checklist", () => {
 });
 
 describe("batch D1: integridad del batch", () => {
-  it("22. D1.03 no tiene protocolo (FUNCTIONAL_BLOCKER, sin pseudo-protocolo)", () => {
-    expect(getProtocolForActivity("mpi.need_assessment")).toBeUndefined();
+  it("22. D1.03 ahora tiene protocolo de juicio (blocker anterior resuelto)", () => {
+    expect(getProtocolForActivity("mpi.need_assessment")).toBeDefined();
   });
 
   it("23. namespaces de facts disjuntos entre protocolos", () => {

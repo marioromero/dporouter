@@ -57,6 +57,8 @@ dependencias; sin cambios jurídicos).
 
 D1.02 sigue siendo el único protocolo completo por ahora.
 
+D1.03 usa juicio profesional documentado (sin deducción automática).
+
 D3 continúa pendiente.
 
 Post-UX-Reset fix (explicit fact conflicts):
@@ -121,11 +123,11 @@ Stage 1 canonical activities:
 
 Guided protocols:
 
-`3`
+`4`
 
 Protocol coverage:
 
-`D1.02, D1.04, D1.09 (D1.03 blocked: no deterministic canonical criteria)`
+`D1.02, D1.03 (juicio profesional), D1.04, D1.09`
 
 Pending canonical cross-domain targets:
 

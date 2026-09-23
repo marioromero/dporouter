@@ -55,9 +55,27 @@ UX RESET está implementado:
 D1/D2 permanecen canónicos (20 + 12 actividades, mismas keys, fuentes y
 dependencias; sin cambios jurídicos).
 
-D1.02 sigue siendo el único protocolo completo por ahora.
+D1 guided coverage real (reconciliado):
+
+* 20/20 ExecutionProtocols (D1.01–D1.20), todos execution-ready;
+* product-ready (10): D1.01, D1.03, D1.05, D1.06, D1.07, D1.09, D1.10,
+  D1.11, D1.12, D1.18;
+* execution-ready con gap (10): D1.02 (vía decision sin materializar),
+  D1.04/D1.08 (bundles lifecycle/históricos), D1.13/D1.14 (instancia
+  por período), D1.15 (entidad + fecha), D1.16 (periódico + fecha),
+  D1.17 (append + temporal), D1.19 (ciclo temporal), D1.20
+  (transición + condicional).
 
 D1.03 usa juicio profesional documentado (sin deducción automática).
+
+D2 real state:
+
+* 12 ActivityDefinitions canónicas, sin protocolos productivos;
+* scope infrastructure Company → TreatmentContext → TreatmentPurpose
+  (scopes cerrados, addressing con ancestry, resolución scopeada,
+  export/import validado);
+* capture gaps pendientes (listas, relaciones, matrices, fechas) y
+  temporales (D2.11/D2.12).
 
 D3 continúa pendiente.
 
@@ -113,6 +131,13 @@ Implemented adicionalmente:
 * next-action links;
 * D1.02 guided DPO assessment pilot.
 
+Implemented adicionalmente (reconciliación):
+
+* 20 protocolos guiados D1 con finalización explícita e idempotente;
+* workspace local con treatments/purposes, resolución scopeada de
+  conflictos y export/import validado;
+* D1.03 juicio profesional con ReasoningRecord intacto.
+
 Canonical activity count:
 
 `32`
@@ -142,7 +167,7 @@ Still not implemented:
 * guided protocols for D03–D12 activities;
 * D03-D12;
 * real characterization UI;
-* persistent client context;
+* backend persistent client context (local treatment/purpose workspace exists);
 * state-effect engine;
 * Stage 2 persistence;
 * AI.

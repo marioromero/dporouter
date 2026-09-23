@@ -390,3 +390,80 @@ Unknown required facts prevent a definitive outcome when the protocol marks them
 The system must expose the facts and rules that produced each conclusion.
 
 An LLM must not silently determine a legal obligation or professional classification in place of the canonical rules.
+
+---
+
+## ADR-044 — Explicit finalization with canonical fact effects
+
+Status: ACCEPTED
+
+A definitive outcome may declare `canonical_fact_effects` as plain
+`{fact_key, value}` pairs. They materialize exclusively through an
+explicit professional action: never by rendering, navigating or
+evaluating. Repeating the action is idempotent; failed validation
+writes nothing.
+
+Discarded: auto-materialization on outcome render (implicit mutation
+without an auditable act) and interpreting `ActivityDefinition.state_effect[]`
+as an executable language.
+
+Effects requiring append, create, dynamic dates, history or lifecycle
+remain gaps and are never declared. Judgment protocols (D1.03) keep
+their own finalization path with `ReasoningRecord`; the generic path
+covers `procedure` and `checklist` only.
+
+Stage 1 boundary: materialization writes current observations with
+provenance, never longitudinal history or versioning.
+
+---
+
+## ADR-045 — Explicit fact conflicts with professional resolution
+
+Status: ACCEPTED
+
+Same source plus update keeps that source's latest observation.
+Different sources with the same value agree. Different sources with
+different values produce `fact_conflict`: a distinct state, never
+`unknown` nor `false`, and a conflict in a required fact blocks any
+definitive conclusion.
+
+Resolution is an explicit professional decision recording fact, value,
+moment and alternatives; a later contradiction reopens the conflict.
+Resolution applies only within its own juridical address (absent scope
+means company legacy) and never resolves sibling scopes silently.
+
+Discarded: last-write-wins across sources (destroys provenance) and
+silent majority merging (hides disagreement).
+
+Stage 1 boundary: resolutions carry no longitudinal audit log; that
+belongs to Stage 2.
+
+---
+
+## ADR-046 — Company → TreatmentContext → TreatmentPurpose with closed scopes
+
+Status: ACCEPTED
+
+Stage 1 execution scopes are exactly `company`, `treatment` and
+`purpose`. A company holds multiple treatment contexts; a treatment
+holds multiple purposes. Identity carries full ancestry
+(`companyId`, `companyId + treatmentId`,
+`companyId + treatmentId + purposeId`); membership resolves by
+structural traversal and cross-parent contexts are rejected.
+
+Contexts are persistent juridical objects (identity plus juridical
+attributes), never work instances: no owners, deadlines, workflow,
+history, reopenings, timelines or longitudinal audit. Deletion is a
+hard cascading delete without history.
+
+Discarded: a generic extensible scope engine (unneeded complexity),
+purpose as a flat attribute (destroys per-purpose relations required
+by D2.05/D2.06), and a fourth scope (no demonstrated need).
+
+Execution scope differs from storage scope: guidance may execute on
+one object while addressing another. Purpose-level scoping beyond
+identity/containment remains a separate architectural decision.
+
+Stage 1 boundary: per-period instances, event history, dynamic dates
+and lifecycle transitions stay deferred; `ClientActivityInstance`
+remains a Stage 2 concept.

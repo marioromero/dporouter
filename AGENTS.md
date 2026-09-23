@@ -395,3 +395,38 @@ At the end of each iteration:
 - report verification performed;
 - report any irreversible or costly-to-change decision;
 - stop.
+
+## Documentation Synchronization Gate
+
+This rule is permanent and loads with every session: any future chat
+working on this repository must apply it at iteration close.
+
+When closing any iteration that introduces or modifies a contract,
+changes an architectural decision, adds relevant runtime capability,
+changes readiness (`execution-ready` / `product-ready`), introduces a
+new scope/context, or changes persistence, facts, protocol state,
+reasoning, lifecycle or export/import, review whether these documents
+require updating:
+
+- `docs/DATA_CONTRACTS.md`
+- `docs/GUIDED_EXECUTION.md`
+- `docs/DECISIONS.md`
+- `docs/IMPLEMENTATION_STATUS.md`
+- any directly affected document or skill.
+
+Rules:
+
+1. Do not update documentation by routine when nothing material changed.
+2. Never document future design as implemented.
+3. Distinguish: implemented; approved but pending; known gap.
+4. If the affected document is canonical and governance requires
+   explicit authorization to modify it: do not edit silently; report
+   that synchronization is required and request authorization.
+5. If the iteration authorizes documentary edits: update within the
+   same commit or an immediately associated documentary commit.
+6. Before closing, state explicitly one of:
+   `documentation sync: not required`,
+   `documentation sync: completed`, or
+   `documentation sync: pending authorization`.
+
+The operational step lives in `docs/IMPLEMENTATION_PLAYBOOK.md`.

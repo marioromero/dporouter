@@ -1,6 +1,6 @@
 # Guided Execution
 
-Status: STAGE 1 CANONICAL LAYER — PILOT D1.02
+Status: STAGE 1 CANONICAL LAYER — D1.01–D1.20
 
 `The guidance engine assists professional execution; it does not silently create new legal obligations.`
 
@@ -11,8 +11,8 @@ trigger question, steps, evidence, deliverable, legal basis, dependencies,
 regulatory status.
 
 An `ExecutionProtocol` defines HOW a professional is guided from facts to a
-conclusion for activities requiring professional judgment: concrete
-questions, deterministic rules, explained outcomes and next actions.
+conclusion or to a verified operational state: concrete questions,
+deterministic rules, explained outcomes and next actions.
 
 They are different concepts and live in different canonical sources:
 
@@ -83,10 +83,12 @@ value (injected context), the system reuses it, marks it as `Dato ya
 disponible`, and does not demand answering it again. Session answers may
 still update it explicitly.
 
-In Stage 1 there is no persistent characterization yet, so pilot facts
-resolve through session answers. The architecture already separates
-injected facts from session answers, so future Diagnóstico integration
-reuses the same protocols without rewriting them.
+In Stage 1, characterization facts persist per company (Diagnóstico)
+and session answers persist per company in the local workspace. The
+architecture separates injected facts from session answers, so
+Diagnóstico integration reuses the same protocols without rewriting
+them. Session answers are never presented as saved client records
+beyond the Stage 1 local workspace.
 
 ## 5. Deterministic rules
 
@@ -137,16 +139,77 @@ Entry (`/actividad/:activityKey/guia`), node (`.../guia/:nodeKey`) and
 result (`.../guia/resultado`) routes are stable, shareable and survive
 reload. The copy-link control copies the current node URL.
 
-## 10. Futura integración con Diagnóstico
+## 10. Diagnóstico integration
 
-When characterization exists, its known facts inject into the evaluation
-context (`initialFacts`) and appear as already-available data. Protocols,
-rules and UI remain unchanged.
+Diagnóstico captures characterization facts per company. Its known
+facts inject into the evaluation context (`initialFacts`) and appear
+as already-available data. Protocols, rules and UI remain unchanged.
 
-## 11. Futura persistencia Stage 2
+## 11. Stage 1 persistence vs Stage 2
 
-Stage 1 session state is transient (in-memory, no database, no
-localStorage, no per-client persistence) and is always presented as such.
+Stage 1 persists work locally per company (browser storage):
+companies, treatments and purposes, facts, protocol answers,
+reasoning records and export/import. It is not secure authentication
+and not Stage 2: no backend, no database, no auth, no longitudinal
+audit history.
+
 Stage 2 may persist per-client evaluations with full audit history (who,
 what, when, why, evidence, previous and new values, version) without
 rewriting the canonical protocol model.
+
+## 12. Execution scopes
+
+A protocol declares the juridical object under analysis through a
+closed execution scope:
+
+```text
+company
+treatment
+purpose
+```
+
+Company holds multiple treatment contexts; a treatment holds multiple
+purposes: `Company → TreatmentContext → TreatmentPurpose`. Scopes are
+juridical objects, never work instances: no owners, deadlines,
+workflow, history or longitudinal audit.
+
+A treatment or purpose protocol sees company facts plus its own
+context, never sibling contexts. Company protocols see only company
+facts, so selecting a treatment or purpose never alters a company
+evaluation. D1 protocols are company-scoped.
+
+Execution scope differs from storage scope: a protocol may execute on
+one object while its guidance addresses another (e.g. managing
+purposes from treatment scope). The contract preserves this
+separation.
+
+## 13. Explicit finalization and canonical fact effects
+
+A definitive outcome may carry `canonical_fact_effects`: plain
+`{fact_key, value}` pairs materialized only through an explicit
+professional action. Nothing is written by rendering, navigating or
+evaluating. Repeating the action is idempotent; a failed validation
+writes nothing.
+
+`ActivityDefinition.state_effect[]` is never interpreted as an
+executable language. Append, create, dynamic dates, history and
+lifecycle remain gaps: outcomes that require them carry no effects.
+
+## 14. Fact states and explicit conflicts
+
+Facts are absent, unknown, resolved or conflicted — four
+distinguishable states, never silently converted. Same source plus
+update keeps the latest observation; different sources with the same
+value agree; different sources with different values conflict, and a
+conflict in a required fact blocks any definitive conclusion.
+Resolution is an explicit professional decision recording fact, value,
+moment and alternatives; a later contradiction reopens the conflict.
+Conflicts resolve only within the same juridical address, never
+across scopes.
+
+## 15. Documented professional judgment
+
+Protocols that require a documented professional conclusion use a
+`ReasoningRecord` with an explicit adoption act. The system verifies a
+sufficient basis but never deduces the conclusion: it belongs to the
+professional, with gating fields declared per protocol.

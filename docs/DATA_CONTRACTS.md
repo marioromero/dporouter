@@ -691,6 +691,7 @@ protocol_key
 activity_key
 version
 mode
+execution_scope
 title
 description
 entry_node_key
@@ -710,6 +711,14 @@ procedure
 checklist
 ```
 
+Allowed baseline `execution_scope` values:
+
+```text
+company
+treatment
+purpose
+```
+
 Rules:
 
 * One activity has zero or one active protocol in Stage 1.
@@ -720,6 +729,9 @@ Rules:
 * `external_fact_keys[]` declares valid facts produced outside the
   protocol (Diagnóstico, another protocol, injected context, future
   persistence) so `required_facts` referencing them still validates.
+* `execution_scope` declares the juridical object under analysis;
+  absent means `company` (all D1 protocols resolve identically without
+  editing them).
 
 ## 34. GuidanceNode
 
@@ -821,11 +833,18 @@ classification
 explanation
 provenance
 next_actions[]
+canonical_fact_effects[]
 ```
 
 `classification` preserves the legal-requirement / agency-standard
 distinction at result level. A methodological recommendation must never be
 labeled as a legal requirement.
+
+`canonical_fact_effects[]` holds only plain `{fact_key, value}` pairs
+materialized through explicit finalization. It never interprets
+`ActivityDefinition.state_effect[]` as an executable language: no
+append, create, dynamic-date, history or lifecycle operators exist.
+Effects requiring those remain gaps and are never declared.
 
 ## 38. NextAction
 
@@ -858,6 +877,121 @@ unanswered != no
 
 An unresolved mandatory fact prevents a definitive outcome when the protocol
 marks it as necessary; the system reports which facts are missing instead.
-Session answers in Stage 1 are transient and are never presented as saved
-client records.
+Session answers persist per company in the Stage 1 local workspace and are
+never presented as saved client records beyond it.
+
+## 40. ExecutionScope
+
+The closed set of juridical objects under analysis in Stage 1:
+
+```text
+company
+treatment
+purpose
+```
+
+Rules:
+
+* No arbitrary scope strings, no generic nesting, no extensible engine.
+* A protocol declares at most one scope; absent means `company`.
+* Scopes are juridical objects, never work instances: no owners,
+  deadlines, workflow, history or longitudinal audit.
+
+## 41. ExecutionContext
+
+A valid execution context carries its full ancestry:
+
+```text
+company → companyId
+treatment → companyId + treatmentId
+purpose → companyId + treatmentId + purposeId
+```
+
+Rules:
+
+* Incomplete contexts (purpose without treatment, treatment without
+  company) are inexpressible.
+* Membership resolves by structural traversal: the treatment must live
+  in the active company, the purpose in the active treatment.
+* Cross-parent contexts are rejected, never silently repaired.
+
+## 42. TreatmentContext
+
+The persistent juridical object of one concrete processing operation:
+
+```text
+id (stable, unique within the company)
+companyId (unambiguous parent)
+canonicalTreatmentId (D2.01 identifier, when assigned)
+name
+description
+purposes
+```
+
+It holds its own `protocolAnswers` and `reasoningRecords` in the same
+shape as the company level. It carries no activity state, progress,
+owners, deadlines or history.
+
+## 43. TreatmentPurpose
+
+The persistent juridical child of one purpose within a treatment:
+
+```text
+id (stable, unique within the treatment)
+treatmentId (unambiguous parent)
+description
+```
+
+It holds its own `protocolAnswers` and `reasoningRecords`. It carries
+no workflow, progress, owners, deadlines, execution timestamps or
+history. No fourth level or additional persistent juridical entity
+exists in Stage 1.
+
+## 44. Scoped Fact Addressing
+
+Fact identity is `(scope, ancestry, factKey)`. `protocolKey` and any
+other source belong to provenance, never to the semantic identity.
+
+```text
+company fact → companyId + factKey
+treatment fact → companyId + treatmentId + factKey
+purpose fact → companyId + treatmentId + purposeId + factKey
+```
+
+Rules:
+
+* Protocol answers keep their `Record<protocolKey,
+  Record<factKey, FactRecord>>` shape at every scope; no generic facts
+  store exists.
+* A purpose address always embeds its `treatmentId`, so ancestry is
+  verifiable without global lookups.
+* Active selection (`activeTreatmentId?`, `activePurposeId?`) is
+  navigation, never a fact: a purpose selection requires a compatible
+  treatment selection, and deletion cascades to scoped state plus
+  affected navigation. No soft-delete or history is kept.
+* Export/import preserves local IDs, parent relations, scoped answers
+  and records, and rejects structurally invalid parentage; stale
+  navigation pointers normalize to absent. Workspaces without
+  treatments remain valid, and D1 facts are never moved.
+
+## 45. Scoped Conflict Semantics
+
+Within one juridical address:
+
+```text
+same source + update → latest observation of that source wins
+different sources + same value → agreement, fact resolved
+different sources + different values → fact_conflict
+```
+
+Rules:
+
+* Values in different addresses never conflict with each other.
+* A view resolves by precedence own scope → ancestors; ancestors fill
+  absent keys, never override the own value, never conflict cross-scope.
+* A conflict in a needed fact blocks a definitive conclusion within
+  that view.
+* Professional resolution applies only to its own address (absent scope
+  means company legacy) and records fact, value, moment and
+  alternatives; a later contradiction reopens the conflict.
 

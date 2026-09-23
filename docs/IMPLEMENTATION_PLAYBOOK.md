@@ -22,6 +22,18 @@ order; do not skip steps.
 10. Update `docs/IMPLEMENTATION_STATUS.md` when the iteration requests it.
 11. Commit only when explicitly requested, with only the iteration's files.
 12. Stop. Do not continue into the next iteration without instruction.
+13. Documentation Synchronization Gate: when the iteration introduced or
+modified a contract, changed an architectural decision, added relevant
+runtime capability, changed readiness, introduced a new scope/context,
+or changed persistence, facts, protocol state, reasoning, lifecycle or
+export/import, review `docs/DATA_CONTRACTS.md`,
+`docs/GUIDED_EXECUTION.md`, `docs/DECISIONS.md`,
+`docs/IMPLEMENTATION_STATUS.md` and any directly affected document or
+skill. If a canonical document requires explicit authorization, report
+`documentation sync: pending authorization` instead of editing. Close
+with exactly one of: `documentation sync: not required`,
+`documentation sync: completed`, or
+`documentation sync: pending authorization`.
 
 Blocked or uncertain: report the blocker and the exact affected
 artifact, then stop that specific change until instructed.

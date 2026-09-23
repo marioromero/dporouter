@@ -83,6 +83,21 @@ D2 real state:
 * D2.12 procedure company-scope sin juicio (execution-ready;
   product-ready pendiente: `DYNAMIC_VALUE_EFFECT_GAP` para
   `last_revalidated_at`);
+* D2 product-hardening backlog (consolidado D2 CLOSURE GATE; ninguno
+  bloquea D3):
+  * D2.01: systems/flows sin captura estructurada (revisión como
+    evidencia documental); `treatment_inventory.status = established`
+    sin materializar;
+  * D2.02: `actor.role_history` (append) y `processor_relationship` sin
+    mecanismo; `role_current` sin materializar;
+  * D2.03/D2.04/D2.07/D2.08/D2.09: status canónicos sin vía de
+    materialización treatment-scoped (`purposes = defined`,
+    `source_traceability_status`, `minimization_status`,
+    `retention_status`, `data_quality_status`);
+  * D2.05, rama `not_required` D2.10, rama mecánica D2.11:
+    `DETERMINISTIC_DECISION_FINALIZATION_GAP` (una sola capacidad
+    común pendiente, separada del gap dinámico);
+  * D2.12: `DYNAMIC_VALUE_EFFECT_GAP` (`last_revalidated_at`);
 * scalar capture primitives `text`/`date` (Stage 1: escalares vigentes,
   sin estructuras ni historial);
 * D2.05 purpose-scoped con deterministic decision gap (sin materializar);

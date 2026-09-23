@@ -256,6 +256,9 @@ export const MPI_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       explanation:
         "Juicio profesional documentado: conviene adoptar voluntariamente el MPI. Es recomendación profesional, no obligación legal.",
       provenance: "agency_standard",
+      canonical_fact_effects: [
+        { fact_key: "mpi.recommendation_outcome", value: "recommended" },
+      ],
       next_actions: [
         {
           kind: "activity",
@@ -271,6 +274,9 @@ export const MPI_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       explanation:
         "Juicio profesional documentado: la adopción merece evaluación más profunda. Es recomendación profesional, no obligación legal.",
       provenance: "agency_standard",
+      canonical_fact_effects: [
+        { fact_key: "mpi.recommendation_outcome", value: "worth_considering" },
+      ],
       next_actions: [
         {
           kind: "activity",
@@ -286,6 +292,9 @@ export const MPI_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       explanation:
         "Juicio profesional documentado: con los antecedentes actuales la adopción no es prioritaria. No significa prohibición ni descarte definitivo; debe reevaluarse si cambian las condiciones.",
       provenance: "agency_standard",
+      canonical_fact_effects: [
+        { fact_key: "mpi.recommendation_outcome", value: "not_priority" },
+      ],
       next_actions: [
         {
           kind: "info",
@@ -295,4 +304,17 @@ export const MPI_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       ],
     },
   ],
+  reasoning_requirements: {
+    required_fields: [
+      "conclusion",
+      "legal_question",
+      "facts_considered",
+      "legal_factors",
+      "alternatives_considered",
+      "rationale",
+      "decided_by",
+      "decided_at",
+      "legal_basis",
+    ],
+  },
 };

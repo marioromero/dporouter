@@ -7,6 +7,8 @@ import { findConclusionNode } from "../../content/protocols/registry";
 import { blockingConflicts } from "./facts";
 import { describeFactKey } from "./factLabels";
 import type { CompanyState, ProtocolReasoningRecord } from "./types";
+import type { LegalBasis } from "../types";
+import { nowIso } from "./types";
 
 /**
  * Juicio profesional documentado (Stage 1).
@@ -64,10 +66,11 @@ export function gatePasses(
 }
 
 /**
- * Validez mínima de un borrador/registro contra el contrato canónico.
- * Devuelve issues en lenguaje humano (sin claves técnicas). Vacío = válido.
- * El mínimo exigido lo autoriza la iteración vigente; el contrato no
- * define campos obligatorios y no se inventa semántica en silencio.
+ * Validez mínima de un borrador contra los requisitos declarados por el
+ * protocolo (`reasoning_requirements.required_fields`). Sin declaración,
+ * solo se exige estructuralmente que la conclusión sea una alternativa
+ * canónica. Devuelve issues en lenguaje humano (sin claves técnicas).
+ * Vacío = válido.
  */
 export function validateReasoningDraft(
   protocol: ExecutionProtocol,
@@ -78,20 +81,80 @@ export function validateReasoningDraft(
   if (!outcomeKeys.includes(draft.conclusion)) {
     issues.push("La conclusión debe ser una de las alternativas canónicas.");
   }
-  if (draft.legal_question.trim() === "") {
+  const required = new Set(
+    protocol.reasoning_requirements?.required_fields ?? [],
+  );
+  const need = (field: string): boolean => required.has(field);
+  if (need("legal_question") && draft.legal_question.trim() === "") {
     issues.push("La pregunta jurídica no puede estar vacía.");
   }
-  if (draft.evidence_refs.length === 0) {
+  if (need("evidence_refs") && draft.evidence_refs.length === 0) {
     issues.push("Registra al menos una referencia de evidencia.");
   }
-  if (draft.rationale.trim() === "") {
+  if (need("rationale") && draft.rationale.trim() === "") {
     issues.push("El razonamiento no puede estar vacío.");
   }
-  if (draft.decided_by.trim() === "") {
+  if (need("decided_by") && draft.decided_by.trim() === "") {
     issues.push("Indica quién adopta la conclusión.");
   }
-  if (Number.isNaN(Date.parse(draft.decided_at))) {
+  if (
+    need("decided_at") &&
+    (draft.decided_at.trim() === "" || Number.isNaN(Date.parse(draft.decided_at)))
+  ) {
     issues.push("La fecha de decisión debe ser válida.");
+  }
+  return issues;
+}
+
+export interface ReasoningRecordInput {
+  conclusion: string;
+  legal_question: string;
+  facts_considered: string[];
+  legal_factors: string[];
+  evidence_refs: string[];
+  alternatives_considered: string[];
+  rationale: string;
+  decided_by: string;
+  reviewed_by: string;
+  decided_at: string;
+  legal_basis: LegalBasis[];
+}
+
+/**
+ * Validez completa de un registro persistido: campos del borrador más
+ * los campos automáticos exigidos por la declaración
+ * (facts_considered, legal_factors, alternatives_considered, legal_basis).
+ */
+export function validateReasoningRecord(
+  protocol: ExecutionProtocol,
+  record: ReasoningRecordInput,
+): string[] {
+  const issues = validateReasoningDraft(protocol, {
+    conclusion: record.conclusion,
+    legal_question: record.legal_question,
+    evidence_refs: record.evidence_refs,
+    rationale: record.rationale,
+    decided_by: record.decided_by,
+    reviewed_by: record.reviewed_by,
+    decided_at: record.decided_at,
+  });
+  const required = new Set(
+    protocol.reasoning_requirements?.required_fields ?? [],
+  );
+  if (required.has("facts_considered") && record.facts_considered.length === 0) {
+    issues.push("El registro debe listar los hechos considerados.");
+  }
+  if (required.has("legal_factors") && record.legal_factors.length === 0) {
+    issues.push("El registro debe listar los factores considerados.");
+  }
+  if (
+    required.has("alternatives_considered") &&
+    record.alternatives_considered.length === 0
+  ) {
+    issues.push("El registro debe listar las alternativas consideradas.");
+  }
+  if (required.has("legal_basis") && record.legal_basis.length === 0) {
+    issues.push("El registro debe incluir el fundamento.");
   }
   return issues;
 }
@@ -101,29 +164,6 @@ export type RecordedJudgment =
   | { status: "valid"; record: ProtocolReasoningRecord; outcome: ProtocolOutcome }
   | { status: "stale"; record: ProtocolReasoningRecord; reasons: string[] }
   | { status: "invalid"; reasons: string[] };
-
-/**
- * Guardia de persistencia: un registro solo puede guardarse si su
- * protocolo existe y sus campos son válidos. La validez viva
- * (gate/conflictos) se reevalúa al leer, nunca al escribir.
- */
-export function canPersistRecord(
-  protocol: ExecutionProtocol | undefined,
-  entry: {
-    conclusion: string;
-    legal_question: string;
-    evidence_refs: string[];
-    rationale: string;
-    decided_by: string;
-    reviewed_by: string;
-    decided_at: string;
-  },
-): boolean {
-  if (!protocol) return false;
-  return (
-    validateReasoningDraft(protocol, entry).length === 0
-  );
-}
 
 /**
  * Conclusión registrada para un protocolo, revalidada en vivo: un cambio
@@ -137,15 +177,7 @@ export function getRecordedJudgment(
 ): RecordedJudgment {
   const record = company?.reasoningRecords[protocol.protocol_key];
   if (!record) return { status: "none" };
-  const fieldIssues = validateReasoningDraft(protocol, {
-    conclusion: record.conclusion,
-    legal_question: record.legal_question,
-    evidence_refs: record.evidence_refs,
-    rationale: record.rationale,
-    decided_by: record.decided_by,
-    reviewed_by: record.reviewed_by,
-    decided_at: record.decided_at,
-  });
+  const fieldIssues = validateReasoningRecord(protocol, record);
   if (fieldIssues.length > 0) {
     return { status: "invalid", reasons: fieldIssues };
   }
@@ -209,4 +241,122 @@ export function resolveGuideResult(
     return { kind: "continue", nodeKey: conclusion.node_key };
   }
   return { kind: "evaluation" };
+}
+
+export interface FinalizeInput {
+  protocol: ExecutionProtocol;
+  company: CompanyState | null;
+  facts: FactMap;
+  draft: ReasoningDraft;
+  legalBasis: LegalBasis[];
+}
+
+export type FinalizeResult =
+  | {
+      ok: true;
+      record: ProtocolReasoningRecord;
+      effects: Array<{ fact_key: string; value: string }>;
+    }
+  | { ok: false; errors: string[] };
+
+/**
+ * Finalización atómica del juicio profesional. Verifica en orden:
+ * empresa activa, base suficiente (gate), borrador válido según los
+ * requisitos declarados, y coherencia conclusión ↔ outcome definitivo
+ * (el outcome aporta sus canonical_fact_effects). Devuelve el registro
+ * y los efectos a materializar juntos; nunca uno sin el otro.
+ *
+ * Si un efecto encuentra otra fuente con valor contradictorio, no se
+ * rechaza ni se impone precedencia: la observación se registra con la
+ * identidad del protocolo y el modelo de fact_conflict ya congelado
+ * decide el estado resultante.
+ */
+export function finalizeJudgment(input: FinalizeInput): FinalizeResult {
+  const { protocol, company, facts, draft, legalBasis } = input;
+  if (!company) {
+    return { ok: false, errors: ["Requiere empresa activa."] };
+  }
+  if (!gatePasses(protocol, company, facts)) {
+    return {
+      ok: false,
+      errors: ["Sin base suficiente para concluir: revisa los antecedentes pendientes."],
+    };
+  }
+  const issues = validateReasoningDraft(protocol, draft);
+  if (issues.length > 0) {
+    return { ok: false, errors: issues };
+  }
+  const outcome = protocol.outcomes.find(
+    (o) => o.outcome_key === draft.conclusion,
+  );
+  if (!outcome) {
+    return { ok: false, errors: ["La conclusión no es una alternativa canónica."] };
+  }
+  const at = nowIso();
+  const record: ProtocolReasoningRecord = {
+    protocolKey: protocol.protocol_key,
+    activityKey: protocol.activity_key,
+    conclusion: draft.conclusion,
+    legal_question: draft.legal_question,
+    facts_considered: [...protocol.decision_fact_keys],
+    legal_factors: considerationNodes(protocol).map((c) => c.title),
+    evidence_refs: draft.evidence_refs,
+    alternatives_considered: protocol.outcomes
+      .map((o) => o.outcome_key)
+      .filter((k) => k !== draft.conclusion),
+    rationale: draft.rationale,
+    decided_by: draft.decided_by,
+    reviewed_by: draft.reviewed_by,
+    decided_at: draft.decided_at,
+    legal_basis: legalBasis.map((b) => ({ ...b })),
+    updatedAt: at,
+  };
+  const recordIssues = validateReasoningRecord(protocol, record);
+  if (recordIssues.length > 0) {
+    return { ok: false, errors: recordIssues };
+  }
+  const effects: Array<{ fact_key: string; value: string }> = (
+    outcome.canonical_fact_effects ?? []
+  ).map((e) => ({
+    fact_key: e.fact_key,
+    value: e.value,
+  }));
+  return {
+    ok: true,
+    record,
+    effects,
+  };
+}
+
+/**
+ * Aplica una finalización al estado de empresa: registro + efectos
+ * canónicos en una sola transformación pura (el contexto la persiste
+ * en una única escritura).
+ */
+export function applyFinalization(
+  company: CompanyState,
+  protocol: ExecutionProtocol,
+  record: ProtocolReasoningRecord,
+  effects: Array<{ fact_key: string; value: string }>,
+): CompanyState {
+  const at = nowIso();
+  const answers = { ...(company.protocolAnswers[protocol.protocol_key] ?? {}) };
+  for (const e of effects) {
+    answers[e.fact_key] = {
+      value: e.value,
+      source: protocol.protocol_key,
+      updatedAt: at,
+    };
+  }
+  return {
+    ...company,
+    protocolAnswers: {
+      ...company.protocolAnswers,
+      [protocol.protocol_key]: answers,
+    },
+    reasoningRecords: {
+      ...company.reasoningRecords,
+      [protocol.protocol_key]: { ...record, updatedAt: at },
+    },
+  };
 }

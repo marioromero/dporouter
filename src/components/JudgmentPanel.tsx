@@ -52,7 +52,7 @@ export function JudgmentPanel({
   session: ProtocolSession;
   node: GuidanceNode;
 }) {
-  const { company, saveReasoningRecord } = useWorkspace();
+  const { company, finalizeProfessionalJudgment } = useWorkspace();
   const facts = session.facts;
   const ready = gatePasses(protocol, company, facts);
   const recorded = getRecordedJudgment(protocol, company, facts);
@@ -72,6 +72,7 @@ export function JudgmentPanel({
   const [reviewedBy, setReviewedBy] = useState("");
   const [decidedAt, setDecidedAt] = useState(todayIso());
   const [attempted, setAttempted] = useState(false);
+  const [finalizeErrors, setFinalizeErrors] = useState<string[]>([]);
 
   const draft: ReasoningDraft = useMemo(
     () => ({
@@ -94,26 +95,16 @@ export function JudgmentPanel({
 
   function adopt() {
     if (!company || !canAdopt) return;
-    const factors = considerationNodes(protocol);
-    const alternatives = protocol.outcomes
-      .map((o) => o.outcome_key)
-      .filter((k) => k !== conclusion);
-    saveReasoningRecord({
-      protocolKey: protocol.protocol_key,
-      activityKey: protocol.activity_key,
-      conclusion,
-      legal_question: draft.legal_question,
-      facts_considered: [...protocol.decision_fact_keys],
-      legal_factors: factors.map((f) => f.title),
-      evidence_refs: draft.evidence_refs,
-      alternatives_considered: alternatives,
-      rationale: draft.rationale,
-      decided_by: draft.decided_by,
-      reviewed_by: draft.reviewed_by,
-      decided_at: draft.decided_at,
-      legal_basis: activityDef.legal_basis.map((b) => ({ ...b })),
-      updatedAt: nowIso(),
-    });
+    const result = finalizeProfessionalJudgment(
+      protocol.protocol_key,
+      draft,
+      facts,
+    );
+    if (!result.ok) {
+      setFinalizeErrors(result.errors);
+      return;
+    }
+    setFinalizeErrors([]);
     // Sincroniza el borrador de sesión con lo adoptado: evita que la
     // selección del nodo y la conclusión registrada diverjan en silencio.
     if (node.fact_key) {
@@ -285,12 +276,15 @@ export function JudgmentPanel({
                 onChange={(e) => setDecidedAt(e.target.value)}
               />
             </div>
-            {attempted && issues.length > 0 ? (
+            {attempted && (issues.length > 0 || finalizeErrors.length > 0) ? (
               <div className="notice" role="alert">
                 <strong>Falta para adoptar la conclusión</strong>
                 <ul>
                   {issues.map((m, i) => (
                     <li key={i}>{m}</li>
+                  ))}
+                  {finalizeErrors.map((m, i) => (
+                    <li key={`f-${i}`}>{m}</li>
                   ))}
                 </ul>
               </div>
@@ -360,7 +354,7 @@ function optionLabel(
 ): string {
   if (value === undefined) return "Sin responder";
   if (value === "unknown") return "Desconocido";
-  return node.options?.find((o) => o.value === value)?.label ?? value;
+  return node.options?.find((o) => o.value === value)?.label ?? "Valor registrado";
 }
 
 function MissingFacts({
@@ -372,14 +366,10 @@ function MissingFacts({
 }) {
   const { company } = useWorkspace();
   // Misma semántica que el gate: solo "yes" vigente cuenta como base.
-  // "no" explícito también bloquea (factor no considerado).
+  // "no" explícito también bloquea (factor no considerado). Los
+  // conflictos se listan sin filtrar para no ocultar ninguno.
   const missing = protocol.decision_fact_keys.filter((f) => facts[f] !== "yes");
-  const blocked =
-    company != null
-      ? blockingConflicts(protocol, company).filter((f) =>
-          protocol.decision_fact_keys.includes(f),
-        )
-      : [];
+  const blocked = company != null ? blockingConflicts(protocol, company) : [];
   if (missing.length === 0 && blocked.length === 0) {
     return <p>No faltan antecedentes: existe base suficiente para concluir.</p>;
   }

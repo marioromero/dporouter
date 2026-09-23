@@ -25,6 +25,12 @@ export function describeFactValue(factKey: string, value: string): string {
     const label = node?.options?.find((o) => o.value === value)?.label;
     if (label) return label;
   }
+  // Sin nodo productor, una etiqueta de outcome canónico sigue siendo
+  // una traducción humana disponible (nunca el enum crudo).
+  for (const p of listProtocols()) {
+    const label = p.outcomes.find((o) => o.outcome_key === value)?.label;
+    if (label) return label;
+  }
   return value;
 }
 

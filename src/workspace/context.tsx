@@ -11,13 +11,18 @@ import type {
   CompanyState,
   FactRecord,
   LocalProfile,
-  ProtocolReasoningRecord,
   WorkspaceData,
 } from "./types";
 import { newCompany, newProfile, nowIso } from "./types";
 import { loadWorkspace, saveWorkspace, validateCompanyState } from "./store";
 import { getProtocol } from "../../content/protocols/registry";
-import { canPersistRecord } from "./reasoning";
+import { getCanonicalActivity } from "../../content/registry";
+import {
+  applyFinalization,
+  finalizeJudgment,
+  type ReasoningDraft,
+} from "./reasoning";
+import type { FactMap } from "../../content/protocols/types";
 
 /**
  * Workspace local Stage 1: perfiles y empresas creados por el usuario,
@@ -45,7 +50,11 @@ interface WorkspaceContextValue {
   setDiagnosticFact: (factKey: string, value: string) => void;
   clearDiagnosticFact: (factKey: string) => void;
   resolveFactConflict: (factKey: string, value: string) => void;
-  saveReasoningRecord: (entry: ProtocolReasoningRecord) => void;
+  finalizeProfessionalJudgment: (
+    protocolKey: string,
+    draft: ReasoningDraft,
+    facts: FactMap,
+  ) => { ok: true } | { ok: false; errors: string[] };
   setLastLocation: (path: string) => void;
   exportCompany: (id: string) => string | null;
   importCompany: (json: string) => { ok: true } | { ok: false; error: string };
@@ -291,27 +300,33 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   );
 
   /**
-   * Adopción atómica de conclusión profesional + ReasoningRecord.
-   * Una sola escritura: la conclusión persistente y su respaldo nunca
-   * pueden divergir silenciosamente.
+   * Finalización atómica del juicio profesional: valida gate, borrador
+   * y coherencia, y persiste el ReasoningRecord junto a los
+   * canonical_fact_effects del outcome en una única escritura. Nunca
+   * deja un registro sin su fact ni un fact sin su registro.
    */
-  const saveReasoningRecord = useCallback(
-    (entry: ProtocolReasoningRecord) => {
-      if (!company) return;
-      // Defensa en profundidad: la UI ya valida, pero la escritura
-      // rechaza borradores inválidos o de protocolo desconocido. La
-      // validez viva (gate/conflictos) se reevalúa al leer.
-      const protocol = getProtocol(entry.protocolKey);
-      if (!canPersistRecord(protocol, entry)) {
-        return;
-      }
-      updateCompany(company.id, (c) => ({
-        ...c,
-        reasoningRecords: {
-          ...c.reasoningRecords,
-          [entry.protocolKey]: { ...entry, updatedAt: nowIso() },
-        },
-      }));
+  const finalizeProfessionalJudgment = useCallback(
+    (
+      protocolKey: string,
+      draft: ReasoningDraft,
+      facts: FactMap,
+    ): { ok: true } | { ok: false; errors: string[] } => {
+      if (!company) return { ok: false, errors: ["Requiere empresa activa."] };
+      const protocol = getProtocol(protocolKey);
+      if (!protocol) return { ok: false, errors: ["Protocolo desconocido."] };
+      const activity = getCanonicalActivity(protocol.activity_key);
+      const result = finalizeJudgment({
+        protocol,
+        company,
+        facts,
+        draft,
+        legalBasis: activity?.legal_basis ?? [],
+      });
+      if (!result.ok) return result;
+      updateCompany(company.id, (c) =>
+        applyFinalization(c, protocol, result.record, result.effects),
+      );
+      return { ok: true };
     },
     [company, updateCompany],
   );
@@ -386,7 +401,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       setDiagnosticFact,
       clearDiagnosticFact,
       resolveFactConflict,
-      saveReasoningRecord,
+      finalizeProfessionalJudgment,
       setLastLocation,
       exportCompany,
       importCompany,
@@ -395,7 +410,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       data, profile, company, createProfile, selectProfile, createCompany,
       selectCompany, setActivityStatus, saveProtocolAnswer, clearProtocolAnswers,
       clearProtocolFact, setDiagnosticFact, clearDiagnosticFact, resolveFactConflict,
-      saveReasoningRecord, setLastLocation,
+      finalizeProfessionalJudgment, setLastLocation,
       exportCompany, importCompany,
     ],
   );

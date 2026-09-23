@@ -112,6 +112,15 @@ export interface ProtocolOutcome {
   detail?: string;
   provenance: ProtocolProvenance;
   next_actions: NextAction[];
+  /**
+   * Efectos canónicos al finalizar este outcome definitivo. Cada efecto
+   * es solo {fact_key, value}: sin expresiones, condiciones ni lógica.
+   * Reutiliza el shape de FactEffect con semántica explícita de efecto
+   * canónico al finalizar. La materialización la hace el workspace con
+   * el mecanismo existente de observaciones; un outcome de evaluación
+   * (p. ej. incompleto) nunca lleva efectos.
+   */
+  canonical_fact_effects?: FactEffect[];
 }
 
 /** Protocolo de ejecución guiada de una actividad. */
@@ -134,6 +143,16 @@ export interface ExecutionProtocol {
    * referencian hechos de fuera del protocolo.
    */
   external_fact_keys?: string[];
+  /**
+   * Requisitos de reasoning específicos del protocolo. Declara qué
+   * campos del contrato canónico ReasoningRecord son obligatorios para
+   * dar por válido un registro de este protocolo. Sin esta declaración
+   * el runtime solo exige estructuralmente la conclusión. Nunca
+   * convierte requisitos de un protocolo en regla global.
+   */
+  reasoning_requirements?: {
+    required_fields: string[];
+  };
   last_review: string;
   provenance: ProtocolProvenance;
 }

@@ -148,8 +148,7 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
     }
   }
   for (const a of protocol.outcomes) {
-    for (const na of a.next_actions) {
-      if (na.kind === "node" && na.node_key && !nodeKeys.has(na.node_key)) {
+    for (const na of a.next_actions) {      if (na.kind === "node" && na.node_key && !nodeKeys.has(na.node_key)) {
         errors.push(
           `${protocol.protocol_key}: next action de ${a.outcome_key} apunta a nodo inexistente ${na.node_key}`,
         );
@@ -164,6 +163,39 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
           `${protocol.protocol_key}: next action de ${a.outcome_key} referencia actividad inexistente ${na.activity_key}`,
         );
       }
+    }
+  }
+  // Efectos canónicos: solo pares {fact_key, value} no vacíos.
+  // Sin expresiones, condiciones ni lógica.
+  for (const o of protocol.outcomes) {
+    for (const e of o.canonical_fact_effects ?? []) {
+      if (e.fact_key.trim() === "" || e.value.trim() === "") {
+        errors.push(
+          `${protocol.protocol_key}: outcome ${o.outcome_key} con canonical fact effect vacío`,
+        );
+      }
+    }
+  }
+  // Requisitos de reasoning: solo nombres de campo del contrato
+  // canónico ReasoningRecord (DATA_CONTRACTS §10).
+  const reasoningFields = new Set([
+    "conclusion",
+    "legal_question",
+    "facts_considered",
+    "legal_factors",
+    "evidence_refs",
+    "alternatives_considered",
+    "rationale",
+    "decided_by",
+    "reviewed_by",
+    "decided_at",
+    "legal_basis",
+  ]);
+  for (const f of protocol.reasoning_requirements?.required_fields ?? []) {
+    if (!reasoningFields.has(f)) {
+      errors.push(
+        `${protocol.protocol_key}: reasoning requirement desconocido ${f}`,
+      );
     }
   }
   for (const f of protocol.decision_fact_keys) {

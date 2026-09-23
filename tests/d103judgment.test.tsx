@@ -13,17 +13,16 @@ import { getCanonicalActivity } from "../content/registry";
 import { WorkspaceProvider } from "../src/workspace/context";
 import { GuidanceSessionProvider } from "../src/guidance/session";
 import { newCompany } from "../src/workspace/types";
-import type {
-  CompanyState,
-  ProtocolReasoningRecord,
-} from "../src/workspace/types";
+import type { CompanyState, ProtocolReasoningRecord } from "../src/workspace/types";
+import type { LegalBasis } from "../src/types";
 import { STORAGE_KEY, validateCompanyState } from "../src/workspace/store";
 import {
   blockingConflicts,
   getFactStatus,
 } from "../src/workspace/facts";
 import {
-  canPersistRecord,
+  applyFinalization,
+  finalizeJudgment,
   gatePasses,
   getRecordedJudgment,
   resolveGuideResult,
@@ -120,6 +119,19 @@ function adoptedCompany(
     reasoningRecords: { [P03.protocol_key]: recordedEntry(conclusion) },
   });
 }
+
+const TEST_LEGAL_BASIS: LegalBasis[] = [
+  {
+    source_id: "cl_ley_19628_2026",
+    source_name: "Ley N° 19.628",
+    article_or_provision: "Artículo 49",
+    reference_text: "",
+    source_url: "",
+    basis_type: "law",
+    regulatory_status: "transitional",
+    last_verified_at: "2026-09-21",
+  },
+];
 
 describe("D1.03 contenido y estructura", () => {
   it("protocolo único mode decision provisional, D1.03 intacto", () => {
@@ -244,8 +256,11 @@ describe("D1.03 conclusión y ReasoningRecord", () => {
     expect(validateReasoningDraft(P03, validDraft({ rationale: " " })).length).toBeGreaterThan(0);
     expect(validateReasoningDraft(P03, validDraft({ decided_by: "" })).length).toBeGreaterThan(0);
     expect(validateReasoningDraft(P03, validDraft({ decided_at: "no-fecha" })).length).toBeGreaterThan(0);
-    expect(validateReasoningDraft(P03, validDraft({ evidence_refs: [] })).length).toBeGreaterThan(0);
     expect(validateReasoningDraft(P03, validDraft({ legal_question: "" })).length).toBeGreaterThan(0);
+    // evidence_refs vacío NO invalida por sí solo (regla D1.03).
+    expect(validateReasoningDraft(P03, validDraft({ evidence_refs: [] }))).toEqual([]);
+    // reviewed_by tampoco es obligatorio.
+    expect(validateReasoningDraft(P03, validDraft({ reviewed_by: "" }))).toEqual([]);
   });
 
   it("mismos hechos con dos conclusiones distintas en ejecuciones separadas", () => {
@@ -478,6 +493,11 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
     expect(screen.queryByText("existe base suficiente para concluir")).toBeNull();
   });
 
+  it("base completa sin registro muestra disponibilidad para concluir", () => {
+    renderPanel(fullFacts());
+    expect(screen.getByText("No faltan antecedentes: existe base suficiente para concluir.")).toBeTruthy();
+  });
+
   it("alternativa importada desconocida usa mensaje genérico", () => {
     localStorage.clear();
     const at = new Date().toISOString();
@@ -514,12 +534,86 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
     localStorage.clear();
   });
 
-  it("canPersistRecord autoriza lo válido y rechaza lo inválido", () => {
-    expect(canPersistRecord(P03, validDraft())).toBe(true);
-    expect(canPersistRecord(undefined, validDraft())).toBe(false);
+  it("finalizeJudgment autoriza lo válido y rechaza lo inválido", () => {
+    const company = companyWith({
+      protocolAnswers: answersFor(P03.protocol_key, fullFacts()),
+    });
+    const ok = finalizeJudgment({
+      protocol: P03,
+      company,
+      facts: fullFacts(),
+      draft: validDraft(),
+      legalBasis: TEST_LEGAL_BASIS,
+    });
+    expect(ok.ok).toBe(true);
+    if (ok.ok) {
+      expect(ok.record.conclusion).toBe("recommended");
+      expect(ok.effects).toEqual([
+        { fact_key: "mpi.recommendation_outcome", value: "recommended" },
+      ]);
+      // Registro y efecto viajan juntos: atomicidad estructural.
+      const applied = applyFinalization(company, P03, ok.record, ok.effects);
+      expect(
+        applied.reasoningRecords[P03.protocol_key].conclusion,
+      ).toBe("recommended");
+      expect(
+        applied.protocolAnswers[P03.protocol_key]["mpi.recommendation_outcome"].value,
+      ).toBe("recommended");
+    }
+    const noGate = finalizeJudgment({
+      protocol: P03,
+      company,
+      facts: fullFacts({ [F.capacity]: "unknown" }),
+      draft: validDraft(),
+      legalBasis: TEST_LEGAL_BASIS,
+    });
+    expect(noGate.ok).toBe(false);
+    const badDraft = finalizeJudgment({
+      protocol: P03,
+      company,
+      facts: fullFacts(),
+      draft: validDraft({ conclusion: "invented" }),
+      legalBasis: TEST_LEGAL_BASIS,
+    });
+    expect(badDraft.ok).toBe(false);
+    const noCompany = finalizeJudgment({
+      protocol: P03,
+      company: null,
+      facts: fullFacts(),
+      draft: validDraft(),
+      legalBasis: TEST_LEGAL_BASIS,
+    });
+    expect(noCompany.ok).toBe(false);
+  });
+
+  it("finalize respeta conflicto ajeno sin precedencia especial", () => {
+    const at = new Date().toISOString();
+    const company = companyWith({
+      diagnosticFacts: {
+        "mpi.recommendation_outcome": {
+          value: "not_priority",
+          source: "diagnostico",
+          updatedAt: at,
+        },
+      },
+      protocolAnswers: answersFor(P03.protocol_key, fullFacts()),
+    });
+    const result = finalizeJudgment({
+      protocol: P03,
+      company,
+      facts: fullFacts(),
+      draft: validDraft({ conclusion: "recommended" }),
+      legalBasis: TEST_LEGAL_BASIS,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("debió finalizar");
+    const applied = applyFinalization(company, P03, result.record, result.effects);
+    // Ambas observaciones coexisten: el modelo congelado reporta conflicto.
+    expect(getFactStatus(applied, "mpi.recommendation_outcome").state).toBe("conflict");
+    // ...pero registro y fact propio siguen coherentes entre sí.
+    expect(applied.reasoningRecords[P03.protocol_key].conclusion).toBe("recommended");
     expect(
-      canPersistRecord(P03, validDraft({ conclusion: "invented" })),
-    ).toBe(false);
-    expect(canPersistRecord(P03, validDraft({ rationale: "" }))).toBe(false);
+      applied.protocolAnswers[P03.protocol_key]["mpi.recommendation_outcome"].value,
+    ).toBe("recommended");
   });
 });

@@ -13,6 +13,12 @@ import { MPI_REPORTING_WHISTLEBLOWING_PROTOCOL } from "./mpi.internal_reporting_
 import { MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL } from "./mpi.internal_disciplinary_framework";
 import { MPI_REGULATION_INTEGRATE_PROTOCOL } from "./mpi.internal_regulation_integrate";
 import { DPO_CONFIDENTIALITY_DUTY_PROTOCOL } from "./dpo.confidentiality_duty";
+import { DPO_CONTACT_NOTIFICATION_PROTOCOL } from "./dpo.contact_and_agency_notification";
+import { DPO_ANNUAL_PLAN_PROTOCOL } from "./dpo.annual_plan";
+import { DPO_ANNUAL_REPORT_PROTOCOL } from "./dpo.annual_report";
+import { DPO_GOVERNANCE_REVALIDATION_PROTOCOL } from "./dpo.governance_revalidation";
+import { MPI_CERTIFICATION_LIFECYCLE_PROTOCOL } from "./mpi.certification_lifecycle";
+import { MPI_LIFECYCLE_REVIEW_PROTOCOL } from "./mpi.lifecycle_review";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -41,6 +47,12 @@ const PROTOCOLS: ExecutionProtocol[] = [
   MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL,
   MPI_REGULATION_INTEGRATE_PROTOCOL,
   DPO_CONFIDENTIALITY_DUTY_PROTOCOL,
+  DPO_CONTACT_NOTIFICATION_PROTOCOL,
+  DPO_ANNUAL_PLAN_PROTOCOL,
+  DPO_ANNUAL_REPORT_PROTOCOL,
+  DPO_GOVERNANCE_REVALIDATION_PROTOCOL,
+  MPI_CERTIFICATION_LIFECYCLE_PROTOCOL,
+  MPI_LIFECYCLE_REVIEW_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

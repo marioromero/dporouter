@@ -378,6 +378,12 @@ const D105 = "/actividad/mpi.internal_reporting_and_whistleblowing";
 const D106 = "/actividad/mpi.internal_disciplinary_framework";
 const D107 = "/actividad/mpi.internal_regulation_integrate";
 const D112 = "/actividad/dpo.confidentiality_duty";
+const D110 = "/actividad/dpo.contact_and_agency_notification";
+const D113 = "/actividad/dpo.annual_plan";
+const D114 = "/actividad/dpo.annual_report";
+const D116 = "/actividad/dpo.governance_revalidation";
+const D119 = "/actividad/mpi.certification_lifecycle";
+const D120 = "/actividad/mpi.lifecycle_review";
 
 async function registrarMpiDiagnostico(
   page: import("@playwright/test").Page,
@@ -589,6 +595,129 @@ test("D1.12 completo finaliza deber sin declarar cumplimiento", async ({ page })
   );
 });
 
+test("D1.10 completo finaliza doble efecto y persiste", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await page.goto(`${D110}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  for (const node of [
+    "define-medium",
+    "publish-contact",
+    "notify-agency",
+    "notify-internal",
+    "change-mechanism",
+  ]) {
+    await expect(page).toHaveURL(new RegExp(`/guia/${node}$`));
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Contacto publicado y comunicado",
+  );
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+  await page.reload();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+});
+
+test("D1.13 desarrollado enlaza rendición sin bloque de registro", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await page.goto(`${D113}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  for (const node of ["review-risks", "define-objectives"]) {
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page).toHaveURL(new RegExp("/guia/define-owners$"));
+  await answerAndContinue(page, "na");
+  await answerAndContinue(page, "yes");
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Plan anual desarrollado y difundido",
+  );
+  await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
+  await page
+    .getByTestId("guia-next-actions")
+    .getByRole("link", { name: "Rendir cuenta del período en D1.14" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Rendir cuenta anual de resultados del DPO" }),
+  ).toBeVisible();
+});
+
+test("D1.14 sin plan deriva a D1.13", async ({ page }) => {
+  await page.goto(`${D114}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/plan-gate$"));
+  await answerAndContinue(page, "no");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "A la espera del plan del período",
+  );
+  await page
+    .getByTestId("guia-next-actions")
+    .getByRole("link", { name: "Desarrollar el plan anual en D1.13" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Desarrollar plan anual del DPO" }),
+  ).toBeVisible();
+});
+
+test("D1.16 revalidado con checks", async ({ page }) => {
+  await page.goto(`${D116}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  for (const node of [
+    "check-changes",
+    "check-conflicts",
+    "check-resources",
+    "check-updating",
+    "check-access",
+    "check-remediation",
+  ]) {
+    await expect(page).toHaveURL(new RegExp(`/guia/${node}$`));
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Gobernanza revalidada",
+  );
+  await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
+});
+
+test("D1.19 expediente completo sin tocar lifecycle", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await registrarMpiDiagnostico(page, "implemented");
+  await page.goto(`${D119}/guia/case-gate`);
+  await answerAndContinue(page, "certify");
+  for (const node of [
+    "confirm-implemented",
+    "prepare-antecedents",
+    "record-request",
+    "record-grant",
+    "control-renewal",
+    "record-closures",
+  ]) {
+    await expect(page).toHaveURL(new RegExp(`/guia/${node}$`));
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Expediente de certificación completo",
+  );
+  await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
+});
+
+test("D1.20 continuidad confirma vigencia", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await registrarMpiDiagnostico(page, "implementing");
+  await page.goto(`${D120}/guia/changes-review`);
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/continuity-determination$"));
+  await answerAndContinue(page, "continues");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Vigencia confirmada y documentada",
+  );
+  await expect(page.getByTestId("guia-finalize")).toHaveCount(0);
+});
+
 test("batch sin overflow en desktop y tablet", async ({ page }) => {
   for (const path of [
     D104,
@@ -598,6 +727,12 @@ test("batch sin overflow en desktop y tablet", async ({ page }) => {
     D106,
     D107,
     D112,
+    D110,
+    D113,
+    D114,
+    D116,
+    D119,
+    D120,
     `${D104}/guia/adoption-evidence`,
     `${D109}/guia/check-conflicts`,
     `${D109}/guia/resultado`,

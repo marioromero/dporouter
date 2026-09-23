@@ -374,6 +374,10 @@ test("D1.08 completo no ofrece registro canónico", async ({ page }) => {
 const D115 = "/actividad/dpo.infringement_escalation";
 const D117 = "/actividad/dpo.terminate_or_replace";
 const D118 = "/actividad/mpi.assemble_program";
+const D105 = "/actividad/mpi.internal_reporting_and_whistleblowing";
+const D106 = "/actividad/mpi.internal_disciplinary_framework";
+const D107 = "/actividad/mpi.internal_regulation_integrate";
+const D112 = "/actividad/dpo.confidentiality_duty";
 
 async function registrarMpiDiagnostico(
   page: import("@playwright/test").Page,
@@ -488,14 +492,115 @@ test("D1.18 completo finaliza implemented", async ({ page }) => {
   );
 });
 
+test("D1.05 completo finaliza mecanismo y persiste", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await registrarMpiDiagnostico(page, "implementing");
+  await page.goto(`${D105}/guia/define-channel`);
+  for (const node of [
+    "define-channel",
+    "identity-reserve",
+    "non-retaliation",
+    "handling-flow",
+    "test-channel",
+  ]) {
+    await expect(page).toHaveURL(new RegExp(`/guia/${node}$`));
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Mecanismo implementado y operativo",
+  );
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+  await page.reload();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+});
+
+test("D1.06 completo finaliza régimen", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await registrarMpiDiagnostico(page, "adoption_formalized");
+  await page.goto(`${D106}/guia/map-existing`);
+  for (const node of [
+    "map-existing",
+    "integrate-breaches",
+    "define-procedure",
+    "verify-coherence",
+    "formalize-approved",
+  ]) {
+    await expect(page).toHaveURL(new RegExp(`/guia/${node}$`));
+    await answerAndContinue(page, "yes");
+  }
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Régimen disciplinario establecido y aprobado",
+  );
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+});
+
+test("D1.07 con condicionales descartados finaliza integración", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await registrarMpiDiagnostico(page, "implementing");
+  await page.goto(`${D107}/guia/identify-subjects`);
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/identify-instruments$"));
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/incorporate-obligations$"));
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/update-bylaws$"));
+  await answerAndContinue(page, "na");
+  await expect(page).toHaveURL(new RegExp("/guia/verify-publicity$"));
+  await answerAndContinue(page, "na");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Integración incorporada y evidenciada",
+  );
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+});
+
+test("D1.12 completo finaliza deber sin declarar cumplimiento", async ({ page }) => {
+  await crearEmpresaFin(page);
+  await page.goto(`${D112}/guia/designation-gate`);
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/verify-obligation$"));
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/formalize-instrument$"));
+  await answerAndContinue(page, "na");
+  await expect(page).toHaveURL(new RegExp("/guia/verify-scope$"));
+  await answerAndContinue(page, "yes");
+  await expect(page).toHaveURL(new RegExp("/guia/verify-measures$"));
+  await answerAndContinue(page, "yes");
+  await expect(page.getByTestId("guia-outcome-label")).toContainText(
+    "Deber formalizado y respaldado",
+  );
+  const body = (await page.textContent("body")) ?? "";
+  expect(body).not.toContain("Cumple");
+  await page.getByTestId("guia-finalize-apply").click();
+  await expect(page.getByTestId("guia-finalize-status")).toContainText(
+    "Estado registrado para esta empresa",
+  );
+});
+
 test("batch sin overflow en desktop y tablet", async ({ page }) => {
   for (const path of [
     D104,
     D109,
     D103,
+    D105,
+    D106,
+    D107,
+    D112,
     `${D104}/guia/adoption-evidence`,
     `${D109}/guia/check-conflicts`,
     `${D109}/guia/resultado`,
+    `${D105}/guia/test-channel`,
+    `${D112}/guia/verify-measures`,
   ]) {
     await page.goto(path);
     const overflow = await page.evaluate(

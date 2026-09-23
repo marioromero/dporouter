@@ -9,6 +9,10 @@ import { DPO_OPERATING_MODEL_PROTOCOL as P11 } from "../content/protocols/dpo.op
 import { DPO_INFRINGEMENT_ESCALATION_PROTOCOL as P15 } from "../content/protocols/dpo.infringement_escalation";
 import { DPO_TERMINATE_OR_REPLACE_PROTOCOL as P17 } from "../content/protocols/dpo.terminate_or_replace";
 import { MPI_ASSEMBLE_PROGRAM_PROTOCOL as P18 } from "../content/protocols/mpi.assemble_program";
+import { MPI_REPORTING_WHISTLEBLOWING_PROTOCOL as P05 } from "../content/protocols/mpi.internal_reporting_and_whistleblowing";
+import { MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL as P06 } from "../content/protocols/mpi.internal_disciplinary_framework";
+import { MPI_REGULATION_INTEGRATE_PROTOCOL as P07 } from "../content/protocols/mpi.internal_regulation_integrate";
+import { DPO_CONFIDENTIALITY_DUTY_PROTOCOL as P12 } from "../content/protocols/dpo.confidentiality_duty";
 import type { ExecutionProtocol } from "../content/protocols/types";
 import {
   getProtocolForActivity,
@@ -19,6 +23,7 @@ import type { FactMap } from "../content/protocols/types";
 import { blockingConflicts, mergedFactRecords } from "../src/workspace/facts";
 import {
   applyProcedureFinalization,
+  getFinalizableOutcome,
   validateProcedureFinalization,
 } from "../src/workspace/finalize";
 import { newCompany } from "../src/workspace/types";
@@ -1138,6 +1143,477 @@ describe("batch D1: integridad del tercer batch", () => {
           `${p.protocol_key}/${o.outcome_key}`,
         ).toEqual([]);
       }
+    }
+  });
+});
+
+describe("batch D1: D1.05 procedure", () => {
+  it("80. D1.05 tiene exactamente un protocolo activo mode procedure", () => {
+    expect(getProtocolForActivity("mpi.internal_reporting_and_whistleblowing")).toBe(P05);
+    expect(P05.protocol_key).toBe("mpi.internal_reporting_and_whistleblowing.v1");
+    expect(P05.mode).toBe("procedure");
+    expect(P05.version).toBe(1);
+    expect(P05.entry_node_key).toBe("define-channel");
+    expect(getCanonicalActivity(P05.activity_key)?.human_code).toBe("D1.05");
+  });
+
+  it("81. cinco verificaciones del mecanismo más síntesis", () => {
+    expect(P05.nodes.map((n) => n.node_key)).toEqual([
+      "define-channel",
+      "identity-reserve",
+      "non-retaliation",
+      "handling-flow",
+      "test-channel",
+      "final-confirmation",
+    ]);
+    expect(P05.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["mechanism_implemented", "mechanism_in_progress", "not_started"].sort(),
+    );
+    expect(P05.external_fact_keys).toContain("mpi.lifecycle_status");
+  });
+
+  it("82. estructura válida y siguiente paso resuelve", () => {
+    expect(validateProtocolStructure(P05)).toEqual([]);
+    expect(getCanonicalActivity("mpi.formalize_adoption")).toBeDefined();
+  });
+
+  function fullMechanism(over: FactMap = {}): FactMap {
+    return {
+      "mpi.lifecycle_status": "implementing",
+      "mpi.whistleblowing.channel_defined": "yes",
+      "mpi.whistleblowing.identity_reserve": "yes",
+      "mpi.whistleblowing.non_retaliation": "yes",
+      "mpi.whistleblowing.handling_defined": "yes",
+      "mpi.whistleblowing.tested": "yes",
+      ...over,
+    };
+  }
+
+  it("83. sin adopción no inicia y deriva a D1.04 sin recrearlo", () => {
+    const e = mustOutcomeFor(P05, {
+      ...fullMechanism(),
+      "mpi.lifecycle_status": "not_adopted",
+    });
+    expect(e.outcome_key).toBe("not_started");
+    expect(e.rule_id).toBe("not-adopted");
+    expect(
+      e.outcome.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("mpi.formalize_adoption");
+    for (const f of protocolFactKeys(P05)) {
+      expect(
+        f === "mpi.lifecycle_status" || f.startsWith("mpi.whistleblowing."),
+        f,
+      ).toBe(true);
+    }
+  });
+
+  it("84. todo operativo produce mecanismo con efecto", () => {
+    const e = mustOutcomeFor(P05, fullMechanism());
+    expect(e.outcome_key).toBe("mechanism_implemented");
+    expect(e.rule_id).toBe("all-verified");
+    expect(e.outcome.classification).toBe("legal_requirement");
+    expect(e.outcome.canonical_fact_effects).toEqual([
+      { fact_key: "mpi.whistleblowing_status", value: "implemented" },
+    ]);
+  });
+
+  it("85. pendiente o sin información mantiene en implementación", () => {
+    const e = mustOutcomeFor(
+      P05,
+      fullMechanism({ "mpi.whistleblowing.tested": "no" }),
+    );
+    expect(e.outcome_key).toBe("mechanism_in_progress");
+    const u = mustOutcomeFor(
+      P05,
+      fullMechanism({ "mpi.whistleblowing.non_retaliation": "unknown" }),
+    );
+    expect(u.outcome_key).toBe("mechanism_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+  });
+
+  it("86. guía el mecanismo, no casos individuales", () => {
+    const text = JSON.stringify(P05).toLowerCase();
+    expect(text).not.toContain("denunciante");
+    for (const f of protocolFactKeys(P05)) {
+      expect(f).not.toContain("case");
+    }
+  });
+});
+
+describe("batch D1: D1.06 procedure", () => {
+  it("87. D1.06 tiene exactamente un protocolo activo mode procedure", () => {
+    expect(getProtocolForActivity("mpi.internal_disciplinary_framework")).toBe(P06);
+    expect(P06.protocol_key).toBe("mpi.internal_disciplinary_framework.v1");
+    expect(P06.mode).toBe("procedure");
+    expect(P06.entry_node_key).toBe("map-existing");
+    expect(getCanonicalActivity(P06.activity_key)?.human_code).toBe("D1.06");
+  });
+
+  it("88. cinco verificaciones del régimen más síntesis", () => {
+    expect(P06.nodes.map((n) => n.node_key)).toEqual([
+      "map-existing",
+      "integrate-breaches",
+      "define-procedure",
+      "verify-coherence",
+      "formalize-approved",
+      "final-confirmation",
+    ]);
+    expect(P06.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["framework_established", "framework_in_progress", "not_started"].sort(),
+    );
+    expect(P06.external_fact_keys).toContain("mpi.lifecycle_status");
+  });
+
+  it("89. estructura válida y siguiente paso resuelve", () => {
+    expect(validateProtocolStructure(P06)).toEqual([]);
+    expect(getCanonicalActivity("mpi.formalize_adoption")).toBeDefined();
+  });
+
+  function fullRegime(over: FactMap = {}): FactMap {
+    return {
+      "mpi.lifecycle_status": "adoption_formalized",
+      "mpi.disciplinary.existing_mapped": "yes",
+      "mpi.disciplinary.breaches_integrated": "yes",
+      "mpi.disciplinary.procedure_defined": "yes",
+      "mpi.disciplinary.coherence_verified": "yes",
+      "mpi.disciplinary.approved": "yes",
+      ...over,
+    };
+  }
+
+  it("90. todo verificado produce régimen con efecto", () => {
+    const e = mustOutcomeFor(P06, fullRegime());
+    expect(e.outcome_key).toBe("framework_established");
+    expect(e.rule_id).toBe("all-verified");
+    expect(e.outcome.classification).toBe("legal_requirement");
+    expect(e.outcome.canonical_fact_effects).toEqual([
+      { fact_key: "mpi.disciplinary_framework_status", value: "implemented" },
+    ]);
+  });
+
+  it("91. pendiente mantiene en elaboración", () => {
+    const e = mustOutcomeFor(P06, fullRegime({ "mpi.disciplinary.approved": "no" }));
+    expect(e.outcome_key).toBe("framework_in_progress");
+    const u = mustOutcomeFor(
+      P06,
+      fullRegime({ "mpi.disciplinary.procedure_defined": "unknown" }),
+    );
+    expect(u.outcome_key).toBe("framework_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+  });
+
+  it("92. sin sanciones, gravedad ni scoring inventados", () => {
+    const text = JSON.stringify(P06).toLowerCase();
+    expect(text).not.toContain("score");
+    expect(text).not.toContain("gravedad");
+    expect(text).not.toContain("severidad");
+    expect(text).not.toContain("leve");
+    expect(text).not.toContain("grave");
+  });
+});
+
+describe("batch D1: D1.07 procedure", () => {
+  it("93. D1.07 tiene exactamente un protocolo activo mode procedure", () => {
+    expect(getProtocolForActivity("mpi.internal_regulation_integrate")).toBe(P07);
+    expect(P07.protocol_key).toBe("mpi.internal_regulation_integrate.v1");
+    expect(P07.mode).toBe("procedure");
+    expect(P07.entry_node_key).toBe("identify-subjects");
+    expect(getCanonicalActivity(P07.activity_key)?.human_code).toBe("D1.07");
+  });
+
+  it("94. cinco verificaciones con condicionales explícitos más síntesis", () => {
+    expect(P07.nodes.map((n) => n.node_key)).toEqual([
+      "identify-subjects",
+      "identify-instruments",
+      "incorporate-obligations",
+      "update-bylaws",
+      "verify-publicity",
+      "final-confirmation",
+    ]);
+    expect(P07.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["integration_complete", "integration_in_progress", "not_started"].sort(),
+    );
+    for (const key of ["update-bylaws", "verify-publicity"]) {
+      const node = P07.nodes.find((n) => n.node_key === key);
+      expect(node?.options?.map((o) => o.value).sort()).toEqual(
+        ["na", "no", "unknown", "yes"].sort(),
+      );
+    }
+  });
+
+  it("95. estructura válida y siguiente paso resuelve", () => {
+    expect(validateProtocolStructure(P07)).toEqual([]);
+    expect(getCanonicalActivity("mpi.formalize_adoption")).toBeDefined();
+  });
+
+  function fullIntegration(over: FactMap = {}): FactMap {
+    return {
+      "mpi.lifecycle_status": "implementing",
+      "mpi.regulation.subjects_identified": "yes",
+      "mpi.regulation.instruments_identified": "yes",
+      "mpi.regulation.obligations_incorporated": "yes",
+      "mpi.regulation.bylaws_updated": "na",
+      "mpi.regulation.publicity_verified": "na",
+      ...over,
+    };
+  }
+
+  it("96. integración con condicionales descartados produce efecto", () => {
+    const e = mustOutcomeFor(P07, fullIntegration());
+    expect(e.outcome_key).toBe("integration_complete");
+    expect(e.rule_id).toBe("all-verified");
+    expect(e.outcome.classification).toBe("legal_requirement");
+    expect(e.outcome.canonical_fact_effects).toEqual([
+      { fact_key: "mpi.internal_regulation_status", value: "integrated" },
+    ]);
+  });
+
+  it("97. pendiente se distingue de incorporado; unknown bloquea", () => {
+    const e = mustOutcomeFor(
+      P07,
+      fullIntegration({ "mpi.regulation.obligations_incorporated": "no" }),
+    );
+    expect(e.outcome_key).toBe("integration_in_progress");
+    const u = mustOutcomeFor(
+      P07,
+      fullIntegration({ "mpi.regulation.instruments_identified": "unknown" }),
+    );
+    expect(u.outcome_key).toBe("integration_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+  });
+
+  it("98. namespace propio con lifecycle solo externo", () => {
+    for (const f of protocolFactKeys(P07)) {
+      expect(
+        f === "mpi.lifecycle_status" || f.startsWith("mpi.regulation."),
+        f,
+      ).toBe(true);
+    }
+  });
+});
+
+describe("batch D1: D1.12 procedure", () => {
+  it("99. D1.12 tiene exactamente un protocolo activo mode procedure", () => {
+    expect(getProtocolForActivity("dpo.confidentiality_duty")).toBe(P12);
+    expect(P12.protocol_key).toBe("dpo.confidentiality_duty.v1");
+    expect(P12.mode).toBe("procedure");
+    expect(P12.entry_node_key).toBe("designation-gate");
+    expect(getCanonicalActivity(P12.activity_key)?.human_code).toBe("D1.12");
+  });
+
+  it("100. compuerta, cuatro verificaciones y síntesis", () => {
+    expect(P12.nodes.map((n) => n.node_key)).toEqual([
+      "designation-gate",
+      "verify-obligation",
+      "formalize-instrument",
+      "verify-scope",
+      "verify-measures",
+      "final-confirmation",
+    ]);
+    expect(P12.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      ["duty_formalized", "duty_in_progress", "prerequisite_missing"].sort(),
+    );
+  });
+
+  it("101. estructura válida y siguiente paso resuelve", () => {
+    expect(validateProtocolStructure(P12)).toEqual([]);
+    expect(getCanonicalActivity("dpo.designate")).toBeDefined();
+  });
+
+  function fullDuty(over: FactMap = {}): FactMap {
+    return {
+      "dpo.designated": "yes",
+      "dpo.confidentiality.obligation_verified": "yes",
+      "dpo.confidentiality.formalized": "na",
+      "dpo.confidentiality.scope_included": "yes",
+      "dpo.confidentiality.measures_verified": "yes",
+      ...over,
+    };
+  }
+
+  it("102. sin designación deriva a D1.08", () => {
+    const e = mustOutcomeFor(P12, { "dpo.designated": "no" });
+    expect(e.outcome_key).toBe("prerequisite_missing");
+    expect(
+      e.outcome.next_actions.find((a) => a.kind === "activity")?.activity_key,
+    ).toBe("dpo.designate");
+  });
+
+  it("103. deber formalizado con efecto y sin declaración de cumplimiento", () => {
+    const e = mustOutcomeFor(P12, fullDuty());
+    expect(e.outcome_key).toBe("duty_formalized");
+    expect(e.rule_id).toBe("all-verified");
+    expect(e.outcome.classification).toBe("legal_requirement");
+    expect(e.outcome.canonical_fact_effects).toEqual([
+      { fact_key: "dpo.confidentiality_status", value: "formalized" },
+    ]);
+    const text = JSON.stringify(P12);
+    expect(text).not.toContain("Cumple");
+    expect(e.outcome.detail ?? "").toContain("no constituye");
+  });
+
+  it("104. pendiente mantiene en formalización", () => {
+    const e = mustOutcomeFor(
+      P12,
+      fullDuty({ "dpo.confidentiality.measures_verified": "no" }),
+    );
+    expect(e.outcome_key).toBe("duty_in_progress");
+    const u = mustOutcomeFor(
+      P12,
+      fullDuty({ "dpo.confidentiality.scope_included": "unknown" }),
+    );
+    expect(u.outcome_key).toBe("duty_in_progress");
+    expect(u.rule_id).toBe("pending-verification");
+  });
+});
+
+describe("batch D1: integridad del cuarto batch", () => {
+  it("105. catorce protocolos registrados, anteriores intactos", () => {
+    for (const p of [P01, P08, P11, P15, P17, P18, P05, P06, P07, P12]) {
+      expect(validateProtocolStructure(p), p.protocol_key).toEqual([]);
+    }
+    expect(getProtocolForActivity("dpo.need_assessment")?.mode).toBe("decision");
+    expect(getProtocolForActivity("mpi.need_assessment")?.mode).toBe("decision");
+    expect(getProtocolForActivity("mpi.formalize_adoption")?.mode).toBe("procedure");
+    expect(
+      getProtocolForActivity("dpo.initial_governance_validation")?.mode,
+    ).toBe("checklist");
+    expect(getProtocolForActivity("mpi.assemble_program")?.mode).toBe("procedure");
+  });
+
+  it("106. namespaces propios y disjuntos", () => {
+    const shared = new Set(["dpo.designated", "mpi.lifecycle_status"]);
+    const seen = new Map<string, string>();
+    for (const p of [P05, P06, P07, P12]) {
+      for (const f of protocolFactKeys(p)) {
+        if (shared.has(f)) continue;
+        if (seen.has(f)) {
+          throw new Error(`colisión ${f} entre ${seen.get(f)} y ${p.protocol_key}`);
+        }
+        seen.set(f, p.protocol_key);
+      }
+    }
+    const byPrefix: Array<{ protocol: typeof P05; prefix: string; code: string }> = [
+      { protocol: P05, prefix: "mpi.whistleblowing.", code: "D1.05" },
+      { protocol: P06, prefix: "mpi.disciplinary.", code: "D1.06" },
+      { protocol: P07, prefix: "mpi.regulation.", code: "D1.07" },
+      { protocol: P12, prefix: "dpo.confidentiality.", code: "D1.12" },
+    ];
+    for (const { protocol, prefix, code } of byPrefix) {
+      for (const f of protocolFactKeys(protocol)) {
+        if (shared.has(f)) continue;
+        expect(f.startsWith(prefix), `${code}: ${f}`).toBe(true);
+      }
+    }
+  });
+
+  it("107. los cuatro definitivos finalizan; incompletos no", () => {
+    const cases: Array<{
+      protocol: typeof P05;
+      facts: FactMap;
+      outcomeKey: string;
+      effect: { fact_key: string; value: string };
+    }> = [
+      {
+        protocol: P05,
+        facts: {
+          "mpi.lifecycle_status": "implementing",
+          "mpi.whistleblowing.channel_defined": "yes",
+          "mpi.whistleblowing.identity_reserve": "yes",
+          "mpi.whistleblowing.non_retaliation": "yes",
+          "mpi.whistleblowing.handling_defined": "yes",
+          "mpi.whistleblowing.tested": "yes",
+        },
+        outcomeKey: "mechanism_implemented",
+        effect: { fact_key: "mpi.whistleblowing_status", value: "implemented" },
+      },
+      {
+        protocol: P06,
+        facts: {
+          "mpi.lifecycle_status": "implementing",
+          "mpi.disciplinary.existing_mapped": "yes",
+          "mpi.disciplinary.breaches_integrated": "yes",
+          "mpi.disciplinary.procedure_defined": "yes",
+          "mpi.disciplinary.coherence_verified": "yes",
+          "mpi.disciplinary.approved": "yes",
+        },
+        outcomeKey: "framework_established",
+        effect: { fact_key: "mpi.disciplinary_framework_status", value: "implemented" },
+      },
+      {
+        protocol: P07,
+        facts: {
+          "mpi.lifecycle_status": "implementing",
+          "mpi.regulation.subjects_identified": "yes",
+          "mpi.regulation.instruments_identified": "yes",
+          "mpi.regulation.obligations_incorporated": "yes",
+          "mpi.regulation.bylaws_updated": "yes",
+          "mpi.regulation.publicity_verified": "na",
+        },
+        outcomeKey: "integration_complete",
+        effect: { fact_key: "mpi.internal_regulation_status", value: "integrated" },
+      },
+      {
+        protocol: P12,
+        facts: {
+          "dpo.designated": "yes",
+          "dpo.confidentiality.obligation_verified": "yes",
+          "dpo.confidentiality.formalized": "yes",
+          "dpo.confidentiality.scope_included": "yes",
+          "dpo.confidentiality.measures_verified": "yes",
+        },
+        outcomeKey: "duty_formalized",
+        effect: { fact_key: "dpo.confidentiality_status", value: "formalized" },
+      },
+    ];
+    for (const c of cases) {
+      const company = newCompany(`Fin ${c.outcomeKey} SpA`);
+      const validated = validateProcedureFinalization({
+        protocol: c.protocol,
+        company,
+        facts: c.facts,
+        outcomeKey: c.outcomeKey,
+      });
+      expect(validated.ok, c.outcomeKey).toBe(true);
+      if (!validated.ok) continue;
+      const { company: next, applied } = applyProcedureFinalization(
+        company,
+        c.protocol,
+        validated.effects,
+      );
+      expect(applied).toEqual([c.effect.fact_key]);
+      expect(
+        next.protocolAnswers[c.protocol.protocol_key]?.[c.effect.fact_key]?.value,
+      ).toBe(c.effect.value);
+      // Repetir es no-op.
+      const twice = applyProcedureFinalization(next, c.protocol, validated.effects);
+      expect(twice.applied).toEqual([]);
+      // Export/import conserva.
+      const checked = validateCompanyState(JSON.parse(JSON.stringify(next)));
+      expect(checked.ok).toBe(true);
+      if (!checked.ok) continue;
+      expect(
+        checked.value.protocolAnswers[c.protocol.protocol_key]?.[c.effect.fact_key]?.value,
+      ).toBe(c.effect.value);
+    }
+  });
+
+  it("108. outcomes no definitivos sin efectos en el batch", () => {
+    const nonDefinitive: Array<[typeof P05, string]> = [
+      [P05, "mechanism_in_progress"],
+      [P05, "not_started"],
+      [P06, "framework_in_progress"],
+      [P06, "not_started"],
+      [P07, "integration_in_progress"],
+      [P07, "not_started"],
+      [P12, "duty_in_progress"],
+      [P12, "prerequisite_missing"],
+    ];
+    for (const [p, key] of nonDefinitive) {
+      expect(
+        getFinalizableOutcome(p, key),
+        `${p.protocol_key}/${key}`,
+      ).toBeUndefined();
     }
   });
 });

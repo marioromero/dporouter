@@ -9,6 +9,10 @@ import { DPO_OPERATING_MODEL_PROTOCOL } from "./dpo.operating_model";
 import { DPO_INFRINGEMENT_ESCALATION_PROTOCOL } from "./dpo.infringement_escalation";
 import { DPO_TERMINATE_OR_REPLACE_PROTOCOL } from "./dpo.terminate_or_replace";
 import { MPI_ASSEMBLE_PROGRAM_PROTOCOL } from "./mpi.assemble_program";
+import { MPI_REPORTING_WHISTLEBLOWING_PROTOCOL } from "./mpi.internal_reporting_and_whistleblowing";
+import { MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL } from "./mpi.internal_disciplinary_framework";
+import { MPI_REGULATION_INTEGRATE_PROTOCOL } from "./mpi.internal_regulation_integrate";
+import { DPO_CONFIDENTIALITY_DUTY_PROTOCOL } from "./dpo.confidentiality_duty";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -33,6 +37,10 @@ const PROTOCOLS: ExecutionProtocol[] = [
   DPO_INFRINGEMENT_ESCALATION_PROTOCOL,
   DPO_TERMINATE_OR_REPLACE_PROTOCOL,
   MPI_ASSEMBLE_PROGRAM_PROTOCOL,
+  MPI_REPORTING_WHISTLEBLOWING_PROTOCOL,
+  MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL,
+  MPI_REGULATION_INTEGRATE_PROTOCOL,
+  DPO_CONFIDENTIALITY_DUTY_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

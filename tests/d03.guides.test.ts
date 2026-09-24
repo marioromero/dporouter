@@ -308,7 +308,7 @@ describe("regresión D3 guides", () => {
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
     expect(ALL_ACTIVITIES).toHaveLength(47);
-    expect(listProtocols()).toHaveLength(38);
+    expect(listProtocols()).toHaveLength(45);
     for (const k of [
       "consent.mechanism_design",
       "consent.freedom_assess",

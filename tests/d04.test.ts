@@ -345,10 +345,12 @@ describe("contenido canónico D4", () => {
     }
   });
 
-  it("15. protocols D4 = 0", () => {
-    for (const k of EXPECTED_KEYS) {
-      expect(getProtocolForActivity(k), k).toBeUndefined();
+  it("15. protocols D4.01–D4.07 registrados; D4.08/D4.09 sin protocolo", () => {
+    for (const k of EXPECTED_KEYS.slice(0, 7)) {
+      expect(getProtocolForActivity(k), k).toBeTruthy();
     }
+    expect(getProtocolForActivity("automated_decision.scope_assess")).toBeUndefined();
+    expect(getProtocolForActivity("automated_decision.safeguards_enable")).toBeUndefined();
   });
 
   it("16. applicability y dependencies separados", () => {

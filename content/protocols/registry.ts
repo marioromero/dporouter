@@ -38,6 +38,13 @@ import { CONSENT_MECHANISM_DESIGN_PROTOCOL } from "./consent.mechanism_design";
 import { CONSENT_FREEDOM_ASSESS_PROTOCOL } from "./consent.freedom_assess";
 import { CONSENT_PROOF_DESIGN_PROTOCOL } from "./consent.proof_design";
 import { CONSENT_WITHDRAWAL_ENABLE_PROTOCOL } from "./consent.withdrawal_enable";
+import { RIGHTS_EXERCISE_MECHANISM_DESIGN_PROTOCOL } from "./rights.exercise_mechanism_design";
+import { RIGHTS_ACCESS_ENABLE_PROTOCOL } from "./rights.access_enable";
+import { RIGHTS_RECTIFICATION_ENABLE_PROTOCOL } from "./rights.rectification_enable";
+import { RIGHTS_SUPPRESSION_ENABLE_PROTOCOL } from "./rights.suppression_enable";
+import { RIGHTS_OPPOSITION_ENABLE_PROTOCOL } from "./rights.opposition_enable";
+import { RIGHTS_BLOCKING_ENABLE_PROTOCOL } from "./rights.blocking_enable";
+import { RIGHTS_PORTABILITY_ENABLE_PROTOCOL } from "./rights.portability_enable";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -90,6 +97,13 @@ const PROTOCOLS: ExecutionProtocol[] = [
   CONSENT_FREEDOM_ASSESS_PROTOCOL,
   CONSENT_PROOF_DESIGN_PROTOCOL,
   CONSENT_WITHDRAWAL_ENABLE_PROTOCOL,
+  RIGHTS_EXERCISE_MECHANISM_DESIGN_PROTOCOL,
+  RIGHTS_ACCESS_ENABLE_PROTOCOL,
+  RIGHTS_RECTIFICATION_ENABLE_PROTOCOL,
+  RIGHTS_SUPPRESSION_ENABLE_PROTOCOL,
+  RIGHTS_OPPOSITION_ENABLE_PROTOCOL,
+  RIGHTS_BLOCKING_ENABLE_PROTOCOL,
+  RIGHTS_PORTABILITY_ENABLE_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

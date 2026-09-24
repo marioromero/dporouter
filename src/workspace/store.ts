@@ -329,6 +329,102 @@ function checkDataPurposeLinks(
   return true;
 }
 
+const USE_COVERAGES = ["covered", "not_covered", "unknown"];
+const USE_LEGAL_PATHS = [
+  "contract_necessary",
+  "explicit_consent",
+  "legal_authorization",
+  "none",
+  "unknown",
+  "not_applicable",
+];
+const USE_CHECKS = ["yes", "no", "unknown"];
+const SAFEGUARD_CHECK_FIELDS = [
+  "informationTransparency",
+  "explanation",
+  "humanIntervention",
+  "pointOfView",
+  "review",
+];
+
+/** Matriz coverage → legalPath (idéntica a la de operaciones). */
+function isValidCoveragePath(coverage: string, path: string): boolean {
+  switch (coverage) {
+    case "covered":
+      return (
+        path === "contract_necessary" ||
+        path === "explicit_consent" ||
+        path === "legal_authorization" ||
+        path === "none" ||
+        path === "unknown"
+      );
+    case "not_covered":
+      return path === "not_applicable";
+    case "unknown":
+      return path === "unknown";
+    default:
+      return false;
+  }
+}
+
+function checkAutomatedUseSafeguards(v: unknown): boolean {
+  if (!isRecord(v)) return false;
+  for (const f of SAFEGUARD_CHECK_FIELDS) {
+    if (v[f] !== undefined && !USE_CHECKS.includes(v[f] as string)) {
+      return false;
+    }
+  }
+  for (const f of ["interventionChannel", "reviewChannel"]) {
+    if (v[f] !== undefined && !isNonEmptyString(v[f])) return false;
+  }
+  return true;
+}
+
+/**
+ * Valida un uso automatizado: identidad, descriptivos, enums,
+ * matriz coverage/legalPath, purposeId del mismo treatment y
+ * safeguards solo en covered. Estricta: lo inválido rechaza, nunca
+ * se corrige en silencio.
+ */
+function checkAutomatedUseRecord(v: unknown, purposeIds: Set<string>): boolean {
+  if (!isRecord(v)) return false;
+  if (typeof v.id !== "string" || v.id.trim() === "") return false;
+  if (typeof v.name !== "string" || v.name.trim() === "") return false;
+  for (const f of [
+    "description",
+    "processDescription",
+    "mechanismDescription",
+    "decisionDescription",
+  ]) {
+    if (v[f] !== undefined && typeof v[f] !== "string") return false;
+  }
+  if (
+    v.purposeId !== undefined &&
+    (typeof v.purposeId !== "string" || !purposeIds.has(v.purposeId))
+  ) {
+    return false;
+  }
+  if (!USE_CHECKS.includes(v.profiling as string)) return false;
+  if (v.evidenceRef !== undefined && typeof v.evidenceRef !== "string") {
+    return false;
+  }
+  if (!USE_COVERAGES.includes(v.article8bisCoverage as string)) return false;
+  if (!USE_LEGAL_PATHS.includes(v.legalPath as string)) return false;
+  if (
+    !isValidCoveragePath(
+      v.article8bisCoverage as string,
+      v.legalPath as string,
+    )
+  ) {
+    return false;
+  }
+  if (v.safeguards !== undefined) {
+    if (v.article8bisCoverage !== "covered") return false;
+    if (!checkAutomatedUseSafeguards(v.safeguards)) return false;
+  }
+  return true;
+}
+
 /**
  * Valida colecciones locales de un treatment ya migrado (IDs únicos por
  * construcción de mapa + refs existentes). Devuelve el treatment
@@ -372,6 +468,17 @@ function checkLocalCollections(
   );
   const links = t.dataPurposeLinks ?? [];
   if (!checkDataPurposeLinks(links, dataIds, purposeIds)) return null;
+  // Usos automatizados: array con IDs únicos; ausente = válido (legacy).
+  if (t.automatedUses !== undefined) {
+    if (!Array.isArray(t.automatedUses)) return null;
+    const seen = new Set<string>();
+    for (const u of t.automatedUses) {
+      if (!isRecord(u)) return null;
+      if (typeof u.id !== "string" || seen.has(u.id)) return null;
+      seen.add(u.id);
+      if (!checkAutomatedUseRecord(u, purposeIds)) return null;
+    }
+  }
   return { actors, dataItems, sources, retentionRules, dataPurposeLinks: links };
 }
 
@@ -379,6 +486,10 @@ function checkLocalCollections(
  * Normaliza colecciones locales en migración: conserva entradas
  * válidas (normalizando ids a sus claves), poda refs colgadas y
  * duplica nada. Lo inválido se descarta entrada por entrada.
+ *
+ * Excepción: `automatedUses` es todo o nada. Al no existir legacy
+ * con esta colección, cualquier entrada inválida indica corrupción:
+ * se rechaza el treatment completo en lugar de podar en silencio.
  */
 function normalizeLocalCollections(
   t: Record<string, unknown>,
@@ -389,7 +500,8 @@ function normalizeLocalCollections(
   sources: Record<string, unknown>;
   retentionRules: Record<string, unknown>;
   dataPurposeLinks: unknown[];
-} {
+  automatedUses: unknown[];
+} | null {
   const actors: Record<string, unknown> = {};
   if (isRecord(t.actors)) {
     for (const [k, a] of Object.entries(t.actors)) {
@@ -463,7 +575,22 @@ function normalizeLocalCollections(
       dataPurposeLinks.push({ dataId: l.dataId, purposeId: l.purposeId });
     }
   }
-  return { actors, dataItems, sources, retentionRules, dataPurposeLinks };
+  // automatedUses: sin legacy posible; validación estricta entrada por
+  // entrada con los purposes ya normalizados. Una sola entrada
+  // inválida rechaza el treatment (nunca poda silenciosa).
+  const automatedUses: unknown[] = [];
+  if (t.automatedUses !== undefined) {
+    if (!Array.isArray(t.automatedUses)) return null;
+    const seen = new Set<string>();
+    for (const u of t.automatedUses) {
+      if (!isRecord(u)) return null;
+      if (typeof u.id !== "string" || seen.has(u.id)) return null;
+      seen.add(u.id);
+      if (!checkAutomatedUseRecord(u, purposeIds)) return null;
+      automatedUses.push(u);
+    }
+  }
+  return { actors, dataItems, sources, retentionRules, dataPurposeLinks, automatedUses };
 }
 
 function pruneAnswerMaps(v: unknown): Record<string, Record<string, FactRecord>> {
@@ -509,6 +636,7 @@ function migrateTreatments(
       { ...t, purposes },
       new Set(Object.keys(purposes)),
     );
+    if (!locals) continue;
     const candidate = {
       ...t,
       context: ctx,

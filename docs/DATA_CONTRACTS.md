@@ -1027,3 +1027,56 @@ Rules:
   means company legacy) and records fact, value, moment and
   alternatives; a later contradiction reopens the conflict.
 
+## 46. AutomatedUseRecord
+
+A local value object owned exclusively by one treatment,
+supporting D4.08/D4.09 repeated-use evaluation (see ADR-052):
+
+```text
+id (stable, unique within the treatment)
+name
+description?
+purposeId? (same-treatment purpose only; cross-parent rejected)
+processDescription?
+mechanismDescription?
+decisionDescription?
+profiling (yes | no | unknown)
+evidenceRef? (documentary reference of the use, never subject evidence)
+article8bisCoverage (covered | not_covered | unknown)
+legalPath (contract_necessary | explicit_consent | legal_authorization
+  | none | unknown | not_applicable)
+safeguards? (only when covered: five yes|no|unknown verifications
+  plus minimal intervention/review channel scalars)
+```
+
+Rules:
+
+* One collection `automatedUses[]` per treatment, shared by D4.08
+  and D4.09. It is not an execution scope, not a global entity, not
+  a `ClientActivityInstance`: no progress, owner, deadline,
+  lifecycle, history or events.
+* New uses start unclassified (`unknown`/`unknown`, no safeguards);
+  descriptive drafts never force a legal determination.
+* Coverage/legalPath obey the closed matrix (`covered` admits the
+  three exceptions, `none` or `unknown`; `not_covered` forces
+  `not_applicable`; `unknown` forces `unknown`). Coverage changes
+  normalize path and safeguards atomically.
+* `safeguards` corresponds only to covered uses. Its absence for
+  `not_covered`/`unknown` is never non-compliance; safeguards on
+  such uses are rejected at import.
+* Determinations are subordinate professional records, not
+  independent canonical facts. Creating, editing or deleting uses
+  never writes canonical effects; the joint justification lives in
+  the single treatment-scoped D4.08 ReasoningRecord (use IDs as
+  explicit `automated_use:<id>` tokens), and the consolidated
+  results live in treatment canonical facts written only by
+  explicit finalization.
+* Purpose deletion clears `purposeId` on affected uses and keeps
+  them; use deletion is local hard-delete with its determinations
+  and safeguards. Absent collection equals empty (legacy valid).
+* Read-only deterministic `derived.treatment.automated_uses_*`
+  projections expose existence, per-use classification progress,
+  covered presence, legal-path determination and safeguard state.
+  They never persist, never write facts and never conclude
+  `no_covered_use` from an empty inventory.
+

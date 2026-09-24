@@ -1,9 +1,10 @@
 import { getPurpose, getTreatment } from "./scope";
-import type { CompanyState, ExecutionContext } from "./types";
+import type { AutomatedUseRecord, CompanyState, ExecutionContext } from "./types";
 import type { FactMap } from "../../content/protocols/types";
 
 /**
- * Derived session facts: proyecciones read-only de structured state D2.
+ * Derived session facts: proyecciones read-only de structured state
+ * D2/D4.
  *
  * Capa mínima, pura y determinista. Mismo CompanyState + mismo
  * ExecutionContext → mismo FactMap. Sin side effects, sin
@@ -33,6 +34,8 @@ function deriveTreatmentFacts(
   if (!t) return {};
   const actors = Object.values(t.actors ?? {});
   const purposes = Object.values(t.purposes ?? {});
+  const uses = t.automatedUses ?? [];
+  const covered = uses.filter((u) => u.article8bisCoverage === "covered");
   return {
     "derived.treatment.actors_exist": yesNo(actors.length > 0),
     // Vacío → "no": un conjunto vacío nunca cuenta como completo.
@@ -76,7 +79,89 @@ function deriveTreatmentFacts(
           (r) => r.dataItemIds.length > 0,
         ),
     ),
+    // Usos automatizados D4.08/D4.09 (colección local compartida).
+    // Mecánico: existe al menos un uso identificado.
+    "derived.treatment.automated_uses_exist": yesNo(uses.length > 0),
+    // Mecánico: todo uso identificado tiene cobertura determinada
+    // (covered/not_covered). Vacío → "no": nunca completo por
+    // vacuidad. No concluye no_covered_use: eso exige finalización
+    // D4.08 con ReasoningRecord válido.
+    "derived.treatment.automated_uses_coverage_complete": yesNo(
+      uses.length > 0 &&
+        uses.every((u) => u.article8bisCoverage !== "unknown"),
+    ),
+    // Mecánico: algún uso pendiente de clasificación. Un unknown no
+    // deduce ausencia de cubiertos.
+    "derived.treatment.automated_uses_coverage_pending": yesNo(
+      uses.some((u) => u.article8bisCoverage === "unknown"),
+    ),
+    // Mecánico: existe al menos un uso cubierto por art. 8 bis.
+    "derived.treatment.automated_uses_covered_exist": yesNo(
+      covered.length > 0,
+    ),
+    // Mecánico: todo uso cubierto tiene vía determinada (las tres
+    // excepciones y `none` cuentan como determinadas; `unknown`
+    // sigue pendiente). Vacío de cubiertos → "no".
+    "derived.treatment.automated_uses_legal_path_complete": yesNo(
+      covered.length > 0 &&
+        covered.every((u) => u.legalPath !== "unknown"),
+    ),
+    // Mecánico: algún uso cubierto con ausencia determinada de vía
+    // (`none`). `unknown` es pendiente, no ausencia.
+    "derived.treatment.automated_uses_unpathed_covered_exist": yesNo(
+      covered.some((u) => u.legalPath === "none"),
+    ),
+    // Mecánico: todo uso cubierto tiene sus cinco verificaciones
+    // determinadas (yes/no explícitos). Vacío de cubiertos → "no":
+    // sin conjunción vacía hacia cumplimiento.
+    "derived.treatment.automated_uses_safeguards_complete": yesNo(
+      covered.length > 0 && covered.every((u) => safeguardsDetermined(u)),
+    ),
+    // Mecánico: todo uso cubierto con las cinco en "yes". Exige al
+    // menos un cubierto: nunca cumplimiento por vacuidad.
+    "derived.treatment.automated_uses_safeguards_enabled": yesNo(
+      covered.length > 0 && covered.every((u) => safeguardsEnabled(u)),
+    ),
+    // Mecánico: algún uso cubierto con una verificación en "no".
+    // Solo usos covered: not_covered/unknown quedan excluidos.
+    "derived.treatment.automated_uses_safeguards_deficient": yesNo(
+      covered.some((u) => safeguardsDeficient(u)),
+    ),
   };
+}
+
+const SAFEGUARD_CHECKS = [
+  "informationTransparency",
+  "explanation",
+  "humanIntervention",
+  "pointOfView",
+  "review",
+] as const;
+
+function safeguardValues(u: AutomatedUseRecord): (string | undefined)[] {
+  const s = u.safeguards;
+  if (!s) return [];
+  return SAFEGUARD_CHECKS.map((f) => s[f]);
+}
+
+function safeguardsDetermined(u: AutomatedUseRecord): boolean {
+  const values = safeguardValues(u);
+  return (
+    values.length === SAFEGUARD_CHECKS.length &&
+    values.every((v) => v === "yes" || v === "no")
+  );
+}
+
+function safeguardsEnabled(u: AutomatedUseRecord): boolean {
+  const values = safeguardValues(u);
+  return (
+    values.length === SAFEGUARD_CHECKS.length &&
+    values.every((v) => v === "yes")
+  );
+}
+
+function safeguardsDeficient(u: AutomatedUseRecord): boolean {
+  return safeguardValues(u).some((v) => v === "no");
 }
 
 /**

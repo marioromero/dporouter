@@ -128,6 +128,12 @@ export interface TreatmentScopedState {
   sources?: Record<string, SourceRecord>;
   retentionRules?: Record<string, RetentionRuleRecord>;
   dataPurposeLinks?: DataPurposeLink[];
+  /**
+   * Usos automatizados locales D4.08/D4.09. Colección compartida por
+   * ambas actividades dentro del mismo treatment. Ausente equivale
+   * estructuralmente a vacía (workspaces previos). Ver ADR-052.
+   */
+  automatedUses?: AutomatedUseRecord[];
 }
 
 /** Estado scopeado de una finalidad: objeto + protocol state propio. */
@@ -188,6 +194,66 @@ export interface RetentionRuleRecord {
 export interface DataPurposeLink {
   dataId: string;
   purposeId: string;
+}
+
+/** Verificación objetiva ternaria de una salvaguarda local. */
+export type SafeguardCheck = "yes" | "no" | "unknown";
+
+/** Determinación profesional local de cobertura art. 8 bis. */
+export type AutomatedUseCoverage = "covered" | "not_covered" | "unknown";
+
+/** Vía legal determinada para un uso cubierto. */
+export type AutomatedUseLegalPath =
+  | "contract_necessary"
+  | "explicit_consent"
+  | "legal_authorization"
+  | "none"
+  | "unknown"
+  | "not_applicable";
+
+/** Verificaciones objetivas de salvaguardas D4.09 por uso cubierto. */
+export interface AutomatedUseSafeguards {
+  informationTransparency?: SafeguardCheck;
+  explanation?: SafeguardCheck;
+  humanIntervention?: SafeguardCheck;
+  pointOfView?: SafeguardCheck;
+  review?: SafeguardCheck;
+  /** Canal/procedimiento de intervención. Escalar mínimo, sin workflow. */
+  interventionChannel?: string;
+  /** Canal/proceso de revisión. Escalar mínimo, sin workflow. */
+  reviewChannel?: string;
+}
+
+/**
+ * Uso automatizado local de un treatment (D4.08/D4.09). Value object
+ * treatment-owned con identidad local para edición y referencia
+ * interna. Sin execution scope, workflow, reasoning, progreso,
+ * lifecycle, owner, deadline, historial ni alcance global: NO es una
+ * entidad jurídica nueva. Ver ADR-052.
+ *
+ * Las determinaciones (`article8bisCoverage`, `legalPath`) son
+ * profesionales, locales y subordinadas: no son canonical facts
+ * independientes y editarlas no materializa efectos jurídicos. La
+ * justificación conjunta vive en el único ReasoningRecord
+ * treatment-scoped de D4.08; los agregados canónicos viven en facts
+ * treatment-level materializados solo por finalización explícita.
+ */
+export interface AutomatedUseRecord {
+  id: string;
+  name: string;
+  description?: string;
+  /** Purpose del mismo treatment. Cross-parent se rechaza. */
+  purposeId?: string;
+  processDescription?: string;
+  mechanismDescription?: string;
+  decisionDescription?: string;
+  profiling: SafeguardCheck;
+  /** Referencia documental del uso, no evidencia de un titular. */
+  evidenceRef?: string;
+  article8bisCoverage: AutomatedUseCoverage;
+  legalPath: AutomatedUseLegalPath;
+  /** Solo corresponde cuando coverage = covered. */
+  safeguards?: AutomatedUseSafeguards;
 }
 
 /**

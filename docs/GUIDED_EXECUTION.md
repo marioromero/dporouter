@@ -231,3 +231,20 @@ sufficient basis but never deduces the conclusion: it belongs to the
 professional, with gating fields declared per protocol. Records persist
 in their execution scope (company, treatment or purpose) with
 same-scope effects; re-finalizing is idempotent.
+
+## 16. Local automated-use inventory (D4.08/D4.09 groundwork)
+
+A treatment may hold a local `automatedUses[]` collection (ADR-052,
+`DATA_CONTRACTS.md` §46): treatment-owned value objects with local
+identity, subordinate coverage/path determinations and per-use
+safeguard verifications. It is structure, not execution: no
+per-use protocol sessions, progress, outcomes or fact keys exist,
+and editing uses never writes canonical facts.
+
+Read-only `derived.treatment.automated_uses_*` projections expose
+existence, classification progress, covered presence, legal-path
+determination and safeguard state for future structural gates.
+The single treatment-scoped D4.08 ReasoningRecord carries the
+joint justification (use IDs as explicit `automated_use:<id>`
+tokens); treatment aggregates materialize only through explicit
+finalization. No D4.08/D4.09 protocols exist yet.

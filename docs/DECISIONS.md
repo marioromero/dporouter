@@ -627,3 +627,56 @@ Stage 1 boundary: no new scope, storage, entity, history or
 Stage 2 semantics. Existing protocols become product-ready only
 when their own content declares static same-scope effects in
 later batches; this capability alone changes no readiness.
+
+---
+
+## ADR-052 — Automated uses as treatment-owned local value objects
+
+Status: ACCEPTED
+
+`TreatmentScopedState.automatedUses[]` is a local collection owned
+exclusively by one `TreatmentContext` (ADR-046). D4.08
+(`automated_decision.scope_assess`) and D4.09
+(`automated_decision.safeguards_enable`) share the same collection;
+there is no second list and no duplicated truth.
+
+Each `AutomatedUseRecord` carries a local `id` (unique within the
+treatment only), human identification, optional same-treatment
+`purposeId`, factual process/mechanism/decision descriptions,
+`profiling` (`yes | no | unknown`), an optional documentary
+`evidenceRef`, subordinate professional determinations
+(`article8bisCoverage`, `legalPath`) and optional per-use
+safeguard verifications (`safeguards`, only when covered).
+
+Coverage/legalPath obey a closed matrix (`covered` admits the three
+exceptions, `none` or `unknown`; `not_covered` forces
+`not_applicable`; `unknown` forces `unknown`). Coverage changes
+normalize path and safeguards in a single consistent write; old
+legal paths are never carried over. Import rejects invalid
+combinations instead of repairing them silently.
+
+Safeguard checks are objective structural verifications (`yes | no |
+unknown` each, plus minimal channel scalars), never workflow. They
+exist only for covered uses; their absence elsewhere is never
+non-compliance.
+
+One treatment-scoped `ReasoningRecord` (D4.08) validates the joint
+evaluation; there is no record per use and the global record schema
+is unchanged. Use IDs travel as explicit `automated_use:<id>`
+tokens (exact ID, never name-only narrative), validated against the
+addressed treatment. Canonical effects remain treatment-level
+aggregates (`scope_status`, `legal_path_status`,
+`safeguards_status`), written only by explicit protocol
+finalization — never by editing, creating or deleting uses.
+
+Discarded: dynamic fact keys per use (a hidden scope breaking
+closed fact identity and validation); a fourth scope or
+`AutomatedDecisionContext` (disproportionate, canon-frozen against);
+per-use protocol sub-sessions, progress or instances (de facto
+`ClientActivityInstance`); generic aggregation or history/lifecycle
+machinery.
+
+Stage 1 boundary: no new scope, entity, workflow, owner, deadline,
+history, lifecycle, events or per-subject records. Collection
+absence stays valid for legacy workspaces; deletion is local
+hard-delete with technical cascade only.

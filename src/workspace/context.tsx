@@ -19,16 +19,19 @@ import { getProtocol } from "../../content/protocols/registry";
 import { getCanonicalActivity } from "../../content/registry";
 import {
   addActor as addActorState,
+  addAutomatedUse as addAutomatedUseState,
   addDataItem as addDataItemState,
   addDataPurposeLink as addDataPurposeLinkState,
   addRetentionRule as addRetentionRuleState,
   addSource as addSourceState,
   deleteActor as deleteActorState,
+  deleteAutomatedUse as deleteAutomatedUseState,
   deleteDataItem as deleteDataItemState,
   deleteRetentionRule as deleteRetentionRuleState,
   deleteSource as deleteSourceState,
   removeDataPurposeLink as removeDataPurposeLinkState,
   updateActor as updateActorState,
+  updateAutomatedUse as updateAutomatedUseState,
   updateDataItem as updateDataItemState,
   updateRetentionRule as updateRetentionRuleState,
   updateSource as updateSourceState,
@@ -52,6 +55,8 @@ import {
 import type { ExecutionContext } from "./types";
 import type {
   ActorInput,
+  AutomatedUseInput,
+  AutomatedUsePatch,
   DataItemInput,
   RetentionRuleInput,
   SourceInput,
@@ -197,6 +202,13 @@ interface WorkspaceContextValue {
     treatmentId: string,
     link: { dataId: string; purposeId: string },
   ) => void;
+  addAutomatedUse: (treatmentId: string, input: AutomatedUseInput) => string | null;
+  updateAutomatedUse: (
+    treatmentId: string,
+    id: string,
+    patch: AutomatedUsePatch,
+  ) => void;
+  deleteAutomatedUse: (treatmentId: string, id: string) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -728,6 +740,43 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     },
     [company, updateCompany],
   );
+
+  const addAutomatedUse = useCallback(
+    (treatmentId: string, input: AutomatedUseInput): string | null => {
+      if (!company) return null;
+      let created: string | null = null;
+      updateCompany(company.id, (c) => {
+        const result = addAutomatedUseState(c, treatmentId, input);
+        if (!result) return c;
+        created = result.id;
+        return result.company;
+      });
+      return created;
+    },
+    [company, updateCompany],
+  );
+
+  const updateAutomatedUse = useCallback(
+    (treatmentId: string, id: string, patch: AutomatedUsePatch) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => updateAutomatedUseState(c, treatmentId, id, patch) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const deleteAutomatedUse = useCallback(
+    (treatmentId: string, id: string) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => deleteAutomatedUseState(c, treatmentId, id) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
   const setDiagnosticFact = useCallback(
     (factKey: string, value: string) => {
       if (!company) return;
@@ -1026,6 +1075,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       deleteRetentionRule,
       addDataPurposeLink,
       removeDataPurposeLink,
+      addAutomatedUse,
+      updateAutomatedUse,
+      deleteAutomatedUse,
     }),
     [
       data, profile, company, createProfile, selectProfile, createCompany,
@@ -1038,7 +1090,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       renamePurpose, deletePurpose, addActor, updateActor, deleteActor,
       addDataItem, updateDataItem, deleteDataItem, addSource, updateSource,
       deleteSource, addRetentionRule, updateRetentionRule, deleteRetentionRule,
-      addDataPurposeLink, removeDataPurposeLink,
+      addDataPurposeLink, removeDataPurposeLink, addAutomatedUse,
+      updateAutomatedUse, deleteAutomatedUse,
     ],
   );
 

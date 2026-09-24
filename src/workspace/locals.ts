@@ -1,17 +1,22 @@
 import { getTreatment, touchCompanyState } from "./scope";
 import type {
   ActorRecord,
+  AutomatedUseCoverage,
+  AutomatedUseLegalPath,
+  AutomatedUseRecord,
+  AutomatedUseSafeguards,
   CompanyState,
   DataItemRecord,
   DataPurposeLink,
   RetentionRuleRecord,
+  SafeguardCheck,
   SourceRecord,
   TreatmentScopedState,
 } from "./types";
 import { newId } from "./types";
 
 /**
- * CRUD de value objects locales D2 dentro de un TreatmentContext.
+ * CRUD de value objects locales D2/D4 dentro de un TreatmentContext.
  *
  * Funciones puras sobre CompanyState. Todas exigen treatment resuelto
  * por ancestry válida (`company → treatment`); ante treatment
@@ -28,12 +33,32 @@ const SOURCE_KINDS = [
   "public_source",
   "other",
 ] as const;
+const USE_COVERAGES = ["covered", "not_covered", "unknown"] as const;
+const USE_LEGAL_PATHS = [
+  "contract_necessary",
+  "explicit_consent",
+  "legal_authorization",
+  "none",
+  "unknown",
+  "not_applicable",
+] as const;
+const USE_CHECKS = ["yes", "no", "unknown"] as const;
+const SAFEGUARD_CHECK_FIELDS = [
+  "informationTransparency",
+  "explanation",
+  "humanIntervention",
+  "pointOfView",
+  "review",
+] as const;
 
 /** Vocabularios cerrados canónicos (reutilizados por validación). */
 export const LOCAL_VOCABS = {
   actorKinds: ACTOR_KINDS,
   actorRoles: ACTOR_ROLES,
   sourceKinds: SOURCE_KINDS,
+  useCoverages: USE_COVERAGES,
+  useLegalPaths: USE_LEGAL_PATHS,
+  safeguardChecks: USE_CHECKS,
 };
 
 function nonEmpty(v: unknown): v is string {
@@ -532,5 +557,340 @@ export function removeDataPurposeLink(
         (l) => !(l.dataId === link.dataId && l.purposeId === link.purposeId),
       ),
     };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Automated uses (D4.08/D4.09): colección local compartida del treatment
+// ---------------------------------------------------------------------------
+
+/**
+ * Matriz coverage → legalPath permitidos. Única fuente de la
+ * invariante, reutilizada por operaciones e import.
+ */
+const COVERAGE_PATHS: Record<
+  AutomatedUseCoverage,
+  readonly AutomatedUseLegalPath[]
+> = {
+  covered: [
+    "contract_necessary",
+    "explicit_consent",
+    "legal_authorization",
+    "none",
+    "unknown",
+  ],
+  not_covered: ["not_applicable"],
+  unknown: ["unknown"],
+};
+
+/** Invariante coverage/legalPath. */
+export function isValidCoveragePath(
+  coverage: AutomatedUseCoverage,
+  path: AutomatedUseLegalPath,
+): boolean {
+  return COVERAGE_PATHS[coverage].includes(path);
+}
+
+function isCheck(v: unknown): v is SafeguardCheck {
+  return (
+    typeof v === "string" && (USE_CHECKS as readonly string[]).includes(v)
+  );
+}
+
+function isOptionalText(v: unknown): boolean {
+  return v === undefined || typeof v === "string";
+}
+
+/** Safeguards válido: checks ternarios + canales escalares no vacíos. */
+function checkSafeguardsInput(v: unknown): v is AutomatedUseSafeguards {
+  if (v === undefined || v === null) return false;
+  if (typeof v !== "object") return false;
+  const s = v as Record<string, unknown>;
+  for (const f of SAFEGUARD_CHECK_FIELDS) {
+    if (s[f] !== undefined && !isCheck(s[f])) return false;
+  }
+  for (const f of ["interventionChannel", "reviewChannel"] as const) {
+    if (s[f] !== undefined && !nonEmpty(s[f])) return false;
+  }
+  return true;
+}
+
+export interface AutomatedUseInput {
+  name: string;
+  description?: string;
+  purposeId?: string;
+  processDescription?: string;
+  mechanismDescription?: string;
+  decisionDescription?: string;
+  profiling?: SafeguardCheck;
+  evidenceRef?: string;
+}
+
+function cleanUsePurpose(
+  t: TreatmentScopedState,
+  purposeId: string | undefined,
+): string | undefined | null {
+  if (purposeId === undefined) return undefined;
+  // Solo purposes del mismo treatment: sin lookup global, cross-parent
+  // se rechaza por construcción.
+  if (typeof purposeId !== "string" || t.purposes[purposeId] === undefined) {
+    return null;
+  }
+  return purposeId;
+}
+
+export function addAutomatedUse(
+  company: CompanyState,
+  treatmentId: string,
+  input: AutomatedUseInput,
+): { company: CompanyState; id: string } | null {
+  if (!nonEmpty(input.name)) return null;
+  if (input.profiling !== undefined && !isCheck(input.profiling)) return null;
+  for (const f of [
+    input.description,
+    input.processDescription,
+    input.mechanismDescription,
+    input.decisionDescription,
+  ]) {
+    if (!isOptionalText(f)) return null;
+  }
+  if (input.evidenceRef !== undefined && !nonEmpty(input.evidenceRef)) {
+    return null;
+  }
+  const id = newId("autouse");
+  let out: { company: CompanyState; id: string } | null = null;
+  const next = withTreatment(company, treatmentId, (t) => {
+    const purposeId = cleanUsePurpose(t, input.purposeId);
+    if (purposeId === null) return null;
+    const record: AutomatedUseRecord = {
+      id,
+      name: input.name.trim(),
+      ...(input.description !== undefined
+        ? { description: input.description }
+        : {}),
+      ...(purposeId !== undefined ? { purposeId } : {}),
+      ...(input.processDescription !== undefined
+        ? { processDescription: input.processDescription }
+        : {}),
+      ...(input.mechanismDescription !== undefined
+        ? { mechanismDescription: input.mechanismDescription }
+        : {}),
+      ...(input.decisionDescription !== undefined
+        ? { decisionDescription: input.decisionDescription }
+        : {}),
+      profiling: input.profiling ?? "unknown",
+      ...(nonEmpty(input.evidenceRef) ? { evidenceRef: input.evidenceRef } : {}),
+      // Estado inicial: sin clasificación; safeguards ausente.
+      article8bisCoverage: "unknown",
+      legalPath: "unknown",
+    };
+    return { ...t, automatedUses: [...(t.automatedUses ?? []), record] };
+  });
+  if (next) out = { company: next, id };
+  return out;
+}
+
+export interface AutomatedUsePatch {
+  name?: string;
+  description?: string | null;
+  purposeId?: string | null;
+  processDescription?: string | null;
+  mechanismDescription?: string | null;
+  decisionDescription?: string | null;
+  profiling?: SafeguardCheck;
+  evidenceRef?: string | null;
+  article8bisCoverage?: AutomatedUseCoverage;
+  legalPath?: AutomatedUseLegalPath;
+  /** null retira safeguards; objeto las reemplaza íntegras. */
+  safeguards?: AutomatedUseSafeguards | null;
+}
+
+function cleanSafeguardsPatch(
+  v: AutomatedUseSafeguards | null,
+): AutomatedUseSafeguards | null {
+  if (v === null) return null;
+  const out: AutomatedUseSafeguards = {};
+  for (const f of SAFEGUARD_CHECK_FIELDS) {
+    if (v[f] !== undefined) out[f] = v[f];
+  }
+  if (nonEmpty(v.interventionChannel)) {
+    out.interventionChannel = v.interventionChannel;
+  }
+  if (nonEmpty(v.reviewChannel)) out.reviewChannel = v.reviewChannel;
+  return out;
+}
+
+/**
+ * Edición con invariantes en una única actualización consistente.
+ * Cambiar cobertura normaliza vía y safeguards (sin arrastrar
+ * determinaciones antiguas); safeguards solo vive en covered.
+ * Nada genera facts ni efectos: la escritura canónica sigue
+ * reservada a finalización explícita.
+ */
+export function updateAutomatedUse(
+  company: CompanyState,
+  treatmentId: string,
+  id: string,
+  patch: AutomatedUsePatch,
+): CompanyState | null {
+  return withTreatment(company, treatmentId, (t) => {
+    const uses = t.automatedUses ?? [];
+    const idx = uses.findIndex((u) => u.id === id);
+    if (idx < 0) return null;
+    const current = uses[idx];
+    if (patch.name !== undefined && !nonEmpty(patch.name)) return null;
+    if (patch.profiling !== undefined && !isCheck(patch.profiling)) return null;
+    for (const f of [
+      patch.description,
+      patch.processDescription,
+      patch.mechanismDescription,
+      patch.decisionDescription,
+    ]) {
+      if (f !== undefined && f !== null && !isOptionalText(f)) return null;
+    }
+    if (
+      patch.evidenceRef !== undefined &&
+      patch.evidenceRef !== null &&
+      !nonEmpty(patch.evidenceRef)
+    ) {
+      return null;
+    }
+    if (
+      patch.article8bisCoverage !== undefined &&
+      !(USE_COVERAGES as readonly string[]).includes(patch.article8bisCoverage)
+    ) {
+      return null;
+    }
+    if (
+      patch.legalPath !== undefined &&
+      !(USE_LEGAL_PATHS as readonly string[]).includes(patch.legalPath)
+    ) {
+      return null;
+    }
+    if (
+      patch.safeguards !== undefined &&
+      patch.safeguards !== null &&
+      !checkSafeguardsInput(patch.safeguards)
+    ) {
+      return null;
+    }
+    let purposeId = current.purposeId;
+    if (patch.purposeId !== undefined) {
+      if (patch.purposeId === null) {
+        purposeId = undefined;
+      } else {
+        const cleaned = cleanUsePurpose(t, patch.purposeId);
+        if (cleaned === null || cleaned === undefined) return null;
+        purposeId = cleaned;
+      }
+    }
+    // Cobertura y vía resultantes.
+    let coverage = current.article8bisCoverage;
+    let path = current.legalPath;
+    const coverageChanged =
+      patch.article8bisCoverage !== undefined &&
+      patch.article8bisCoverage !== current.article8bisCoverage;
+    if (coverageChanged) {
+      coverage = patch.article8bisCoverage as AutomatedUseCoverage;
+      if (coverage === "not_covered") {
+        if (
+          patch.legalPath !== undefined &&
+          patch.legalPath !== "not_applicable"
+        ) {
+          return null;
+        }
+        path = "not_applicable";
+      } else if (coverage === "unknown") {
+        if (patch.legalPath !== undefined && patch.legalPath !== "unknown") {
+          return null;
+        }
+        path = "unknown";
+      } else {
+        // covered: no arrastrar vía antigua; explícita validada o unknown.
+        if (patch.legalPath !== undefined) {
+          if (!isValidCoveragePath("covered", patch.legalPath)) return null;
+          path = patch.legalPath;
+        } else {
+          path = "unknown";
+        }
+      }
+    } else if (patch.legalPath !== undefined) {
+      if (!isValidCoveragePath(coverage, patch.legalPath)) return null;
+      path = patch.legalPath;
+    }
+    // Safeguards resultantes: solo en covered.
+    let safeguards = current.safeguards;
+    if (coverageChanged && coverage !== "covered") {
+      if (patch.safeguards !== undefined && patch.safeguards !== null) {
+        return null;
+      }
+      safeguards = undefined;
+    } else if (patch.safeguards !== undefined) {
+      if (coverage !== "covered") return null;
+      safeguards =
+        patch.safeguards === null
+          ? undefined
+          : (cleanSafeguardsPatch(patch.safeguards) ?? undefined);
+    }
+    if (!isValidCoveragePath(coverage, path)) return null;
+    if (safeguards !== undefined && coverage !== "covered") return null;
+    const record: AutomatedUseRecord = {
+      ...current,
+      ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+      ...(patch.profiling !== undefined ? { profiling: patch.profiling } : {}),
+      article8bisCoverage: coverage,
+      legalPath: path,
+      ...(safeguards !== undefined ? { safeguards } : {}),
+    };
+    if (purposeId === undefined) delete record.purposeId;
+    else record.purposeId = purposeId;
+    for (const [field, value] of [
+      ["description", patch.description],
+      ["processDescription", patch.processDescription],
+      ["mechanismDescription", patch.mechanismDescription],
+      ["decisionDescription", patch.decisionDescription],
+    ] as const) {
+      if (value === null) delete record[field];
+      else if (value !== undefined) record[field] = value;
+    }
+    if (patch.evidenceRef === null) delete record.evidenceRef;
+    else if (nonEmpty(patch.evidenceRef)) {
+      record.evidenceRef = patch.evidenceRef as string;
+    }
+    if (safeguards === undefined) delete record.safeguards;
+    const next = [...uses];
+    next[idx] = record;
+    return { ...t, automatedUses: next };
+  });
+}
+
+/** Lectura direccionada por ancestry válida; cross-parent imposible. */
+export function getAutomatedUse(
+  company: CompanyState,
+  treatmentId: string,
+  id: string,
+): AutomatedUseRecord | undefined {
+  return getTreatment(company, treatmentId)?.automatedUses?.find(
+    (u) => u.id === id,
+  );
+}
+
+/**
+ * Hard-delete: el uso muere con sus determinaciones y safeguards.
+ * Sin tombstone, sin historial, sin cascada a otros treatments. Los
+ * agregados canónicos ya materializados no se reescriben: una
+ * evaluación finalizada deja de representar la colección hasta una
+ * nueva revisión (responsabilidad del futuro protocolo, no escritura
+ * automática).
+ */
+export function deleteAutomatedUse(
+  company: CompanyState,
+  treatmentId: string,
+  id: string,
+): CompanyState | null {
+  return withTreatment(company, treatmentId, (t) => {
+    const uses = t.automatedUses ?? [];
+    if (!uses.some((u) => u.id === id)) return null;
+    return { ...t, automatedUses: uses.filter((u) => u.id !== id) };
   });
 }

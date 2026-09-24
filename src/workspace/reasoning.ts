@@ -448,6 +448,53 @@ export function applyScopedFinalization(
     updatedAt: at,
   });
 }
+/**
+ * Referencias explícitas a AutomatedUseRecord.id dentro del
+ * ReasoningRecord treatment-scoped (D4.08, ver ADR-052).
+ *
+ * Capacidad estructural sin cambiar el contrato global: `rationale`
+ * es un string estable que sobrevive export/import (validado como
+ * string en import) y admite tokens exactos `automated_use:<id>`.
+ * El token preserva el ID local exacto (distingue U1 de U2 aunque
+ * compartan nombre), vive subordinado al treatment direccionado del
+ * registro y permite detectar referencias a usos inexistentes con
+ * `findUnknownAutomatedUseRefs`. No son dynamic fact keys (nunca se
+ * evalúan como facts) ni sustituyen `evidence_refs` (documentos).
+ * La integración efectiva con D4.08 llega en el batch de protocolo.
+ */
+export const AUTOMATED_USE_REF_PREFIX = "automated_use:";
+
+const AUTOMATED_USE_REF_PATTERN = /\bautomated_use:([A-Za-z0-9_-]+)/g;
+
+/** Token explícito para un ID local de uso automatizado. */
+export function formatAutomatedUseRef(id: string): string {
+  return `${AUTOMATED_USE_REF_PREFIX}${id}`;
+}
+
+/** IDs referenciados en un texto, únicos y en orden de aparición. */
+export function extractAutomatedUseRefs(text: string): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const m of text.matchAll(AUTOMATED_USE_REF_PATTERN)) {
+    if (!seen.has(m[1])) {
+      seen.add(m[1]);
+      out.push(m[1]);
+    }
+  }
+  return out;
+}
+
+/**
+ * Referencias a usos que no existen en el conjunto válido del
+ * treatment direccionado. Vacío = todas resuelven.
+ */
+export function findUnknownAutomatedUseRefs(
+  text: string,
+  knownIds: ReadonlySet<string> | readonly string[],
+): string[] {
+  const known = knownIds instanceof Set ? knownIds : new Set(knownIds);
+  return extractAutomatedUseRefs(text).filter((id) => !known.has(id));
+}
 export function applyFinalization(
   company: CompanyState,
   protocol: ExecutionProtocol,

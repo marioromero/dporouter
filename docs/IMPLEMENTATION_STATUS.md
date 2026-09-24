@@ -43,7 +43,9 @@ UX RESET está implementado:
   deep links antiguos);
 * workspace local Stage 1 (perfiles y empresas creados por el usuario,
   progreso independiente por empresa, localStorage, export/import JSON
-  validado; no constituye auth segura ni Stage 2);
+  validado; tratamientos con colecciones locales D2 más
+  `automatedUses[]` D4.08/D4.09 con invariantes e import estricto;
+  no constituye auth segura ni Stage 2);
 * Activity View V2 en lenguaje humano (sin metadata técnica visible;
   auditoría colapsada; aplicabilidad humana; provenance única;
   vigencia global única);

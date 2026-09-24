@@ -170,6 +170,15 @@ describe("derived session facts", () => {
       "derived.treatment.links_exist": "no",
       "derived.treatment.retention_rules_exist": "no",
       "derived.treatment.retention_rules_linked": "no",
+      "derived.treatment.automated_uses_exist": "no",
+      "derived.treatment.automated_uses_coverage_complete": "no",
+      "derived.treatment.automated_uses_coverage_pending": "no",
+      "derived.treatment.automated_uses_covered_exist": "no",
+      "derived.treatment.automated_uses_legal_path_complete": "no",
+      "derived.treatment.automated_uses_unpathed_covered_exist": "no",
+      "derived.treatment.automated_uses_safeguards_complete": "no",
+      "derived.treatment.automated_uses_safeguards_enabled": "no",
+      "derived.treatment.automated_uses_safeguards_deficient": "no",
     });
   });
 
@@ -215,6 +224,15 @@ describe("derived session facts", () => {
       "derived.treatment.links_exist": "no",
       "derived.treatment.retention_rules_exist": "no",
       "derived.treatment.retention_rules_linked": "no",
+      "derived.treatment.automated_uses_exist": "no",
+      "derived.treatment.automated_uses_coverage_complete": "no",
+      "derived.treatment.automated_uses_coverage_pending": "no",
+      "derived.treatment.automated_uses_covered_exist": "no",
+      "derived.treatment.automated_uses_legal_path_complete": "no",
+      "derived.treatment.automated_uses_unpathed_covered_exist": "no",
+      "derived.treatment.automated_uses_safeguards_complete": "no",
+      "derived.treatment.automated_uses_safeguards_enabled": "no",
+      "derived.treatment.automated_uses_safeguards_deficient": "no",
     });
   });
 

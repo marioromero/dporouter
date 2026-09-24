@@ -356,6 +356,14 @@ export function deletePurpose(
   if (!t || !t.purposes[purposeId]) return null;
   const purposes = { ...t.purposes };
   delete purposes[purposeId];
+  // Los automated uses sobreviven: solo se limpia su purposeId para no
+  // generar dangling references. Sin cascada de usos.
+  const automatedUses = (t.automatedUses ?? []).map((u) => {
+    if (u.purposeId !== purposeId) return u;
+    const next = { ...u };
+    delete next.purposeId;
+    return next;
+  });
   const next = touchCompany({
     ...company,
     treatments: {
@@ -363,6 +371,7 @@ export function deletePurpose(
       [treatmentId]: {
         ...t,
         purposes,
+        automatedUses,
         dataPurposeLinks: (t.dataPurposeLinks ?? []).filter(
           (l) => l.purposeId !== purposeId,
         ),

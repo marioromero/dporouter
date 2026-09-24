@@ -662,9 +662,10 @@ non-compliance.
 
 One treatment-scoped `ReasoningRecord` (D4.08) validates the joint
 evaluation; there is no record per use and the global record schema
-is unchanged. Use IDs travel as explicit `automated_use:<id>`
-tokens (exact ID, never name-only narrative), validated against the
-addressed treatment. Canonical effects remain treatment-level
+is unchanged. Considered use IDs travel as explicit
+`automated_use:<id>` entries inside `facts_considered[]` (exact ID,
+never name-only narrative); `rationale` stays free professional
+prose and is never parsed for references. Canonical effects remain treatment-level
 aggregates (`scope_status`, `legal_path_status`,
 `safeguards_status`), written only by explicit protocol
 finalization — never by editing, creating or deleting uses.

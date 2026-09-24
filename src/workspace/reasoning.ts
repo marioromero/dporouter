@@ -450,33 +450,45 @@ export function applyScopedFinalization(
 }
 /**
  * Referencias explícitas a AutomatedUseRecord.id dentro del
- * ReasoningRecord treatment-scoped (D4.08, ver ADR-052).
+ * `facts_considered[]` del ReasoningRecord treatment-scoped (D4.08,
+ * ver ADR-052).
  *
- * Capacidad estructural sin cambiar el contrato global: `rationale`
- * es un string estable que sobrevive export/import (validado como
- * string en import) y admite tokens exactos `automated_use:<id>`.
- * El token preserva el ID local exacto (distingue U1 de U2 aunque
- * compartan nombre), vive subordinado al treatment direccionado del
- * registro y permite detectar referencias a usos inexistentes con
- * `findUnknownAutomatedUseRefs`. No son dynamic fact keys (nunca se
+ * Capacidad estructural sin cambiar el contrato global:
+ * `facts_considered[]` es un string array estable que sobrevive
+ * export/import (validado como tal en import) y admite entradas
+ * exactas `automated_use:<id>`. El token preserva el ID local
+ * exacto (distingue U1 de U2 aunque compartan nombre), vive
+ * subordinado al treatment direccionado del registro y permite
+ * detectar referencias a usos inexistentes con
+ * `findUnknownAutomatedUseRefs` o comprobar cobertura con
+ * `isAutomatedUseConsidered`. No son dynamic fact keys (nunca se
  * evalúan como facts) ni sustituyen `evidence_refs` (documentos).
- * La integración efectiva con D4.08 llega en el batch de protocolo.
+ * `rationale` permanece texto libre profesional y nunca se parsea
+ * para esta finalidad. La integración efectiva con D4.08 llega en
+ * el batch de protocolo.
  */
 export const AUTOMATED_USE_REF_PREFIX = "automated_use:";
 
-const AUTOMATED_USE_REF_PATTERN = /\bautomated_use:([A-Za-z0-9_-]+)/g;
+const AUTOMATED_USE_REF_ENTRY = /^automated_use:([A-Za-z0-9_-]+)$/;
 
 /** Token explícito para un ID local de uso automatizado. */
 export function formatAutomatedUseRef(id: string): string {
   return `${AUTOMATED_USE_REF_PREFIX}${id}`;
 }
 
-/** IDs referenciados en un texto, únicos y en orden de aparición. */
-export function extractAutomatedUseRefs(text: string): string[] {
+/**
+ * IDs referenciados como entradas exactas de `facts_considered[]`,
+ * únicos y en orden de aparición. El texto libre (incluido
+ * `rationale`) nunca se parsea: un token dentro de una frase no es
+ * una referencia.
+ */
+export function extractAutomatedUseRefs(entries: readonly string[]): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
-  for (const m of text.matchAll(AUTOMATED_USE_REF_PATTERN)) {
-    if (!seen.has(m[1])) {
+  for (const e of entries) {
+    if (typeof e !== "string") continue;
+    const m = AUTOMATED_USE_REF_ENTRY.exec(e);
+    if (m && !seen.has(m[1])) {
       seen.add(m[1]);
       out.push(m[1]);
     }
@@ -489,11 +501,19 @@ export function extractAutomatedUseRefs(text: string): string[] {
  * treatment direccionado. Vacío = todas resuelven.
  */
 export function findUnknownAutomatedUseRefs(
-  text: string,
+  entries: readonly string[],
   knownIds: ReadonlySet<string> | readonly string[],
 ): string[] {
   const known = knownIds instanceof Set ? knownIds : new Set(knownIds);
-  return extractAutomatedUseRefs(text).filter((id) => !known.has(id));
+  return extractAutomatedUseRefs(entries).filter((id) => !known.has(id));
+}
+
+/** Comprueba si un uso concreto fue considerado en el análisis. */
+export function isAutomatedUseConsidered(
+  entries: readonly string[],
+  id: string,
+): boolean {
+  return extractAutomatedUseRefs(entries).includes(id);
 }
 export function applyFinalization(
   company: CompanyState,

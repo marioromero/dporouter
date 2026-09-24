@@ -22,6 +22,7 @@ import {
   extractAutomatedUseRefs,
   findUnknownAutomatedUseRefs,
   formatAutomatedUseRef,
+  isAutomatedUseConsidered,
 } from "../src/workspace/reasoning";
 import { deriveSessionFacts } from "../src/workspace/derived";
 import type { ExecutionContext } from "../src/workspace/types";
@@ -436,19 +437,75 @@ describe("automatedUses: referencias", () => {
     expect(validateCompanyState(JSON.parse(JSON.stringify(c))).ok).toBe(true);
   });
 
-  it("16. refs explícitas a IDs en rationale: formato, extracción y validación", () => {
+  it("16. refs explícitas a IDs en facts_considered: formato, extracción y validación", () => {
     expect(AUTOMATED_USE_REF_PREFIX).toBe("automated_use:");
     expect(formatAutomatedUseRef("abc")).toBe("automated_use:abc");
-    const text = `Se evaluó ${formatAutomatedUseRef("u1")} y ${formatAutomatedUseRef("u1")} más ${formatAutomatedUseRef("u2")}.`;
-    expect(extractAutomatedUseRefs(text)).toEqual(["u1", "u2"]);
-    expect(extractAutomatedUseRefs("sin referencias")).toEqual([]);
+    const entries = [
+      "derived.treatment.automated_uses_exist",
+      formatAutomatedUseRef("u1"),
+      formatAutomatedUseRef("u1"),
+      formatAutomatedUseRef("u2"),
+    ];
+    expect(extractAutomatedUseRefs(entries)).toEqual(["u1", "u2"]);
+    expect(extractAutomatedUseRefs(["sin referencias"])).toEqual([]);
     // Nombres similares no confunden: el ID exacto manda.
     expect(
-      findUnknownAutomatedUseRefs(text, new Set(["u1", "u2"])),
+      findUnknownAutomatedUseRefs(entries, new Set(["u1", "u2"])),
     ).toEqual([]);
     expect(
-      findUnknownAutomatedUseRefs(text, ["u1"]),
+      findUnknownAutomatedUseRefs(entries, ["u1"]),
     ).toEqual(["u2"]);
+    expect(isAutomatedUseConsidered(entries, "u1")).toBe(true);
+    expect(isAutomatedUseConsidered(entries, "u9")).toBe(false);
+  });
+
+  it("16b. rationale con token es ignorado; mismo ID local en treatments distintos", () => {
+    // Texto libre nunca parseado: el token en rationale no es referencia.
+    const rationale = `Se evaluó ${formatAutomatedUseRef("u1")} en detalle.`;
+    expect(extractAutomatedUseRefs([rationale])).toEqual([]);
+    expect(isAutomatedUseConsidered([rationale], "u1")).toBe(false);
+    // Mismo ID local en treatments distintos, sin colisión: cada
+    // validación usa el conjunto del treatment direccionado.
+    expect(findUnknownAutomatedUseRefs([formatAutomatedUseRef("u1")], ["u1"])).toEqual([]);
+    expect(findUnknownAutomatedUseRefs([formatAutomatedUseRef("u1")], [])).toEqual(["u1"]);
+  });
+
+  it("16c. round-trip preserva tokens en facts_considered sin nueva estructura", () => {
+    let { c, idA } = companyAB();
+    const t = c.treatments?.[idA];
+    if (!t) throw new Error("sin treatment");
+    const record = {
+      protocolKey: "automated_decision.scope_assess.v1",
+      activityKey: "automated_decision.scope_assess",
+      conclusion: "covered_uses_with_legal_path",
+      legal_question: "q",
+      facts_considered: [formatAutomatedUseRef("u1"), "otro hecho"],
+      legal_factors: [],
+      evidence_refs: [],
+      alternatives_considered: [],
+      rationale: `Narrativa libre que menciona ${formatAutomatedUseRef("u1")} sin crear referencia.`,
+      decided_by: "profesional",
+      reviewed_by: "",
+      decided_at: "2026-09-24",
+      legal_basis: [],
+      updatedAt: "2026-09-24T00:00:00.000Z",
+    };
+    const withRecord: CompanyState = {
+      ...c,
+      treatments: {
+        ...c.treatments,
+        [idA]: {
+          ...t,
+          reasoningRecords: { [record.protocolKey]: record },
+        },
+      },
+    };
+    const v = validateCompanyState(JSON.parse(JSON.stringify(withRecord)));
+    if (!v.ok) throw new Error("import falló");
+    const back = v.value.treatments?.[idA]?.reasoningRecords?.[record.protocolKey];
+    expect(back?.facts_considered).toEqual([formatAutomatedUseRef("u1"), "otro hecho"]);
+    expect(extractAutomatedUseRefs(back?.facts_considered ?? [])).toEqual(["u1"]);
+    expect(back?.rationale).toContain(formatAutomatedUseRef("u1"));
   });
 });
 

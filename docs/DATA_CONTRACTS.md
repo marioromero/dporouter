@@ -1067,8 +1067,10 @@ Rules:
 * Determinations are subordinate professional records, not
   independent canonical facts. Creating, editing or deleting uses
   never writes canonical effects; the joint justification lives in
-  the single treatment-scoped D4.08 ReasoningRecord (use IDs as
-  explicit `automated_use:<id>` tokens), and the consolidated
+  the single treatment-scoped D4.08 ReasoningRecord (considered use
+  IDs as explicit `automated_use:<id>` entries in
+  `facts_considered[]`; `rationale` stays free prose and is never
+  parsed), and the consolidated
   results live in treatment canonical facts written only by
   explicit finalization.
 * Purpose deletion clears `purposeId` on affected uses and keeps

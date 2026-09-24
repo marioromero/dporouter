@@ -245,6 +245,6 @@ Read-only `derived.treatment.automated_uses_*` projections expose
 existence, classification progress, covered presence, legal-path
 determination and safeguard state for future structural gates.
 The single treatment-scoped D4.08 ReasoningRecord carries the
-joint justification (use IDs as explicit `automated_use:<id>`
-tokens); treatment aggregates materialize only through explicit
+joint justification (considered use IDs as explicit
+`automated_use:<id>` entries in `facts_considered[]`); treatment aggregates materialize only through explicit
 finalization. No D4.08/D4.09 protocols exist yet.

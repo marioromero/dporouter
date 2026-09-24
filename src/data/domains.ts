@@ -4,6 +4,7 @@ import { D2_ACTIVITY_KEYS } from "../../content/domains/d02";
 import { D3_ACTIVITY_KEYS } from "../../content/domains/d03";
 import { D4_ACTIVITY_KEYS } from "../../content/domains/d04";
 import { D5_ACTIVITY_KEYS } from "../../content/domains/d05";
+import { D6_ACTIVITY_KEYS } from "../../content/domains/d06";
 import { normalizeText } from "../../content/text";
 
 /** Normalización textual única de la capa canónica (reexportada). */
@@ -13,7 +14,7 @@ export { normalizeText };
  * Registro de aplicación D1-D12 (navegación, búsqueda, rutas).
  * Consume definiciones canónicas de /content; no duplica contenido.
  * Códigos, claves y nombres exactos según la iteración vigente.
- * D6-D12 permanecen sin actividades hasta su importación controlada.
+  * D7-D12 permanecen sin actividades hasta su importación controlada.
  */
 export const DOMAINS: DomainDefinition[] = [
   {
@@ -75,9 +76,11 @@ export const DOMAINS: DomainDefinition[] = [
     domain_key: "d6",
     human_code: "D6",
     name: "Cesiones, encargados y subencargados",
-    objective: "",
-    description: "",
-    activity_keys: [],
+    objective:
+      "Identificar y clasificar las relaciones de tratamiento con terceros, evaluar la licitud y formalización de las cesiones de datos personales y verificar las obligaciones contractuales, operacionales, de subdelegación, confidencialidad, seguridad y cierre aplicables a encargados y subencargados, preservando la separación entre estas relaciones y las transferencias internacionales.",
+    description:
+      "D6 Stage 1 identifica y evalúa relaciones de tratamiento con terceros, cesiones, encargados y subencargados, sus fundamentos, contratos y controles, pero no administra cada comunicación, cesión, transferencia o incidente como una transacción/caso individual. Sin ThirdPartyContext, sin eventos y sin historiales.",
+    activity_keys: [...D6_ACTIVITY_KEYS],
     related_domain_keys: [],
   },
   {

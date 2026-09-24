@@ -232,7 +232,7 @@ describe("motor de ejecución guiada — piloto D1.02", () => {
   it("22. D1 y D2 no cambian semánticamente (D3 importado, consent resuelta)", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
-    expect(ALL_ACTIVITIES).toHaveLength(54);
+    expect(ALL_ACTIVITIES).toHaveLength(61);
     expect(getUnresolvedReferences()).toEqual([
       "mpi.diffusion",
       "risk.mpi_sync",

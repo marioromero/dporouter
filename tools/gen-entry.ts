@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { renderD01, renderD02, renderD03, renderD04, renderD05 } from "./domain-doc";
+import { renderD01, renderD02, renderD03, renderD04, renderD05, renderD06 } from "./domain-doc";
 import { D01_ACTIVITIES } from "../content/domains/d01";
 import {
   D02_ACTIVITIES,
@@ -18,6 +18,10 @@ import {
   D05_ACTIVITIES,
   D05_PROVENANCE_NOTES,
 } from "../content/domains/d05";
+import {
+  D06_ACTIVITIES,
+  D06_PROVENANCE_NOTES,
+} from "../content/domains/d06";
 import { SOURCES } from "../content/sources";
 import { getDomainPendingReferences } from "../content/registry";
 
@@ -68,6 +72,14 @@ const d05 = renderD05(
 );
 writeFileSync(join(outDir, "D05.md"), d05, "utf-8");
 
+const d06 = renderD06(
+  D06_ACTIVITIES,
+  SOURCES,
+  getDomainPendingReferences(D06_ACTIVITIES),
+  D06_PROVENANCE_NOTES,
+);
+writeFileSync(join(outDir, "D06.md"), d06, "utf-8");
+
 console.log(
-  `Documentación regenerada: D01 (${D01_ACTIVITIES.length} actividades), D02 (${D02_ACTIVITIES.length} actividades), D03 (${D03_ACTIVITIES.length} actividades), D04 (${D04_ACTIVITIES.length} actividades), D05 (${D05_ACTIVITIES.length} actividades)`,
+  `Documentación regenerada: D01 (${D01_ACTIVITIES.length} actividades), D02 (${D02_ACTIVITIES.length} actividades), D03 (${D03_ACTIVITIES.length} actividades), D04 (${D04_ACTIVITIES.length} actividades), D05 (${D05_ACTIVITIES.length} actividades), D06 (${D06_ACTIVITIES.length} actividades)`,
 );

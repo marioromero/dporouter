@@ -248,6 +248,34 @@ export function renderD05(
   });
 }
 
+/** Proyección D06. */
+export function renderD06(
+  activities: ActivityDefinition[],
+  sources: CanonicalSource[],
+  pendingRefs: string[],
+  provenanceNotes: Record<string, string>,
+): string {
+  return renderDomainDoc({
+    sourceFile: "content/domains/d06.ts",
+    title: "# D06 — Cesiones, encargados y subencargados",
+    domainKey: "d6",
+    humanCode: "D6",
+    name: "Cesiones, encargados y subencargados",
+    objective:
+      "Identificar y clasificar las relaciones de tratamiento con terceros, evaluar la licitud y formalización de las cesiones de datos personales y verificar las obligaciones contractuales, operacionales, de subdelegación, confidencialidad, seguridad y cierre aplicables a encargados y subencargados, preservando la separación entre estas relaciones y las transferencias internacionales.",
+    description:
+      "D6 Stage 1 identifica y evalúa relaciones de tratamiento con terceros, cesiones, encargados y subencargados, sus fundamentos, contratos y controles, pero no administra cada comunicación, cesión, transferencia o incidente como una transacción/caso individual. D6.01 evalúa el treatment; D6.02–D6.03 evalúan la purpose activa; D6.04–D6.07 evalúan el treatment. La aplicabilidad conceptual vive en trigger, objetivo, pasos y notas hasta la auditoría de captura diferida (sin taxonomía machine-readable en esta importación).",
+    review: "2026-12-01",
+    normativeNote: NORMATIVE_NOTE,
+    activities,
+    sources,
+    pendingRefs,
+    provenanceNotes,
+    freezeNote:
+      "D6 está congelado salvo revisión controlada. No inventar, completar ni reinterpretar su contenido jurídico. La aplicación consume la representación estructurada; este documento es la especificación humana canónica. Stage 1 no administra comunicaciones/cesiones/transferencias/incidentes como transacciones: sin DisclosureEvent, CessionEvent, TransferEvent, ProcessorEvent, IncidentEvent, ThirdPartyContext, historiales ni timers. Fronteras: D2.09 es source-of-truth de calidad, D7 evalúa licitud internacional, D9 es dominio primario de seguridad.",
+  });
+}
+
 /** Proyección D02. */
 export function renderD02(
   activities: ActivityDefinition[],

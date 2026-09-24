@@ -4,6 +4,7 @@ import { D02_ACTIVITIES, D2_ACTIVITY_KEYS } from "./domains/d02";
 import { D03_ACTIVITIES, D3_ACTIVITY_KEYS } from "./domains/d03";
 import { D04_ACTIVITIES, D4_ACTIVITY_KEYS } from "./domains/d04";
 import { D05_ACTIVITIES, D5_ACTIVITY_KEYS } from "./domains/d05";
+import { D06_ACTIVITIES, D6_ACTIVITY_KEYS } from "./domains/d06";
 import { normalizeText } from "./text";
 
 /**
@@ -17,6 +18,7 @@ export const ALL_ACTIVITIES: ActivityDefinition[] = [
   ...D03_ACTIVITIES,
   ...D04_ACTIVITIES,
   ...D05_ACTIVITIES,
+  ...D06_ACTIVITIES,
 ];
 
 const KEYS = new Set<string>(ALL_ACTIVITIES.map((a) => a.activity_key));
@@ -27,6 +29,7 @@ for (const k of D2_ACTIVITY_KEYS) DOMAIN_OF.set(k, { domainKey: "d2", domainCode
 for (const k of D3_ACTIVITY_KEYS) DOMAIN_OF.set(k, { domainKey: "d3", domainCode: "D3" });
 for (const k of D4_ACTIVITY_KEYS) DOMAIN_OF.set(k, { domainKey: "d4", domainCode: "D4" });
 for (const k of D5_ACTIVITY_KEYS) DOMAIN_OF.set(k, { domainKey: "d5", domainCode: "D5" });
+for (const k of D6_ACTIVITY_KEYS) DOMAIN_OF.set(k, { domainKey: "d6", domainCode: "D6" });
 
 export function getCanonicalActivity(
   activityKey: string,

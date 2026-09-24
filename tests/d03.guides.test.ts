@@ -303,11 +303,11 @@ describe("D3.02 transparency.publication_validate (checklist, company)", () => {
 });
 
 describe("regresión D3 guides", () => {
-  it("16. D1/D2/D3 intactos, 54 actividades, 54 protocolos, rama D3 con guía", () => {
+  it("16. D1/D2/D3 intactos, 61 actividades, 54 protocolos, rama D3 con guía", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
-    expect(ALL_ACTIVITIES).toHaveLength(54);
+    expect(ALL_ACTIVITIES).toHaveLength(61);
     expect(listProtocols()).toHaveLength(54);
     for (const k of [
       "consent.mechanism_design",

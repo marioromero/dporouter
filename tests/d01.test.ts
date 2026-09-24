@@ -181,7 +181,7 @@ describe("contenido canónico D1", () => {
     expect(new Set(D01_ACTIVITIES.map((a) => a.activity_key)).size).toBe(20);
   });
 
-  it("12. D2 tiene 12 actividades; D3 tiene 6; D4 tiene 9; D5 tiene 7; D6-D12 continúan con cero", () => {
+  it("12. D2 tiene 12 actividades; D3 tiene 6; D4 tiene 9; D5 tiene 7; D6 tiene 7; D7-D12 continúan con cero", () => {
     expect(getDomain("d2")?.activity_keys).toHaveLength(12);
     for (const d of DOMAINS) {
       if (d.domain_key === "d1") {
@@ -193,6 +193,8 @@ describe("contenido canónico D1", () => {
       } else if (d.domain_key === "d4") {
         expect(d.activity_keys).toHaveLength(9);
       } else if (d.domain_key === "d5") {
+        expect(d.activity_keys).toHaveLength(7);
+      } else if (d.domain_key === "d6") {
         expect(d.activity_keys).toHaveLength(7);
       } else {
         expect(d.activity_keys, d.domain_key).toEqual([]);

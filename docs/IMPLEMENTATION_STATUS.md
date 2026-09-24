@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-24 (D5.04–D5.07 guided batch, D5 CLOSED)
+Last controlled update: 2026-09-24 (D6 canonical import, 7 activities, 61 total; guided retrofit pending)
 
 ## Functional baseline
 
@@ -20,9 +20,9 @@ Completed outside the codebase:
 - Block 5 — activities D1-D12;
 - Block 6 — coverage and integrity review.
 
-D01–D05 are imported (`content/domains/d01.ts`, `d02.ts`, `d03.ts`, `d04.ts`, `d05.ts`).
+D01–D06 are imported (`content/domains/d01.ts`, `d02.ts`, `d03.ts`, `d04.ts`, `d05.ts`, `d06.ts`).
 
-D06–D12 have NOT yet been imported into this repository.
+D07–D12 have NOT yet been imported into this repository.
 
 Do not invent them.
 
@@ -213,11 +213,11 @@ remain pending per-activity batches.
 
 Canonical activity count:
 
-`54`
+`61`
 
 Stage 1 canonical activities:
 
-`54`
+`61`
 
 Guided protocols:
 
@@ -269,6 +269,14 @@ D5.04–D5.07 guided batch (D5 CLOSED):
 
 Readiness D5 final: canonical 7, protocols 7, execution-ready 7, product-ready 7 (`D5 guided retrofit CLOSED`). Canonical total 54, protocols total 54, pending refs 2 (`risk.mpi_sync`, `mpi.diffusion`).
 
+D6 canonical coverage:
+
+`D6.01–D6.07 (7 ActivityDefinitions, 0 ExecutionProtocols; canon importado, guided retrofit pendiente)`
+
+D6.01 (`third_party.relationship_map`, assessment, con juicio) y D6.02 (`cession.lawfulness_assess`, assessment, con juicio) requieren ReasoningRecord; D6.03–D6.07 (`cession.instrument_validate`, `processor.contract_validate`, `processor.instruction_controls_validate`, `subprocessor.authorization_validate`, `processor.security_exit_validate`) son `implementation` sin juicio. Las 7 con `applicable_role = responsible`, `evidence_basis = agency_standard`, `relationship_effect = []`, `conditions_applicability = []` (aplicabilidad conceptual en trigger/objetivo/pasos; sin taxonomía machine-readable hasta el capture audit). Scopes conceptuales: D6.01 treatment, D6.02 purpose, D6.03 purpose, D6.04–D6.07 treatment (sin scope de tercero, sin `ThirdPartyContext`, sin modificar `ActorRecord`). Única dependencia: D6.03 → D6.02 (`completion_dependency`); D2.02 es contexto relacionado, no dependencia. Fronteras congeladas: Stage 1 sin eventos/transacciones/historiales; D6 solo identifica dimensión internacional (licitud en D7, sin dependencia D6→D7); D2.09 es source-of-truth de calidad (D6.03 sin fact propio); D6.07 complementa sin sustituir D9 (sin facts D9). D1–D5 intactos. D6 no resuelve pending refs (siguen 2).
+
+Readiness D6: canonical 7, protocols 0, execution-ready 0, product-ready 0 (`D6 canonical content imported; guided retrofit pending`). Canonical total 61, protocols total 54, pending refs 2 (`risk.mpi_sync`, `mpi.diffusion`).
+
 Pending canonical cross-domain targets:
 
 * `risk.mpi_sync`
@@ -276,8 +284,8 @@ Pending canonical cross-domain targets:
 
 Still not implemented:
 
-* guided protocols for D06–D12 activities;
-* D06-D12;
+* guided protocols for D6–D12 activities;
+* D07-D12;
 * real characterization UI;
 * backend persistent client context (local treatment/purpose workspace exists);
 * state-effect engine;

@@ -168,9 +168,9 @@ describe("contenido canónico D4", () => {
     }
   });
 
-  it("4. total canónico = 54 (D5 importado)", () => {
-    expect(ALL_ACTIVITIES).toHaveLength(54);
-    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(54);
+  it("4. total canónico = 61 (D6 importado)", () => {
+    expect(ALL_ACTIVITIES).toHaveLength(61);
+    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(61);
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
@@ -338,7 +338,7 @@ describe("contenido canónico D4", () => {
       domainKey: "d4",
       domainCode: "D4",
     });
-    for (const key of ["d6","d7","d8","d9","d10","d11","d12"]) {
+    for (const key of ["d7","d8","d9","d10","d11","d12"]) {
       expect(getDomain(key)?.activity_keys, key).toEqual([]);
     }
   });

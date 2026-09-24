@@ -178,9 +178,9 @@ describe("contenido canónico D5", () => {
     }
   });
 
-  it("6. total canónico = 54; D1–D4 intactos", () => {
-    expect(ALL_ACTIVITIES).toHaveLength(54);
-    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(54);
+  it("6. total canónico = 61; D1–D4 intactos", () => {
+    expect(ALL_ACTIVITIES).toHaveLength(61);
+    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(61);
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
@@ -324,7 +324,7 @@ describe("contenido canónico D5", () => {
       domainKey: "d5",
       domainCode: "D5",
     });
-    for (const key of ["d6", "d7", "d8", "d9", "d10", "d11", "d12"]) {
+    for (const key of ["d7", "d8", "d9", "d10", "d11", "d12"]) {
       expect(getDomain(key)?.activity_keys, key).toEqual([]);
     }
   });
@@ -333,7 +333,7 @@ describe("contenido canónico D5", () => {
     for (const k of EXPECTED_KEYS) {
       expect(getProtocolForActivity(k), k).toBeTruthy();
     }
-    expect(ALL_ACTIVITIES).toHaveLength(54);
+    expect(ALL_ACTIVITIES).toHaveLength(61);
   });
 
   it("20. D05.md sincronizado y determinístico", () => {

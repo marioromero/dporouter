@@ -297,16 +297,17 @@ describe("contenido canónico D2", () => {
     ).toHaveLength(8);
   });
 
-  it("26. registro global contiene exactamente 54 actividades", () => {
-    expect(ALL_ACTIVITIES).toHaveLength(54);
-    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(54);
+  it("26. registro global contiene exactamente 61 actividades", () => {
+    expect(ALL_ACTIVITIES).toHaveLength(61);
+    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(61);
   });
 
-  it("27. D3 tiene 6 actividades; D4 tiene 9; D5 tiene 7; D6-D12 contienen cero", () => {
+  it("27. D3 tiene 6 actividades; D4 tiene 9; D5 tiene 7; D6 tiene 7; D7-D12 contienen cero", () => {
     expect(getDomain("d3")?.activity_keys).toHaveLength(6);
     expect(getDomain("d4")?.activity_keys).toHaveLength(9);
     expect(getDomain("d5")?.activity_keys).toHaveLength(7);
-    for (const key of ["d6","d7","d8","d9","d10","d11","d12"]) {
+    expect(getDomain("d6")?.activity_keys).toHaveLength(7);
+    for (const key of ["d7","d8","d9","d10","d11","d12"]) {
       expect(getDomain(key)?.activity_keys, key).toEqual([]);
     }
   });

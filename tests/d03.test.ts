@@ -374,17 +374,18 @@ describe("contenido canónico D3", () => {
     expect(getCanonicalActivity(DEMO_ACTIVITY_KEY)).toBeUndefined();
   });
 
-  it("23. D1/D2/D3 intactos; registro global en 54 (D4 + D5 importados)", () => {
+  it("23. D1/D2/D3 intactos; registro global en 61 (D4 + D5 + D6 importados)", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
-    expect(ALL_ACTIVITIES).toHaveLength(54);
-    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(54);
+    expect(ALL_ACTIVITIES).toHaveLength(61);
+    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(61);
   });
 
-  it("24. D4 tiene 9 actividades; D5 tiene 7; D6-D12 contienen cero actividades", () => {
+  it("24. D4 tiene 9 actividades; D5 tiene 7; D6 tiene 7; D7-D12 contienen cero actividades", () => {
     expect(getDomain("d4")?.activity_keys).toHaveLength(9);
     expect(getDomain("d5")?.activity_keys).toHaveLength(7);
-    for (const key of ["d6","d7","d8","d9","d10","d11","d12"]) {
+    expect(getDomain("d6")?.activity_keys).toHaveLength(7);
+    for (const key of ["d7","d8","d9","d10","d11","d12"]) {
       expect(getDomain(key)?.activity_keys, key).toEqual([]);
     }
   });

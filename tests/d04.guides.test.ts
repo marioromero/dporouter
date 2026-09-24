@@ -380,13 +380,13 @@ describe("integración D4.01 → D4.02–D4.07", () => {
 });
 
 describe("regresión cierre batch D4.01–D4.07", () => {
-  it("22. D1/D2/D3/D4 canon intactos; 54 actividades; 54 protocolos; 2 pendings", () => {
+  it("22. D1/D2/D3/D4 canon intactos; 61 actividades; 54 protocolos; 2 pendings", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
     expect(D04_ACTIVITIES).toHaveLength(9);
-    expect(ALL_ACTIVITIES).toHaveLength(54);
-    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(54);
+    expect(ALL_ACTIVITIES).toHaveLength(61);
+    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(61);
     expect(listProtocols()).toHaveLength(54);
     for (const k of [
       "rights.exercise_mechanism_design",

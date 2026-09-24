@@ -11,6 +11,7 @@ import { statusOf } from "../workspace/store";
 import { summarizeDomain, suggestNextReview } from "../workspace/suggest";
 import {
   ActorWorkspace,
+  AutomatedUsesWorkspace,
   DataWorkspace,
   LinksWorkspace,
   PurposeWorkspace,
@@ -319,6 +320,7 @@ export function EmpresaPage() {
           <SourceWorkspace treatmentId={company.activeTreatmentId} />
           <LinksWorkspace treatmentId={company.activeTreatmentId} />
           <RetentionWorkspace treatmentId={company.activeTreatmentId} />
+          <AutomatedUsesWorkspace treatmentId={company.activeTreatmentId} />
         </>
       ) : null}
 

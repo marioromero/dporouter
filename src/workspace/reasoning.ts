@@ -22,6 +22,24 @@ import type { CompanyState, ProtocolReasoningRecord } from "./types";
 import type { LegalBasis } from "../types";
 import { isDerivedFactKey } from "../../content/protocols/types";
 import { nowIso } from "./types";
+import {
+  currentAutomatedUses,
+  getScopeFinalizeGuard,
+} from "./automatedScope";
+
+/** Refs a usos automatizados: definidas en automatedScope, reexportadas.
+ * Entradas exactas `automated_use:<id>` para `facts_considered[]`
+ * (ver ADR-052): ID exacto, subordinadas al treatment del registro,
+ * sin dynamic fact keys, sin usar `evidence_refs`, sin parsear
+ * `rationale`. Las consume el guard D4.08 en finalización y
+ * staleness (ver automatedScope). */
+export {
+  AUTOMATED_USE_REF_PREFIX,
+  extractAutomatedUseRefs,
+  findUnknownAutomatedUseRefs,
+  formatAutomatedUseRef,
+  isAutomatedUseConsidered,
+} from "./automatedScope";
 
 /**
  * Juicio profesional documentado (Stage 1).
@@ -40,6 +58,13 @@ export interface ReasoningDraft {
   decided_by: string;
   reviewed_by: string;
   decided_at: string;
+  /**
+   * Entradas adicionales para `facts_considered[]` compuestas por el
+   * llamante (p. ej. referencias `automated_use:<id>` al finalizar
+   * D4.08). Opcional y genérico: el finalizer solo exige strings no
+   * vacíos; cada protocolo decide si lo usa.
+   */
+  extra_facts_considered?: string[];
 }
 
 /** Nodos de consideración: preguntas excepto el nodo conclusión. */
@@ -266,6 +291,19 @@ export function getRecordedJudgment(
     }
     return { status: "stale", record, reasons };
   }
+  // Consistencia con colecciones locales (dispatch por datos, sin
+  // literales): un record cuya cobertura de usos ya no coincide con
+  // la colección actual queda desactualizado aunque el gate pase.
+  const guard = getScopeFinalizeGuard(protocol);
+  if (guard) {
+    const effective =
+      ctx ?? (company ? { scope: "company", companyId: company.id } : null);
+    const stale = guard.stalenessReasons(
+      record,
+      currentAutomatedUses(company, effective),
+    );
+    if (stale.length > 0) return { status: "stale", record, reasons: stale };
+  }
   return { status: "valid", record, outcome };
 }
 
@@ -366,13 +404,19 @@ export function finalizeJudgment(input: FinalizeInput): FinalizeResult {
   if (!outcome) {
     return { ok: false, errors: ["La conclusión no es una alternativa canónica."] };
   }
+  const extras = draft.extra_facts_considered ?? [];
+  for (const e of extras) {
+    if (typeof e !== "string" || e.trim() === "") {
+      return { ok: false, errors: ["Las referencias adicionales no son válidas."] };
+    }
+  }
   const at = nowIso();
   const record: ProtocolReasoningRecord = {
     protocolKey: protocol.protocol_key,
     activityKey: protocol.activity_key,
     conclusion: draft.conclusion,
     legal_question: draft.legal_question,
-    facts_considered: [...protocol.decision_fact_keys],
+    facts_considered: [...protocol.decision_fact_keys, ...extras],
     legal_factors: considerationNodes(protocol).map((c) => c.title),
     evidence_refs: draft.evidence_refs,
     alternatives_considered: protocol.outcomes
@@ -447,73 +491,6 @@ export function applyScopedFinalization(
     ...record,
     updatedAt: at,
   });
-}
-/**
- * Referencias explícitas a AutomatedUseRecord.id dentro del
- * `facts_considered[]` del ReasoningRecord treatment-scoped (D4.08,
- * ver ADR-052).
- *
- * Capacidad estructural sin cambiar el contrato global:
- * `facts_considered[]` es un string array estable que sobrevive
- * export/import (validado como tal en import) y admite entradas
- * exactas `automated_use:<id>`. El token preserva el ID local
- * exacto (distingue U1 de U2 aunque compartan nombre), vive
- * subordinado al treatment direccionado del registro y permite
- * detectar referencias a usos inexistentes con
- * `findUnknownAutomatedUseRefs` o comprobar cobertura con
- * `isAutomatedUseConsidered`. No son dynamic fact keys (nunca se
- * evalúan como facts) ni sustituyen `evidence_refs` (documentos).
- * `rationale` permanece texto libre profesional y nunca se parsea
- * para esta finalidad. La integración efectiva con D4.08 llega en
- * el batch de protocolo.
- */
-export const AUTOMATED_USE_REF_PREFIX = "automated_use:";
-
-const AUTOMATED_USE_REF_ENTRY = /^automated_use:([A-Za-z0-9_-]+)$/;
-
-/** Token explícito para un ID local de uso automatizado. */
-export function formatAutomatedUseRef(id: string): string {
-  return `${AUTOMATED_USE_REF_PREFIX}${id}`;
-}
-
-/**
- * IDs referenciados como entradas exactas de `facts_considered[]`,
- * únicos y en orden de aparición. El texto libre (incluido
- * `rationale`) nunca se parsea: un token dentro de una frase no es
- * una referencia.
- */
-export function extractAutomatedUseRefs(entries: readonly string[]): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  for (const e of entries) {
-    if (typeof e !== "string") continue;
-    const m = AUTOMATED_USE_REF_ENTRY.exec(e);
-    if (m && !seen.has(m[1])) {
-      seen.add(m[1]);
-      out.push(m[1]);
-    }
-  }
-  return out;
-}
-
-/**
- * Referencias a usos que no existen en el conjunto válido del
- * treatment direccionado. Vacío = todas resuelven.
- */
-export function findUnknownAutomatedUseRefs(
-  entries: readonly string[],
-  knownIds: ReadonlySet<string> | readonly string[],
-): string[] {
-  const known = knownIds instanceof Set ? knownIds : new Set(knownIds);
-  return extractAutomatedUseRefs(entries).filter((id) => !known.has(id));
-}
-
-/** Comprueba si un uso concreto fue considerado en el análisis. */
-export function isAutomatedUseConsidered(
-  entries: readonly string[],
-  id: string,
-): boolean {
-  return extractAutomatedUseRefs(entries).includes(id);
 }
 export function applyFinalization(
   company: CompanyState,

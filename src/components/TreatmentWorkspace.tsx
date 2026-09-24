@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { useWorkspace } from "../workspace/context";
+import type {
+  AutomatedUseLegalPath,
+  AutomatedUseRecord,
+  AutomatedUseSafeguards,
+  SafeguardCheck,
+} from "../workspace/types";
 
 /**
  * Workspace D2 Stage 1: tratamientos, finalidades y estructuras locales.
@@ -756,5 +762,391 @@ export function RetentionWorkspace({ treatmentId }: { treatmentId: string }) {
         </>
       )}
     </section>
+  );
+}
+
+const USE_PROFILING: Array<{ value: SafeguardCheck; label: string }> = [
+  { value: "yes", label: "Sí" },
+  { value: "no", label: "No" },
+  { value: "unknown", label: "Desconocido — pendiente" },
+];
+
+const USE_COVERAGES = [
+  { value: "covered", label: "Comprendido (art. 8 bis)" },
+  { value: "not_covered", label: "No comprendido" },
+  { value: "unknown", label: "Desconocido — pendiente de evaluar" },
+] as const;
+
+const USE_PATHS: Record<string, Array<{ value: AutomatedUseLegalPath; label: string }>> = {
+  covered: [
+    { value: "contract_necessary", label: "Necesario para contrato" },
+    { value: "explicit_consent", label: "Consentimiento previo y expreso" },
+    { value: "legal_authorization", label: "Habilitación legal" },
+    { value: "none", label: "Sin vía (ausencia determinada)" },
+    { value: "unknown", label: "Pendiente (unknown)" },
+  ],
+  not_covered: [{ value: "not_applicable", label: "No aplica" }],
+  unknown: [{ value: "unknown", label: "Pendiente (unknown)" }],
+};
+
+const SAFEGUARD_FIELDS: Array<{
+  key: keyof Omit<AutomatedUseSafeguards, "interventionChannel" | "reviewChannel">;
+  label: string;
+}> = [
+  { key: "informationTransparency", label: "Información y transparencia" },
+  { key: "explanation", label: "Explicación" },
+  { key: "humanIntervention", label: "Intervención humana" },
+  { key: "pointOfView", label: "Punto de vista del titular" },
+  { key: "review", label: "Revisión de la decisión" },
+];
+
+function coverageLabel(u: AutomatedUseRecord): string {
+  if (u.article8bisCoverage === "covered") return "Comprendido (art. 8 bis)";
+  if (u.article8bisCoverage === "not_covered") return "No comprendido";
+  return "Cobertura pendiente";
+}
+
+function safeguardsSummary(u: AutomatedUseRecord): string {
+  if (u.article8bisCoverage !== "covered") return "";
+  const s = u.safeguards;
+  if (!s) return "Salvaguardas sin evaluar";
+  const values = SAFEGUARD_FIELDS.map((f) => s[f.key]);
+  if (values.some((v) => v === "no")) return "Salvaguardas con deficiencia";
+  if (values.every((v) => v === "yes")) return "Salvaguardas habilitadas";
+  return "Salvaguardas incompletas";
+}
+
+/**
+ * Inventario de usos automatizados del tratamiento (D4.08/D4.09).
+ *
+ * Edita la colección local compartida con el treatment
+ * explícitamente direccionado: nunca elabora juicios, nunca ejecuta
+ * protocolos, nunca escribe canonical facts. Crear o editar un uso
+ * NO completa D4.08 ni D4.09; la conclusión vive en la guía con su
+ * ReasoningRecord. Sin sub-rutas: el uso jamás es ExecutionContext.
+ */
+export function AutomatedUsesWorkspace({ treatmentId }: { treatmentId: string }) {
+  const {
+    company,
+    addAutomatedUse,
+    deleteAutomatedUse,
+  } = useWorkspace();
+  const [name, setName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  if (!company) return null;
+  const treatment = company.treatments?.[treatmentId];
+  if (!treatment) return null;
+  const uses = treatment.automatedUses ?? [];
+  const purposes = Object.values(treatment.purposes ?? {});
+  const purposeName = (purposeId: string | undefined): string => {
+    if (!purposeId) return "";
+    const found = purposes.find((p) => p.purpose.id === purposeId);
+    return found ? ` · Finalidad: ${found.purpose.description}` : "";
+  };
+  const evaluated = uses.filter((u) => u.article8bisCoverage !== "unknown").length;
+  return (
+    <section
+      className="activity-section"
+      aria-label="Usos automatizados"
+      data-testid="workspace-automated-uses"
+    >
+      <h2>Usos automatizados de {treatment.context.name}</h2>
+      <p data-testid="automated-uses-summary">
+        {uses.length === 0
+          ? "No hay usos automatizados registrados."
+          : `${uses.length} ${uses.length === 1 ? "uso" : "usos"}, ${evaluated} con cobertura evaluada.`}
+      </p>
+      <p className="result-count">
+        Registrar un uso organiza el inventario: no clasifica jurídicamente ni
+        completa D4.08/D4.09. La cobertura pendiente (desconocido) nunca equivale
+        a no comprendido.
+      </p>
+      {uses.length > 0 ? (
+        <ul>
+          {uses.map((u) => (
+            <li key={u.id}>
+              <strong>{u.name}</strong> · {coverageLabel(u)}
+              {purposeName(u.purposeId)}
+              {u.article8bisCoverage === "covered" ? ` · ${safeguardsSummary(u)}` : null}{" "}
+              <button
+                type="button"
+                className="btn ghost small"
+                onClick={() => setEditingId(editingId === u.id ? null : u.id)}
+                aria-label={`Editar uso ${u.name}`}
+              >
+                {editingId === u.id ? "Cerrar" : "Editar"}
+              </button>{" "}
+              <button
+                type="button"
+                className="btn ghost small"
+                onClick={() => {
+                  deleteAutomatedUse(treatmentId, u.id);
+                  if (editingId === u.id) setEditingId(null);
+                }}
+                aria-label={`Eliminar uso ${u.name}`}
+              >
+                Eliminar
+              </button>
+              {editingId === u.id ? (
+                <UseEditor
+                  treatmentId={treatmentId}
+                  use={u}
+                  purposeOptions={purposes.map((p) => ({
+                    id: p.purpose.id,
+                    description: p.purpose.description,
+                  }))}
+                  onDone={() => setEditingId(null)}
+                />
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="field">
+        <label htmlFor="uso-nombre">Nombre del uso</label>
+        <input
+          id="uso-nombre"
+          className="input"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoComplete="off"
+        />
+      </div>
+      <div className="actions">
+        <button
+          type="button"
+          className="btn"
+          disabled={name.trim() === ""}
+          onClick={() => {
+            addAutomatedUse(treatmentId, { name });
+            setName("");
+          }}
+        >
+          Agregar uso
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function UseEditor({
+  treatmentId,
+  use,
+  purposeOptions,
+  onDone,
+}: {
+  treatmentId: string;
+  use: AutomatedUseRecord;
+  purposeOptions: Array<{ id: string; description: string }>;
+  onDone: () => void;
+}) {
+  const { company, updateAutomatedUse } = useWorkspace();
+  const [description, setDescription] = useState(use.description ?? "");
+  const [purposeId, setPurposeId] = useState(use.purposeId ?? "");
+  const [processDescription, setProcessDescription] = useState(
+    use.processDescription ?? "",
+  );
+  const [mechanismDescription, setMechanismDescription] = useState(
+    use.mechanismDescription ?? "",
+  );
+  const [decisionDescription, setDecisionDescription] = useState(
+    use.decisionDescription ?? "",
+  );
+  const [profiling, setProfiling] = useState<SafeguardCheck>(use.profiling);
+  const [evidenceRef, setEvidenceRef] = useState(use.evidenceRef ?? "");
+  const [coverage, setCoverage] = useState(use.article8bisCoverage);
+  const [legalPath, setLegalPath] = useState<AutomatedUseLegalPath>(use.legalPath);
+  const [safeguards, setSafeguards] = useState<AutomatedUseSafeguards>(
+    use.safeguards ?? {},
+  );
+  const [interventionChannel, setInterventionChannel] = useState(
+    use.safeguards?.interventionChannel ?? "",
+  );
+  const [reviewChannel, setReviewChannel] = useState(
+    use.safeguards?.reviewChannel ?? "",
+  );
+  const paths = USE_PATHS[coverage] ?? USE_PATHS.unknown;
+  const save = () => {
+    updateAutomatedUse(treatmentId, use.id, {
+      description: description === "" ? null : description,
+      purposeId: purposeId === "" ? null : purposeId,
+      processDescription: processDescription === "" ? null : processDescription,
+      mechanismDescription: mechanismDescription === "" ? null : mechanismDescription,
+      decisionDescription: decisionDescription === "" ? null : decisionDescription,
+      profiling,
+      evidenceRef: evidenceRef === "" ? null : evidenceRef,
+      article8bisCoverage: coverage,
+      ...(coverage === "covered" ? { legalPath } : {}),
+      ...(coverage === "covered"
+        ? {
+            safeguards: {
+              ...safeguards,
+              ...(interventionChannel.trim() !== ""
+                ? { interventionChannel: interventionChannel.trim() }
+                : {}),
+              ...(reviewChannel.trim() !== "" ? { reviewChannel: reviewChannel.trim() } : {}),
+            },
+          }
+        : {}),
+    });
+    // Las opciones del editor solo admiten valores válidos; si el uso
+    // sigue existiendo, el guardado se aplicó.
+    const stillThere = company?.treatments?.[treatmentId]?.automatedUses?.some(
+      (u) => u.id === use.id,
+    );
+    if (stillThere) onDone();
+  };
+  return (
+    <div className="field" data-testid={`uso-editor-${use.id}`}>
+      <label htmlFor={fieldId("uso-descripcion", use.id)}>Descripción</label>
+      <input
+        id={fieldId("uso-descripcion", use.id)}
+        className="input"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        autoComplete="off"
+      />
+      <label htmlFor={fieldId("uso-finalidad", use.id)}>Finalidad asociada (opcional)</label>
+      <select
+        id={fieldId("uso-finalidad", use.id)}
+        className="input"
+        value={purposeId}
+        onChange={(e) => setPurposeId(e.target.value)}
+      >
+        <option value="">Sin finalidad asociada</option>
+        {purposeOptions.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.description}
+          </option>
+        ))}
+      </select>
+      <label htmlFor={fieldId("uso-proceso", use.id)}>Proceso y contexto</label>
+      <input
+        id={fieldId("uso-proceso", use.id)}
+        className="input"
+        value={processDescription}
+        onChange={(e) => setProcessDescription(e.target.value)}
+        autoComplete="off"
+      />
+      <label htmlFor={fieldId("uso-mecanismo", use.id)}>Mecanismo automatizado</label>
+      <input
+        id={fieldId("uso-mecanismo", use.id)}
+        className="input"
+        value={mechanismDescription}
+        onChange={(e) => setMechanismDescription(e.target.value)}
+        autoComplete="off"
+      />
+      <label htmlFor={fieldId("uso-decision", use.id)}>Decisión o resultado producido</label>
+      <input
+        id={fieldId("uso-decision", use.id)}
+        className="input"
+        value={decisionDescription}
+        onChange={(e) => setDecisionDescription(e.target.value)}
+        autoComplete="off"
+      />
+      <label htmlFor={fieldId("uso-profiling", use.id)}>Elaboración de perfiles</label>
+      <select
+        id={fieldId("uso-profiling", use.id)}
+        className="input"
+        value={profiling}
+        onChange={(e) => setProfiling(e.target.value as SafeguardCheck)}
+      >
+        {USE_PROFILING.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <label htmlFor={fieldId("uso-evidencia", use.id)}>Referencia documental</label>
+      <input
+        id={fieldId("uso-evidencia", use.id)}
+        className="input"
+        value={evidenceRef}
+        onChange={(e) => setEvidenceRef(e.target.value)}
+        autoComplete="off"
+      />
+      <label htmlFor={fieldId("uso-cobertura", use.id)}>Cobertura art. 8 bis</label>
+      <select
+        id={fieldId("uso-cobertura", use.id)}
+        className="input"
+        value={coverage}
+        onChange={(e) => {
+          const next = e.target.value as AutomatedUseRecord["article8bisCoverage"];
+          setCoverage(next);
+          const first = (USE_PATHS[next] ?? USE_PATHS.unknown)[0];
+          if (first) setLegalPath(first.value);
+        }}
+      >
+        {USE_COVERAGES.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <label htmlFor={fieldId("uso-via", use.id)}>Vía legal</label>
+      <select
+        id={fieldId("uso-via", use.id)}
+        className="input"
+        value={legalPath}
+        onChange={(e) => setLegalPath(e.target.value as AutomatedUseLegalPath)}
+      >
+        {paths.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {coverage === "covered" ? (
+        <>
+          <p className="result-count">
+            Salvaguardas del uso (solo para usos comprendidos; la vía legal no las exime).
+          </p>
+          {SAFEGUARD_FIELDS.map((f) => (
+            <div key={f.key}>
+              <label htmlFor={fieldId(`uso-sg-${f.key}`, use.id)}>{f.label}</label>
+              <select
+                id={fieldId(`uso-sg-${f.key}`, use.id)}
+                className="input"
+                value={safeguards[f.key] ?? ""}
+                onChange={(e) => {
+                  const next: AutomatedUseSafeguards = { ...safeguards };
+                  if (e.target.value === "") delete next[f.key];
+                  else next[f.key] = e.target.value as SafeguardCheck;
+                  setSafeguards(next);
+                }}
+              >
+                <option value="">Sin evaluar</option>
+                <option value="yes">Verificada</option>
+                <option value="no">Pendiente o deficiente</option>
+                <option value="unknown">Desconocida</option>
+              </select>
+            </div>
+          ))}
+          <label htmlFor={fieldId("uso-canal-intervencion", use.id)}>
+            Canal de intervención
+          </label>
+          <input
+            id={fieldId("uso-canal-intervencion", use.id)}
+            className="input"
+            value={interventionChannel}
+            onChange={(e) => setInterventionChannel(e.target.value)}
+            autoComplete="off"
+          />
+          <label htmlFor={fieldId("uso-canal-revision", use.id)}>Canal de revisión</label>
+          <input
+            id={fieldId("uso-canal-revision", use.id)}
+            className="input"
+            value={reviewChannel}
+            onChange={(e) => setReviewChannel(e.target.value)}
+            autoComplete="off"
+          />
+        </>
+      ) : null}
+      <div className="actions">
+        <button type="button" className="btn small" onClick={save}>
+          Guardar uso
+        </button>
+      </div>
+    </div>
   );
 }

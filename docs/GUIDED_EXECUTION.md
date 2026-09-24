@@ -1,6 +1,6 @@
 # Guided Execution
 
-Status: STAGE 1 CANONICAL LAYER — D1.01–D1.20, D2.01–D2.12 (juicios scopeados D2.06/D2.10/D2.11; D2.12 procedure company-scope), D3.01–D3.06 (D3.01 procedure y D3.02 checklist company-scope; D3.03 procedure, D3.04 juicio decision, D3.05 checklist y D3.06 procedure purpose-scope con puente read-only D2.05 y gating D3.03→D3.04/D3.05/D3.06), D4.01–D4.07 (D4.01 procedure, D4.02 checklist, D4.03 procedure, D4.04 checklist, D4.05 checklist, D4.06 procedure, D4.07 checklist, company-scope con gating D4.01→D4.02–D4.07; D4.08–D4.09 sin protocolo)
+Status: STAGE 1 CANONICAL LAYER — D1.01–D1.20, D2.01–D2.12 (juicios scopeados D2.06/D2.10/D2.11; D2.12 procedure company-scope), D3.01–D3.06 (D3.01 procedure y D3.02 checklist company-scope; D3.03 procedure, D3.04 juicio decision, D3.05 checklist y D3.06 procedure purpose-scope con puente read-only D2.05 y gating D3.03→D3.04/D3.05/D3.06), D4.01–D4.09 (D4.01–D4.07 company-scope con gating D4.01→D4.02–D4.07; D4.08 decision y D4.09 checklist treatment-scope sobre automatedUses[] compartida con guard de consistencia)
 
 `The guidance engine assists professional execution; it does not silently create new legal obligations.`
 
@@ -232,7 +232,7 @@ professional, with gating fields declared per protocol. Records persist
 in their execution scope (company, treatment or purpose) with
 same-scope effects; re-finalizing is idempotent.
 
-## 16. Local automated-use inventory (D4.08/D4.09 groundwork)
+## 16. Local automated-use inventory (D4.08/D4.09)
 
 A treatment may hold a local `automatedUses[]` collection (ADR-052,
 `DATA_CONTRACTS.md` §46): treatment-owned value objects with local
@@ -243,8 +243,13 @@ and editing uses never writes canonical facts.
 
 Read-only `derived.treatment.automated_uses_*` projections expose
 existence, classification progress, covered presence, legal-path
-determination and safeguard state for future structural gates.
-The single treatment-scoped D4.08 ReasoningRecord carries the
-joint justification (considered use IDs as explicit
-`automated_use:<id>` entries in `facts_considered[]`); treatment aggregates materialize only through explicit
-finalization. No D4.08/D4.09 protocols exist yet.
+determination and safeguard state as structural gates. The D4.08
+guide (decision, treatment-scope) concludes through the single
+treatment-scoped ReasoningRecord; a consistency guard composes the
+exact `automated_use:<id>` references, validates conclusion↔state
+compatibility and detects collection drift as staleness — all
+through data-dispatched helpers, with the generic finalizer,
+ProtocolView and progress engine untouched. Treatment aggregates
+materialize only through explicit finalization. D4.09 (checklist,
+treatment-scope) verifies operational conditions plus the derived
+per-use safeguard state over the same collection.

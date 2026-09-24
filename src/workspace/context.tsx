@@ -66,6 +66,8 @@ import {
   finalizeJudgment,
   type ReasoningDraft,
 } from "./reasoning";
+import { getScopeFinalizeGuard } from "./automatedScope";
+import { getTreatment } from "./scope";
 import {
   applyScopedProcedureFinalization,
   validateScopedProcedureFinalization,
@@ -896,11 +898,32 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         return { ok: false, errors: ["Requiere selección válida para finalizar."] };
       }
       const activity = getCanonicalActivity(protocol.activity_key);
+      // Consistencia con colecciones locales (dispatch por datos):
+      // el guard valida y compone las referencias antes de la
+      // finalización atómica. Sin guard, el camino es idéntico al
+      // histórico.
+      const guard = getScopeFinalizeGuard(protocol);
+      let draftForFinalize = draft;
+      if (guard) {
+        const uses =
+          ctx.scope === "treatment" && company
+            ? (getTreatment(company, ctx.treatmentId)?.automatedUses ?? [])
+            : [];
+        const extras = guard.composeRefs(uses);
+        const guardErrors = guard.validateFinalization({
+          uses,
+          inventoryReviewed: guard.isInventoryReviewed(facts),
+          conclusion: draft.conclusion,
+          extras,
+        });
+        if (guardErrors.length > 0) return { ok: false, errors: guardErrors };
+        draftForFinalize = { ...draft, extra_facts_considered: extras };
+      }
       const result = finalizeJudgment({
         protocol,
         company,
         facts,
-        draft,
+        draft: draftForFinalize,
         legalBasis: activity?.legal_basis ?? [],
         ctx,
       });

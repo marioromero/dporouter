@@ -380,14 +380,14 @@ describe("integración D4.01 → D4.02–D4.07", () => {
 });
 
 describe("regresión cierre batch D4.01–D4.07", () => {
-  it("22. D1/D2/D3/D4 canon intactos; 47 actividades; 45 protocolos; 4 pendings", () => {
+  it("22. D1/D2/D3/D4 canon intactos; 47 actividades; 47 protocolos; 4 pendings", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
     expect(D04_ACTIVITIES).toHaveLength(9);
     expect(ALL_ACTIVITIES).toHaveLength(47);
     expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(47);
-    expect(listProtocols()).toHaveLength(45);
+    expect(listProtocols()).toHaveLength(47);
     for (const k of [
       "rights.exercise_mechanism_design",
       "rights.access_enable",
@@ -396,11 +396,11 @@ describe("regresión cierre batch D4.01–D4.07", () => {
       "rights.opposition_enable",
       "rights.blocking_enable",
       "rights.portability_enable",
+      "automated_decision.scope_assess",
+      "automated_decision.safeguards_enable",
     ]) {
       expect(getProtocolForActivity(k), k).toBeTruthy();
     }
-    expect(getProtocolForActivity("automated_decision.scope_assess")).toBeUndefined();
-    expect(getProtocolForActivity("automated_decision.safeguards_enable")).toBeUndefined();
   });
 
   it("23. frontera Stage 1 en todo el batch: sin requests, titulares, timers ni history", () => {

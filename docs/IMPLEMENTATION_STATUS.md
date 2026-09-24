@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-24 (D4.01–D4.07 guided batch)
+Last controlled update: 2026-09-24 (D4.08–D4.09 guided batch, D4 CLOSED)
 
 ## Functional baseline
 
@@ -221,15 +221,15 @@ Stage 1 canonical activities:
 
 Guided protocols:
 
-`45`
+`47`
 
 Protocol coverage:
 
-`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3), D4.01–D4.07 (company-scope: D4.01 procedure + D4.02 checklist + D4.03 procedure + D4.04 checklist + D4.05 checklist + D4.06 procedure + D4.07 checklist)`
+`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3), D4.01–D4.09 (D4.01–D4.07 company-scope; D4.08 decision + D4.09 checklist treatment-scope sobre automatedUses[] compartida)`
 
 D4 canonical coverage:
 
-`D4.01–D4.09 (9 ActivityDefinitions, 7 ExecutionProtocols company-scope con gating D4.01→D4.02–D4.07 por completion_dependency operativa; D4.01–D4.07 execution-ready y product-ready; D4.08–D4.09 sin protocolo, guided retrofit pendiente)`
+`D4.01–D4.09 (9 ActivityDefinitions, 9 ExecutionProtocols; 9/9 execution-ready, 9/9 product-ready; D4 guided retrofit CLOSED)`
 
 D3 canonical coverage:
 
@@ -244,7 +244,7 @@ Pending canonical cross-domain targets:
 
 Still not implemented:
 
-* guided protocols for D4.08–D4.09 and D05–D12 activities;
+* guided protocols for D05–D12 activities;
 * D05-D12;
 * real characterization UI;
 * backend persistent client context (local treatment/purpose workspace exists);

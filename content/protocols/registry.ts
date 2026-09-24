@@ -45,6 +45,8 @@ import { RIGHTS_SUPPRESSION_ENABLE_PROTOCOL } from "./rights.suppression_enable"
 import { RIGHTS_OPPOSITION_ENABLE_PROTOCOL } from "./rights.opposition_enable";
 import { RIGHTS_BLOCKING_ENABLE_PROTOCOL } from "./rights.blocking_enable";
 import { RIGHTS_PORTABILITY_ENABLE_PROTOCOL } from "./rights.portability_enable";
+import { AUTOMATED_DECISION_SCOPE_ASSESS_PROTOCOL } from "./automated_decision.scope_assess";
+import { AUTOMATED_DECISION_SAFEGUARDS_ENABLE_PROTOCOL } from "./automated_decision.safeguards_enable";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -104,6 +106,8 @@ const PROTOCOLS: ExecutionProtocol[] = [
   RIGHTS_OPPOSITION_ENABLE_PROTOCOL,
   RIGHTS_BLOCKING_ENABLE_PROTOCOL,
   RIGHTS_PORTABILITY_ENABLE_PROTOCOL,
+  AUTOMATED_DECISION_SCOPE_ASSESS_PROTOCOL,
+  AUTOMATED_DECISION_SAFEGUARDS_ENABLE_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

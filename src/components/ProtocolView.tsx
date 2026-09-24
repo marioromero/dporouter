@@ -70,7 +70,7 @@ export interface ProtocolSession {
   ctx?: ExecutionContext | null;
 }
 
-function sameExecutionContext(
+export function sameExecutionContext(
   a: ExecutionContext | null | undefined,
   b: ExecutionContext | null,
 ): boolean {

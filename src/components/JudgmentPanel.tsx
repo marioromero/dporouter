@@ -21,7 +21,7 @@ import type {
   ProtocolActivityRef,
   ProtocolSession,
 } from "./ProtocolView";
-import { NextActionView, ProtocolChrome } from "./ProtocolView";
+import { NextActionView, ProtocolChrome, sameExecutionContext } from "./ProtocolView";
 import { ProvenanceBadge, provenanceHuman } from "./ui";
 import {
   considerationNodes,
@@ -30,8 +30,17 @@ import {
   validateReasoningDraft,
   type ReasoningDraft,
 } from "../workspace/reasoning";
-import type { ProtocolReasoningRecord } from "../workspace/types";
+import type { ExecutionContext, ProtocolReasoningRecord } from "../workspace/types";
 import { nowIso } from "../workspace/types";
+import { getSpecialRegimeGuard } from "../workspace/specialRegimeGuards";
+import {
+  deriveD5CandidatesForPurpose,
+  linkedItems,
+  resolveItemSignal,
+  resolveProfile,
+  validateSpecialRegimeCoherence,
+} from "../workspace/specialRegime";
+import { getTreatment } from "../workspace/scope";
 
 /**
  * Juicio profesional documentado (genérico, sin literales de actividad).
@@ -53,18 +62,34 @@ export function JudgmentPanel({
   activity,
   session,
   node,
+  addressedCtx,
 }: {
   protocol: ExecutionProtocol;
   activityDef: ActivityDefinition;
   activity: ProtocolActivityRef;
   session: ProtocolSession;
   node: GuidanceNode;
+  /**
+   * Contexto addressed de la guía (opt-in D5): gate, lectura,
+   * registro y finalización usan esta dirección; si la selección
+   * activa se movió, se avisa y se bloquea adoptar hasta reabrir.
+   * Ausente = camino histórico por selección activa.
+   */
+  addressedCtx?: ExecutionContext | null;
 }) {
-  const { company, finalizeProfessionalJudgment } = useWorkspace();
-  const facts = session.facts;
-  const judgmentCtx = company
+  const { company, finalizeProfessionalJudgment, finalizeProfessionalJudgmentAt } = useWorkspace();
+  // D5 addressed: evaluar, gatear, leer y finalizar sobre la vista del
+  // contexto capturado al abrir la guía (igual a facts sin cambio de
+  // selección). El resto conserva la vista activa histórica.
+  const facts =
+    addressedCtx != null ? (session.addressedFacts ?? session.facts) : session.facts;
+  const activeCtx = company
     ? activeExecutionContext(company, protocol.execution_scope ?? "company")
     : null;
+  const judgmentCtx = addressedCtx ?? activeCtx;
+  const contextMismatch =
+    addressedCtx != null && !sameExecutionContext(addressedCtx, activeCtx);
+  const d5Guard = getSpecialRegimeGuard(protocol);
   const ready = gatePasses(protocol, company, facts, judgmentCtx);
   const recorded = getRecordedJudgment(protocol, company, facts, judgmentCtx);
   const options = node.options ?? [];
@@ -84,6 +109,10 @@ export function JudgmentPanel({
   const [decidedAt, setDecidedAt] = useState(todayIso());
   const [attempted, setAttempted] = useState(false);
   const [finalizeErrors, setFinalizeErrors] = useState<string[]>([]);
+  // Refs profesionales `data_item:<id>` (solo D5.03 las elige; D5.01 y
+  // D5.02 las componen automáticamente al finalizar). Etiquetas
+  // humanas en UI, nunca IDs crudos.
+  const [extraItemIds, setExtraItemIds] = useState<string[]>([]);
 
   const draft: ReasoningDraft = useMemo(
     () => ({
@@ -97,20 +126,35 @@ export function JudgmentPanel({
       decided_by: decidedBy,
       reviewed_by: reviewedBy,
       decided_at: decidedAt,
+      ...(d5Guard ? { extra_facts_considered: extraItemIds.map((id) => `data_item:${id}`) } : {}),
     }),
-    [conclusion, legalQuestion, evidenceText, rationale, decidedBy, reviewedBy, decidedAt],
+    [conclusion, legalQuestion, evidenceText, rationale, decidedBy, reviewedBy, decidedAt, d5Guard, extraItemIds],
   );
   const issues = validateReasoningDraft(protocol, draft);
   const canAdopt =
-    ready && issues.length === 0 && conclusion !== "" && company !== null;
+    ready &&
+    issues.length === 0 &&
+    conclusion !== "" &&
+    company !== null &&
+    !contextMismatch;
 
   function adopt() {
     if (!company || !canAdopt) return;
-    const result = finalizeProfessionalJudgment(
-      protocol.protocol_key,
-      draft,
-      facts,
-    );
+    if (contextMismatch) {
+      setFinalizeErrors([
+        "La selección activa cambió desde que se abrió esta guía. Vuelve a abrirla para registrar la conclusión.",
+      ]);
+      return;
+    }
+    const result =
+      addressedCtx != null && judgmentCtx != null
+        ? finalizeProfessionalJudgmentAt(
+            protocol.protocol_key,
+            draft,
+            facts,
+            judgmentCtx,
+          )
+        : finalizeProfessionalJudgment(protocol.protocol_key, draft, facts);
     if (!result.ok) {
       setFinalizeErrors(result.errors);
       return;
@@ -152,6 +196,20 @@ export function JudgmentPanel({
           })}
         </ul>
       </section>
+      {d5Guard && company && judgmentCtx && judgmentCtx.scope === "purpose" ? (
+        <SpecialRegimeGuideStatus
+          company={company}
+          ctx={judgmentCtx}
+          guardRegime={d5Guard.regime}
+          candidateKey={d5Guard.candidateKey}
+          extraItemIds={extraItemIds}
+          onToggleItem={(id) =>
+            setExtraItemIds((prev) =>
+              prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+            )
+          }
+        />
+      ) : null}
       <section
         className="activity-section"
         aria-label="Conclusión documentada"
@@ -207,6 +265,15 @@ export function JudgmentPanel({
                   Selecciona una empresa para documentar la conclusión
                 </Link>
               </p>
+            ) : null}
+            {contextMismatch ? (
+              <div className="notice" role="alert">
+                <strong>La selección cambió desde que se abrió esta guía</strong>
+                <p>
+                  Lo mostrado corresponde a otra finalidad. Vuelve a abrir la
+                  guía para registrar la conclusión correcta.
+                </p>
+              </div>
             ) : null}
             <h3>Conclusión profesional</h3>
             <div className="actions" role="group" aria-label="Alternativas canónicas">
@@ -332,6 +399,147 @@ export function JudgmentPanel({
         )}
       </section>
     </>
+  );
+}
+
+/**
+ * Estado estructural D5 para la finalidad direccionada (trabajo
+ * primero, sin claves técnicas): candidatura, cobertura de
+ * clasificación, datos que activan revisión, advertencias y —solo
+ * D5.03— selección profesional del dato del proceso biométrico.
+ */
+function SpecialRegimeGuideStatus({
+  company,
+  ctx,
+  guardRegime,
+  candidateKey,
+  extraItemIds,
+  onToggleItem,
+}: {
+  company: NonNullable<ReturnType<typeof useWorkspace>["company"]>;
+  ctx: ExecutionContext;
+  guardRegime: "sensitive" | "health" | "biometric";
+  candidateKey: string;
+  extraItemIds: string[];
+  onToggleItem: (id: string) => void;
+}) {
+  if (ctx.scope !== "purpose") return null;
+  const treatment = getTreatment(company, ctx.treatmentId);
+  if (!treatment) return null;
+  const items = linkedItems(treatment, ctx.purposeId);
+  const candidates = deriveD5CandidatesForPurpose(company, ctx.treatmentId, ctx.purposeId);
+  const candidate = candidates?.[candidateKey];
+  const warnings = validateSpecialRegimeCoherence(company, ctx.treatmentId, ctx.purposeId);
+  const profile = resolveProfile(
+    treatment.purposes[ctx.purposeId]?.specialRegimeProfile,
+  );
+  const signalOf = (id: string, field: "sensitive" | "health" | "biologicalProfile" | "geolocation") => {
+    const item = items.find((i) => i.id === id);
+    return resolveItemSignal(item, field);
+  };
+  const requiredIds =
+    guardRegime === "sensitive"
+      ? items.filter((i) => signalOf(i.id, "sensitive") === "yes").map((i) => i.id)
+      : guardRegime === "health"
+        ? items
+            .filter((i) => signalOf(i.id, "health") === "yes" || signalOf(i.id, "biologicalProfile") === "yes")
+            .map((i) => i.id)
+        : [];
+  const pendingCount =
+    guardRegime === "sensitive"
+      ? items.filter((i) => signalOf(i.id, "sensitive") === "unknown").length
+      : guardRegime === "health"
+        ? items.filter(
+            (i) => signalOf(i.id, "health") === "unknown" || signalOf(i.id, "biologicalProfile") === "unknown",
+          ).length
+        : 0;
+  const labelOf = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    const label = item?.label.trim() === "" ? null : item?.label;
+    return label ?? "Dato vinculado";
+  };
+  return (
+    <section className="activity-section" aria-label="Estado estructural de la finalidad">
+      <h2>Estado estructural de la finalidad</h2>
+      <p>
+        Revisión{" "}
+        <strong>
+          {candidate === "yes"
+            ? "indicada por la captura actual"
+            : candidate === "no"
+              ? "no indicada por la captura actual"
+              : "por determinar: completa la clasificación estructural"}
+        </strong>
+        .
+      </p>
+      {items.length === 0 ? (
+        <p>Esta finalidad aún no tiene datos vinculados.</p>
+      ) : (
+        <p>
+          {items.length} {items.length === 1 ? "dato vinculado" : "datos vinculados"}
+          {pendingCount > 0
+            ? `; ${pendingCount} aún por clasificar`
+            : "; clasificación completa"}
+          .
+        </p>
+      )}
+      {requiredIds.length > 0 ? (
+        <>
+          <h3>Datos que activan esta revisión</h3>
+          <ul>
+            {requiredIds.map((id) => (
+              <li key={id}>{labelOf(id)}</li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      {guardRegime === "biometric" ? (
+        <>
+          <h3>Dato del proceso biométrico</h3>
+          <p>
+            Selecciona el dato vinculado correspondiente al proceso
+            biométrico evaluado. La selección es profesional: no se crea
+            ninguna relación persistente.
+          </p>
+          {items.length === 0 ? (
+            <p>Vincula al menos un dato a la finalidad para continuar.</p>
+          ) : (
+            <div role="group" aria-label="Dato del proceso biométrico">
+              {items.map((i) => (
+                <button
+                  key={i.id}
+                  type="button"
+                  className={extraItemIds.includes(i.id) ? "btn small" : "btn ghost small"}
+                  aria-pressed={extraItemIds.includes(i.id)}
+                  onClick={() => onToggleItem(i.id)}
+                >
+                  {labelOf(i.id)}
+                </button>
+              ))}
+            </div>
+          )}
+          {profile.biometricIdentificationUse === "yes" ? null : (
+            <p>
+              La finalidad aún no declara uso de identificación biométrica.
+            </p>
+          )}
+        </>
+      ) : null}
+      {warnings.length > 0 ? (
+        <>
+          <h3>Revisar clasificación</h3>
+          <ul>
+            {warnings.map((w, i) => (
+              <li key={i}>{w.reason}</li>
+            ))}
+          </ul>
+          <p>
+            Estas advertencias no cambian la candidatura ni bloquean por sí
+            solas: considéralas en el razonamiento.
+          </p>
+        </>
+      ) : null}
+    </section>
   );
 }
 

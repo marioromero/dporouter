@@ -45,6 +45,7 @@ import {
   deleteTreatment as deleteTreatmentState,
   renamePurpose as renamePurposeState,
   renameTreatment as renameTreatmentState,
+  resolveExecutionContext,
   saveScopedProtocolAnswer as saveScopedAnswerState,
   scopedAddressAlternatives,
   selectPurpose as selectPurposeState,
@@ -67,6 +68,9 @@ import {
   type ReasoningDraft,
 } from "./reasoning";
 import { getScopeFinalizeGuard } from "./automatedScope";
+import { getSpecialRegimeGuard } from "./specialRegimeGuards";
+import { setSpecialRegimeProfile as setSpecialRegimeProfileState } from "./scope";
+import type { SpecialRegimeProfile } from "./types";
 import { getTreatment } from "./scope";
 import {
   applyScopedProcedureFinalization,
@@ -120,6 +124,17 @@ interface WorkspaceContextValue {
     draft: ReasoningDraft,
     facts: FactMap,
   ) => { ok: true } | { ok: false; errors: string[] };
+  /**
+   * Variante addressed: finaliza en el contexto capturado al abrir la
+   * guía, nunca en la selección activa tardía. Las guías D5 la usan
+   * siempre; el resto conserva el camino histórico.
+   */
+  finalizeProfessionalJudgmentAt: (
+    protocolKey: string,
+    draft: ReasoningDraft,
+    facts: FactMap,
+    ctx: ExecutionContext,
+  ) => { ok: true } | { ok: false; errors: string[] };
   finalizeProtocolOutcome: (
     protocolKey: string,
     outcomeKey: string,
@@ -165,9 +180,18 @@ interface WorkspaceContextValue {
       category?: string | null;
       sourceRefs?: string[];
       note?: string | null;
+      sensitive?: "yes" | "no" | "unknown";
+      health?: "yes" | "no" | "unknown";
+      biologicalProfile?: "yes" | "no" | "unknown";
+      geolocation?: "yes" | "no" | "unknown";
     },
   ) => void;
   deleteDataItem: (treatmentId: string, id: string) => void;
+  setSpecialRegimeProfile: (
+    treatmentId: string,
+    purposeId: string,
+    patch: Partial<SpecialRegimeProfile>,
+  ) => void;
   addSource: (treatmentId: string, input: SourceInput) => string | null;
   updateSource: (
     treatmentId: string,
@@ -606,12 +630,31 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         category?: string | null;
         sourceRefs?: string[];
         note?: string | null;
+        sensitive?: "yes" | "no" | "unknown";
+        health?: "yes" | "no" | "unknown";
+        biologicalProfile?: "yes" | "no" | "unknown";
+        geolocation?: "yes" | "no" | "unknown";
       },
     ) => {
       if (!company) return;
       updateCompany(
         company.id,
         (c) => updateDataItemState(c, treatmentId, id, patch) ?? c,
+      );
+    },
+    [company, updateCompany],
+  );
+
+  const setSpecialRegimeProfile = useCallback(
+    (
+      treatmentId: string,
+      purposeId: string,
+      patch: Partial<SpecialRegimeProfile>,
+    ) => {
+      if (!company) return;
+      updateCompany(
+        company.id,
+        (c) => setSpecialRegimeProfileState(c, treatmentId, purposeId, patch) ?? c,
       );
     },
     [company, updateCompany],
@@ -881,21 +924,18 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
    * El execution context se resuelve explícitamente desde la selección
    * activa y el scope del protocolo en el momento de la acción.
    */
-  const finalizeProfessionalJudgment = useCallback(
+  const finalizeProfessionalJudgmentAt = useCallback(
     (
       protocolKey: string,
       draft: ReasoningDraft,
       facts: FactMap,
+      ctx: ExecutionContext,
     ): { ok: true } | { ok: false; errors: string[] } => {
       if (!company) return { ok: false, errors: ["Requiere empresa activa."] };
       const protocol = getProtocol(protocolKey);
       if (!protocol) return { ok: false, errors: ["Protocolo desconocido."] };
-      const ctx = activeExecutionContext(
-        company,
-        protocol.execution_scope ?? "company",
-      );
-      if (!ctx) {
-        return { ok: false, errors: ["Requiere selección válida para finalizar."] };
+      if (ctx.companyId !== company.id || !resolveExecutionContext(company, ctx)) {
+        return { ok: false, errors: ["Contexto de ejecución inválido."] };
       }
       const activity = getCanonicalActivity(protocol.activity_key);
       // Consistencia con colecciones locales (dispatch por datos):
@@ -906,7 +946,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       let draftForFinalize = draft;
       if (guard) {
         const uses =
-          ctx.scope === "treatment" && company
+          ctx.scope === "treatment"
             ? (getTreatment(company, ctx.treatmentId)?.automatedUses ?? [])
             : [];
         const extras = guard.composeRefs(uses);
@@ -918,6 +958,27 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         });
         if (guardErrors.length > 0) return { ok: false, errors: guardErrors };
         draftForFinalize = { ...draft, extra_facts_considered: extras };
+      }
+      // Consistencia D5 (dispatch por datos): el guard valida cobertura
+      // estructural, referencias requeridas y cautelas propias, y
+      // compone las referencias antes de la finalización atómica.
+      const srGuard = getSpecialRegimeGuard(protocol);
+      if (srGuard) {
+        const extras = srGuard.composeRefs(
+          company,
+          ctx,
+          draftForFinalize.extra_facts_considered ?? [],
+        );
+        const srErrors = srGuard.validateFinalization({
+          company,
+          ctx,
+          protocol,
+          conclusion: draft.conclusion,
+          extras,
+          facts,
+        });
+        if (srErrors.length > 0) return { ok: false, errors: srErrors };
+        draftForFinalize = { ...draftForFinalize, extra_facts_considered: extras };
       }
       const result = finalizeJudgment({
         protocol,
@@ -941,6 +1002,27 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       return { ok: true };
     },
     [company, updateCompany],
+  );
+
+  const finalizeProfessionalJudgment = useCallback(
+    (
+      protocolKey: string,
+      draft: ReasoningDraft,
+      facts: FactMap,
+    ): { ok: true } | { ok: false; errors: string[] } => {
+      if (!company) return { ok: false, errors: ["Requiere empresa activa."] };
+      const protocol = getProtocol(protocolKey);
+      if (!protocol) return { ok: false, errors: ["Protocolo desconocido."] };
+      const ctx = activeExecutionContext(
+        company,
+        protocol.execution_scope ?? "company",
+      );
+      if (!ctx) {
+        return { ok: false, errors: ["Requiere selección válida para finalizar."] };
+      }
+      return finalizeProfessionalJudgmentAt(protocolKey, draft, facts, ctx);
+    },
+    [company, finalizeProfessionalJudgmentAt],
   );
 
   /**
@@ -1072,6 +1154,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       clearDiagnosticFact,
       resolveFactConflict,
       finalizeProfessionalJudgment,
+      finalizeProfessionalJudgmentAt,
       finalizeProtocolOutcome,
       setLastLocation,
       exportCompany,
@@ -1090,6 +1173,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       addDataItem,
       updateDataItem,
       deleteDataItem,
+      setSpecialRegimeProfile,
       addSource,
       updateSource,
       deleteSource,
@@ -1107,11 +1191,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       selectCompany, setActivityStatus, saveProtocolAnswer, saveScopedProtocolAnswer,
       clearScopedProtocolAnswers, clearProtocolAnswers,
       clearProtocolFact, setDiagnosticFact, clearDiagnosticFact, resolveFactConflict,
-      finalizeProfessionalJudgment, finalizeProtocolOutcome, setLastLocation,
+      finalizeProfessionalJudgment, finalizeProfessionalJudgmentAt, finalizeProtocolOutcome, setLastLocation,
       exportCompany, importCompany, addTreatment, selectTreatment,
       renameTreatment, deleteTreatment, addPurpose, selectPurpose,
       renamePurpose, deletePurpose, addActor, updateActor, deleteActor,
-      addDataItem, updateDataItem, deleteDataItem, addSource, updateSource,
+      addDataItem, updateDataItem, deleteDataItem, setSpecialRegimeProfile, addSource, updateSource,
       deleteSource, addRetentionRule, updateRetentionRule, deleteRetentionRule,
       addDataPurposeLink, removeDataPurposeLink, addAutomatedUse,
       updateAutomatedUse, deleteAutomatedUse,

@@ -329,10 +329,23 @@ describe("contenido canónico D5", () => {
     }
   });
 
-  it("19. D5 sin protocolos: 54 actividades, 47 protocolos", () => {
-    for (const k of EXPECTED_KEYS) {
+  it("19. D5.01–D5.03 con protocolos; D5.04–D5.07 sin protocolos", () => {
+    for (const k of [
+      "sensitive.lawfulness_assess",
+      "sensitive.health_biological_assess",
+      "sensitive.biometric_assess",
+    ]) {
+      expect(getProtocolForActivity(k), k).toBeTruthy();
+    }
+    for (const k of [
+      "minors.processing_assess",
+      "research.public_interest_assess",
+      "geolocation.requirements_assess",
+      "financial.titleIII_scope",
+    ]) {
       expect(getProtocolForActivity(k), k).toBeUndefined();
     }
+    expect(ALL_ACTIVITIES).toHaveLength(54);
   });
 
   it("20. D05.md sincronizado y determinístico", () => {

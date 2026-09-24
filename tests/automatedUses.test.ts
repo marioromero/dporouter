@@ -624,13 +624,13 @@ describe("automatedUses: persistencia", () => {
 });
 
 describe("automatedUses: regresión", () => {
-  it("20. D1/D2/D3/D4 canon intactos; 54 actividades; 47 protocolos; 2 pendings", () => {
+  it("20. D1/D2/D3/D4 canon intactos; 54 actividades; 50 protocolos; 2 pendings", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
     expect(D04_ACTIVITIES).toHaveLength(9);
     expect(ALL_ACTIVITIES).toHaveLength(54);
-    expect(listProtocols()).toHaveLength(47);
+    expect(listProtocols()).toHaveLength(50);
     expect(getUnresolvedReferences()).toEqual([
       "mpi.diffusion",
       "risk.mpi_sync",

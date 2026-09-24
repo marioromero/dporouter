@@ -47,6 +47,9 @@ import { RIGHTS_BLOCKING_ENABLE_PROTOCOL } from "./rights.blocking_enable";
 import { RIGHTS_PORTABILITY_ENABLE_PROTOCOL } from "./rights.portability_enable";
 import { AUTOMATED_DECISION_SCOPE_ASSESS_PROTOCOL } from "./automated_decision.scope_assess";
 import { AUTOMATED_DECISION_SAFEGUARDS_ENABLE_PROTOCOL } from "./automated_decision.safeguards_enable";
+import { SENSITIVE_LAWFULNESS_ASSESS_PROTOCOL } from "./sensitive.lawfulness_assess";
+import { SENSITIVE_HEALTH_BIOLOGICAL_ASSESS_PROTOCOL } from "./sensitive.health_biological_assess";
+import { SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL } from "./sensitive.biometric_assess";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -108,6 +111,9 @@ const PROTOCOLS: ExecutionProtocol[] = [
   RIGHTS_PORTABILITY_ENABLE_PROTOCOL,
   AUTOMATED_DECISION_SCOPE_ASSESS_PROTOCOL,
   AUTOMATED_DECISION_SAFEGUARDS_ENABLE_PROTOCOL,
+  SENSITIVE_LAWFULNESS_ASSESS_PROTOCOL,
+  SENSITIVE_HEALTH_BIOLOGICAL_ASSESS_PROTOCOL,
+  SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

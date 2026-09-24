@@ -26,6 +26,7 @@ import {
 } from "../components/ProtocolView";
 import { RecordedJudgmentView, JudgmentPanel } from "../components/JudgmentPanel";
 import { resolveGuideResult } from "../workspace/reasoning";
+import { isSpecialRegimeProtocol } from "../workspace/specialRegimeGuards";
 import { NotFoundPage } from "./NotFound";
 
 /**
@@ -86,9 +87,19 @@ function GuiaContent({
   // Un fact necesario en conflicto bloquea cualquier conclusión definitiva
   // (no equivale a pendiente ni a desconocido). En scopes treatment y
   // purpose solo cuentan conflictos intra-dirección efectiva.
-  const judgmentCtx = company
-    ? activeExecutionContext(company, protocol.execution_scope ?? "company")
-    : null;
+  // Guías D5: siempre el contexto addressed capturado al abrir (nunca
+  // la selección tardía); el resto conserva el camino histórico.
+  const d5Addressed = isSpecialRegimeProtocol(protocol);
+  const judgmentCtx = d5Addressed
+    ? session.ctx
+    : company
+      ? activeExecutionContext(company, protocol.execution_scope ?? "company")
+      : null;
+  // D5 addressed: bloques, resultado y evaluación usan la vista del
+  // contexto capturado al abrir (lo evaluado comparte address con lo
+  // escrito). El resto conserva la vista activa histórica.
+  const evalFacts =
+    d5Addressed && session.addressedFacts ? session.addressedFacts : session.facts;
   const blocks =
     judgmentCtx && judgmentCtx.scope !== "company"
       ? blockingScopedConflicts(protocolNeededFacts(protocol), company, judgmentCtx)
@@ -111,7 +122,7 @@ function GuiaContent({
         />
       );
     }
-    const resolved = resolveGuideResult(protocol, company, session.facts, judgmentCtx);
+    const resolved = resolveGuideResult(protocol, company, evalFacts, judgmentCtx);
     if (resolved.kind === "recorded") {
       return (
         <RecordedJudgmentView
@@ -131,7 +142,7 @@ function GuiaContent({
         />
       );
     }
-    const evaluation = evaluateProtocol(protocol, session.facts);
+    const evaluation = evaluateProtocol(protocol, evalFacts);
     if (evaluation.status === "outcome") {
       return (
         <ProtocolOutcomeView
@@ -188,6 +199,7 @@ function GuiaContent({
           activity={activity}
           session={session}
           node={node}
+          addressedCtx={d5Addressed ? (session.ctx ?? null) : undefined}
         />
       </>
     );
@@ -209,7 +221,7 @@ function GuiaContent({
     // preservada), pero un short-circuit previo del recorrido completo
     // (p. ej. obligación MPI) siempre tiene prioridad y se rendea como
     // resultado: ninguna navegación puede ocultar una conclusión anterior.
-    const resolution = resolveDecisionNode(node, session.facts);
+    const resolution = resolveDecisionNode(node, evalFacts);
     if (resolution.kind === "misconfigured") {
       return (
         <ProtocolMisconfigured
@@ -222,7 +234,7 @@ function GuiaContent({
         />
       );
     }
-    const evaluation = evaluateProtocol(protocol, session.facts);
+    const evaluation = evaluateProtocol(protocol, evalFacts);
     if (resolution.kind === "node") {
       if (evaluation.status === "outcome") {
         return (
@@ -275,7 +287,7 @@ function GuiaContent({
           : null;
       // Si el nodo declara required_facts, el conteo los refleja; si no,
       // se usa el del recorrido.
-      const declaredMissing = getMissingRequiredFacts(protocol, node, session.facts);
+      const declaredMissing = getMissingRequiredFacts(protocol, node, evalFacts);
       const missingCount =
         (node.required_facts?.length ?? 0) > 0
           ? declaredMissing.length

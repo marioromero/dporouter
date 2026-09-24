@@ -602,7 +602,7 @@ describe("integración rama consentimiento A1/A2", () => {
 });
 
 describe("regresión cierre D3", () => {
-  it("24. 54 actividades, 2 pendings, D1/D2/D3.01-02 intactos, 47 protocolos", () => {
+  it("24. 54 actividades, 2 pendings, D1/D2/D3.01-02 intactos, 50 protocolos", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
@@ -611,7 +611,7 @@ describe("regresión cierre D3", () => {
       "mpi.diffusion",
       "risk.mpi_sync",
     ]);
-    expect(listProtocols()).toHaveLength(47);
+    expect(listProtocols()).toHaveLength(50);
     for (const k of [
       "transparency.policy_assemble",
       "transparency.publication_validate",

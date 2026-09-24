@@ -26,6 +26,7 @@ import {
   currentAutomatedUses,
   getScopeFinalizeGuard,
 } from "./automatedScope";
+import { getSpecialRegimeGuard } from "./specialRegimeGuards";
 
 /** Refs a usos automatizados: definidas en automatedScope, reexportadas.
  * Entradas exactas `automated_use:<id>` para `facts_considered[]`
@@ -303,6 +304,18 @@ export function getRecordedJudgment(
       currentAutomatedUses(company, effective),
     );
     if (stale.length > 0) return { status: "stale", record, reasons: stale };
+  }
+  // Consistencia D5 (dispatch por datos): un record cuya cobertura de
+  // datos, links, señales, perfil o candidatura ya no coincide con el
+  // estado actual queda desactualizado aunque el gate pase.
+  const srGuard = getSpecialRegimeGuard(protocol);
+  if (srGuard) {
+    const effective =
+      ctx ?? (company ? { scope: "company", companyId: company.id } : null);
+    if (company && effective && effective.scope === "purpose") {
+      const stale = srGuard.stalenessReasons(record, company, effective, protocol);
+      if (stale.length > 0) return { status: "stale", record, reasons: stale };
+    }
   }
   return { status: "valid", record, outcome };
 }

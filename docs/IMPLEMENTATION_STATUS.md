@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-24 (D5 Punto 0 capture infrastructure, ADR-053; D5 protocols still 0)
+Last controlled update: 2026-09-24 (D5.01–D5.03 guided batch; D5.04–D5.07 protocol-less)
 
 ## Functional baseline
 
@@ -221,11 +221,11 @@ Stage 1 canonical activities:
 
 Guided protocols:
 
-`47`
+`50`
 
 Protocol coverage:
 
-`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3), D4.01–D4.09 (D4.01–D4.07 company-scope; D4.08 decision + D4.09 checklist treatment-scope sobre automatedUses[] compartida). D5.01–D5.07 sin protocolos (canon importado; guided retrofit pendiente)`
+`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3), D4.01–D4.09 (D4.01–D4.07 company-scope; D4.08 decision + D4.09 checklist treatment-scope sobre automatedUses[] compartida). D5.01–D5.03 decision purpose-scope con juicio y guards estructurales; D5.04–D5.07 sin protocolos (guided retrofit parcial)`
 
 D4 canonical coverage:
 
@@ -250,7 +250,13 @@ D5 Punto 0 capture infrastructure (ADR-053; canon D5 intacto, sin protocolos nue
 * refs de razonamiento `data_item:<id>` para futuro uso en `ReasoningRecord.facts_considered[]`;
 * validación/import estricta (enum inválido rechaza; sospechoso enum-válido se preserva; legacy válido; derivados/warnings fuera del JSON).
 
-Readiness D5 sin cambios por esta infraestructura: canonical 7, protocols 0, execution-ready 0, product-ready 0. Canonical total 54, protocols total 47, pending refs 2.
+D5.01–D5.03 guided batch (decision, purpose, con juicio profesional):
+
+* D5.01 (`sensitive.lawfulness_assess`), D5.02 (`sensitive.health_biological_assess`) y D5.03 (`sensitive.biometric_assess`) con ExecutionProtocols execution-ready y product-ready (candidatura derivada como routing, cobertura estructural completa, rutas art. 16/16 bis fieles al canon, cautelas propias —ley sanitaria, prohibición especial, cuatro elementos de información—, refs `data_item:<id>`, staleness contra current state, finalización addressed purpose-scoped);
+* UI estructural mínima: clasificación de datos (Sí/No/Por determinar), perfil de finalidad, advertencias de coherencia y estado estructural en guía; sin claves técnicas;
+* finalización addressed obligatoria en guías D5 (la selección tardía avisa y bloquea); resto de dominios conserva camino histórico.
+
+Readiness D5 actual: canonical 7, protocols 3, execution-ready 3, product-ready 3; pendientes D5.04–D5.07. Canonical total 54, protocols total 50, pending refs 2.
 
 Pending canonical cross-domain targets:
 
@@ -259,7 +265,7 @@ Pending canonical cross-domain targets:
 
 Still not implemented:
 
-* guided protocols for D5–D12 activities;
+* guided protocols for D5.04–D5.07 and D6–D12 activities;
 * D06-D12;
 * real characterization UI;
 * backend persistent client context (local treatment/purpose workspace exists);

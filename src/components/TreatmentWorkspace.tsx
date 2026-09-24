@@ -1,5 +1,10 @@
 import { useState } from "react";
 import { useWorkspace } from "../workspace/context";
+import {
+  DataItemSignalsEditor,
+  PurposeProfileEditor,
+  SpecialRegimeWarnings,
+} from "./SpecialRegimeCapture";
 import type {
   AutomatedUseLegalPath,
   AutomatedUseRecord,
@@ -243,6 +248,8 @@ export function PurposeWorkspace({ treatmentId }: { treatmentId: string }) {
               >
                 Eliminar
               </button>
+              <PurposeProfileEditor treatmentId={treatmentId} purposeId={p.purpose.id} />
+              <SpecialRegimeWarnings treatmentId={treatmentId} purposeId={p.purpose.id} />
             </li>
           ))}
         </ul>
@@ -398,6 +405,7 @@ export function DataWorkspace({ treatmentId }: { treatmentId: string }) {
   return (
     <section className="activity-section" aria-label="Datos" data-testid="workspace-data">
       <h2>Datos de {treatment.context.name}</h2>
+      <SpecialRegimeWarnings treatmentId={treatmentId} />
       {items.length === 0 ? (
         <p>No hay datos registrados.</p>
       ) : (
@@ -406,6 +414,7 @@ export function DataWorkspace({ treatmentId }: { treatmentId: string }) {
             <li key={d.id}>
               <strong>{d.label}</strong>
               {d.category ? ` · ${d.category}` : ""}{" "}
+              <DataItemSignalsEditor treatmentId={treatmentId} dataItemId={d.id} />
               <button
                 type="button"
                 className="btn ghost small"

@@ -168,9 +168,9 @@ describe("contenido canónico D4", () => {
     }
   });
 
-  it("4. total canónico = 47", () => {
-    expect(ALL_ACTIVITIES).toHaveLength(47);
-    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(47);
+  it("4. total canónico = 54 (D5 importado)", () => {
+    expect(ALL_ACTIVITIES).toHaveLength(54);
+    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(54);
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
@@ -319,12 +319,10 @@ describe("contenido canónico D4", () => {
     }
   });
 
-  it("13. 4 pending refs anteriores intactas; D4 no resuelve ninguna", () => {
+  it("13. 2 pending refs restantes (D5 resolvió las suyas); D4 no resuelve ninguna", () => {
     expect(getUnresolvedReferences()).toEqual([
-      "financial.titleIII_scope",
       "mpi.diffusion",
       "risk.mpi_sync",
-      "sensitive.lawfulness_assess",
     ]);
     expect(getDomainPendingReferences(D04_ACTIVITIES)).toEqual([]);
   });
@@ -340,7 +338,7 @@ describe("contenido canónico D4", () => {
       domainKey: "d4",
       domainCode: "D4",
     });
-    for (const key of ["d5","d6","d7","d8","d9","d10","d11","d12"]) {
+    for (const key of ["d6","d7","d8","d9","d10","d11","d12"]) {
       expect(getDomain(key)?.activity_keys, key).toEqual([]);
     }
   });

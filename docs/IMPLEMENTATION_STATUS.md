@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-24 (D4.08–D4.09 guided batch, D4 CLOSED)
+Last controlled update: 2026-09-24 (D5 canonical import, 7 activities; guided retrofit pending)
 
 ## Functional baseline
 
@@ -20,9 +20,9 @@ Completed outside the codebase:
 - Block 5 — activities D1-D12;
 - Block 6 — coverage and integrity review.
 
-D01–D04 are imported (`content/domains/d01.ts`, `d02.ts`, `d03.ts`, `d04.ts`).
+D01–D05 are imported (`content/domains/d01.ts`, `d02.ts`, `d03.ts`, `d04.ts`, `d05.ts`).
 
-D05–D12 have NOT yet been imported into this repository.
+D06–D12 have NOT yet been imported into this repository.
 
 Do not invent them.
 
@@ -213,11 +213,11 @@ remain pending per-activity batches.
 
 Canonical activity count:
 
-`47`
+`54`
 
 Stage 1 canonical activities:
 
-`47`
+`54`
 
 Guided protocols:
 
@@ -225,7 +225,7 @@ Guided protocols:
 
 Protocol coverage:
 
-`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3), D4.01–D4.09 (D4.01–D4.07 company-scope; D4.08 decision + D4.09 checklist treatment-scope sobre automatedUses[] compartida)`
+`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3), D4.01–D4.09 (D4.01–D4.07 company-scope; D4.08 decision + D4.09 checklist treatment-scope sobre automatedUses[] compartida). D5.01–D5.07 sin protocolos (canon importado; guided retrofit pendiente)`
 
 D4 canonical coverage:
 
@@ -235,17 +235,21 @@ D3 canonical coverage:
 
 `D3.01–D3.06 (6 ActivityDefinitions, 6 ExecutionProtocols: D3.01 procedure + D3.02 checklist company-scope; D3.03 procedure + D3.04 decision + D3.05 checklist + D3.06 procedure purpose-scope; 6/6 execution-ready, 6/6 product-ready)`
 
+D5 canonical coverage:
+
+`D5.01–D5.07 (7 ActivityDefinitions, 0 ExecutionProtocols; canon importado, guided retrofit pendiente)`
+
+D5.01–D5.07 son `assessment` purpose-scoped (la finalidad activa es la unidad jurídica principal), `applicable_role = responsible`, `evidence_basis = agency_standard`, `relationship_effect = []`, `conditions_applicability = []` (aplicabilidad conceptual en trigger/objetivo/pasos; sin taxonomía machine-readable), sin dependencias propias. Reasoning requerido en D5.01–D5.05 y D5.07; D5.06 sin juicio (verifica requisitos adicionales sin redefinir licitud D2). D5.01 (`sensitive.lawfulness_assess`) y D5.07 (`financial.titleIII_scope`) resuelven las dos pending references de D2.05 por existencia de los keys canónicos; D2.05 intacto. Frontera Stage 1: D5 evalúa el tratamiento, no almacena datos personales especiales reales (sin registros por titular, sin casos individuales, sin temporizadores operacionales). Captura estructurada de categorías/regímenes diferida a auditoría específica (`D5 SPECIAL-REGIME CAPTURE AUDIT`); `DataItemRecord.category` intacto.
+
 Pending canonical cross-domain targets:
 
 * `risk.mpi_sync`
 * `mpi.diffusion`
-* `sensitive.lawfulness_assess`
-* `financial.titleIII_scope`
 
 Still not implemented:
 
-* guided protocols for D05–D12 activities;
-* D05-D12;
+* guided protocols for D5–D12 activities;
+* D06-D12;
 * real characterization UI;
 * backend persistent client context (local treatment/purpose workspace exists);
 * state-effect engine;

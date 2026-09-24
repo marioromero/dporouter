@@ -220,6 +220,34 @@ export function renderD04(
   });
 }
 
+/** Proyección D05. */
+export function renderD05(
+  activities: ActivityDefinition[],
+  sources: CanonicalSource[],
+  pendingRefs: string[],
+  provenanceNotes: Record<string, string>,
+): string {
+  return renderDomainDoc({
+    sourceFile: "content/domains/d05.ts",
+    title: "# D05 — Tratamientos especiales",
+    domainKey: "d5",
+    humanCode: "D5",
+    name: "Tratamientos especiales",
+    objective:
+      "Identificar y evaluar los regímenes jurídicos adicionales aplicables a una finalidad cuando ésta involucre datos sensibles, categorías especialmente reguladas, geolocalización o tratamientos comprendidos por el Título III, verificando sus condiciones específicas de licitud, protección y uso sin almacenar datos personales reales de los titulares.",
+    description:
+      "D5 evalúa el tratamiento, no almacena los datos objeto del tratamiento: Stage 1 registra exclusivamente características y conclusiones (régimen aplicable, condiciones verificadas, controles y vía evaluada) sin datos personales reales de titulares. D5.01–D5.07 evalúan la finalidad activa (purpose); la aplicabilidad conceptual vive en trigger, objetivo, pasos y notas hasta la auditoría de captura diferida (sin taxonomía machine-readable en esta importación).",
+    review: "2026-09-21",
+    normativeNote: NORMATIVE_NOTE,
+    activities,
+    sources,
+    pendingRefs,
+    provenanceNotes,
+    freezeNote:
+      "D5 está congelado salvo revisión controlada. No inventar, completar ni reinterpretar su contenido jurídico. La aplicación consume la representación estructurada; este documento es la especificación humana canónica. Stage 1 no almacena datos personales especiales reales: sin registros por titular, sin casos individuales, sin temporizadores operacionales.",
+  });
+}
+
 /** Proyección D02. */
 export function renderD02(
   activities: ActivityDefinition[],

@@ -360,12 +360,10 @@ describe("contenido canónico D3", () => {
     });
   });
 
-  it("21. restantes pending refs siguen pendientes (D5/D8)", () => {
+  it("21. restantes pending refs siguen pendientes (D8/D11); D5 resueltas", () => {
     expect(getUnresolvedReferences()).toEqual([
-      "financial.titleIII_scope",
       "mpi.diffusion",
       "risk.mpi_sync",
-      "sensitive.lawfulness_assess",
     ]);
   });
 
@@ -376,16 +374,17 @@ describe("contenido canónico D3", () => {
     expect(getCanonicalActivity(DEMO_ACTIVITY_KEY)).toBeUndefined();
   });
 
-  it("23. D1/D2/D3 intactos; registro global en 47 (D4 importado)", () => {
+  it("23. D1/D2/D3 intactos; registro global en 54 (D4 + D5 importados)", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
-    expect(ALL_ACTIVITIES).toHaveLength(47);
-    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(47);
+    expect(ALL_ACTIVITIES).toHaveLength(54);
+    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(54);
   });
 
-  it("24. D4 tiene 9 actividades; D5-D12 contienen cero actividades", () => {
+  it("24. D4 tiene 9 actividades; D5 tiene 7; D6-D12 contienen cero actividades", () => {
     expect(getDomain("d4")?.activity_keys).toHaveLength(9);
-    for (const key of ["d5","d6","d7","d8","d9","d10","d11","d12"]) {
+    expect(getDomain("d5")?.activity_keys).toHaveLength(7);
+    for (const key of ["d6","d7","d8","d9","d10","d11","d12"]) {
       expect(getDomain(key)?.activity_keys, key).toEqual([]);
     }
   });

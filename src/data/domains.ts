@@ -3,6 +3,7 @@ import { D1_ACTIVITY_KEYS } from "../../content/domains/d01";
 import { D2_ACTIVITY_KEYS } from "../../content/domains/d02";
 import { D3_ACTIVITY_KEYS } from "../../content/domains/d03";
 import { D4_ACTIVITY_KEYS } from "../../content/domains/d04";
+import { D5_ACTIVITY_KEYS } from "../../content/domains/d05";
 import { normalizeText } from "../../content/text";
 
 /** Normalización textual única de la capa canónica (reexportada). */
@@ -12,7 +13,7 @@ export { normalizeText };
  * Registro de aplicación D1-D12 (navegación, búsqueda, rutas).
  * Consume definiciones canónicas de /content; no duplica contenido.
  * Códigos, claves y nombres exactos según la iteración vigente.
- * D5-D12 permanecen sin actividades hasta su importación controlada.
+ * D6-D12 permanecen sin actividades hasta su importación controlada.
  */
 export const DOMAINS: DomainDefinition[] = [
   {
@@ -63,9 +64,11 @@ export const DOMAINS: DomainDefinition[] = [
     domain_key: "d5",
     human_code: "D5",
     name: "Tratamientos especiales",
-    objective: "",
-    description: "",
-    activity_keys: [],
+    objective:
+      "Identificar y evaluar los regímenes jurídicos adicionales aplicables a una finalidad cuando ésta involucre datos sensibles, categorías especialmente reguladas, geolocalización o tratamientos comprendidos por el Título III, verificando sus condiciones específicas de licitud, protección y uso sin almacenar datos personales reales de los titulares.",
+    description:
+      "D5 evalúa el tratamiento, no almacena los datos objeto del tratamiento: Stage 1 registra exclusivamente características y conclusiones (régimen aplicable, condiciones verificadas, controles y vía evaluada) sin datos personales reales de titulares.",
+    activity_keys: [...D5_ACTIVITY_KEYS],
     related_domain_keys: [],
   },
   {

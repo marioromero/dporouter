@@ -602,16 +602,14 @@ describe("integración rama consentimiento A1/A2", () => {
 });
 
 describe("regresión cierre D3", () => {
-  it("24. 47 actividades, 4 pendings, D1/D2/D3.01-02 intactos, 47 protocolos", () => {
+  it("24. 54 actividades, 2 pendings, D1/D2/D3.01-02 intactos, 47 protocolos", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
-    expect(ALL_ACTIVITIES).toHaveLength(47);
+    expect(ALL_ACTIVITIES).toHaveLength(54);
     expect(getUnresolvedReferences()).toEqual([
-      "financial.titleIII_scope",
       "mpi.diffusion",
       "risk.mpi_sync",
-      "sensitive.lawfulness_assess",
     ]);
     expect(listProtocols()).toHaveLength(47);
     for (const k of [

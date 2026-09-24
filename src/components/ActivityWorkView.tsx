@@ -154,7 +154,7 @@ export function ActivityWorkView({
         </div>
       </div>
 
-      <section className="activity-section" aria-label="Acción principal" data-testid="actividad-accion">
+      <section className="activity-section tone-accion" aria-label="Acción principal" data-testid="actividad-accion">
         <h2>Acción principal</h2>
         {primaryGuide ? (
           <div className="actions">
@@ -196,7 +196,7 @@ export function ActivityWorkView({
         ) : null}
       </section>
 
-      <section className="activity-section" aria-label="Qué se busca resolver">
+      <section className="activity-section tone-objetivo" aria-label="Qué se busca resolver">
         <h2>Qué se busca resolver</h2>
         <p>{def.objective}</p>
         {def.trigger_question.trim() !== "" ? (
@@ -221,7 +221,7 @@ export function ActivityWorkView({
       </section>
 
       {blocked.length > 0 ? (
-        <section className="activity-section" aria-label="Dato en conflicto" data-testid="actividad-conflicto">
+        <section className="activity-section tone-conflicto" aria-label="Dato en conflicto" data-testid="actividad-conflicto">
           <h2>Dato en conflicto</h2>
           <p>
             Debes resolver un dato en conflicto antes de obtener una
@@ -236,7 +236,7 @@ export function ActivityWorkView({
       ) : null}
 
       {recorded.status === "valid" && conclusionNode ? (
-        <section className="activity-section" aria-label="Conclusión profesional" data-testid="actividad-juicio">
+        <section className="activity-section tone-juicio" aria-label="Conclusión profesional" data-testid="actividad-juicio">
           <h2>Conclusión profesional</h2>
           <p>
             <strong>{recorded.outcome.label}</strong>
@@ -251,7 +251,7 @@ export function ActivityWorkView({
       ) : null}
 
       {recorded.status === "stale" && conclusionNode ? (
-        <section className="activity-section" aria-label="Conclusión desactualizada">
+        <section className="activity-section tone-stale" aria-label="Conclusión desactualizada">
           <h2>Conclusión desactualizada</h2>
           <p>
             La conclusión registrada ya no refleja los antecedentes
@@ -271,7 +271,7 @@ export function ActivityWorkView({
       ) : null}
 
       {outcome ? (
-        <section className="activity-section" aria-label="Resultado actual" data-testid="actividad-resultado">
+        <section className="activity-section tone-resultado" aria-label="Resultado actual" data-testid="actividad-resultado">
           <h2>Resultado actual</h2>
           <p>
             <strong>{outcome.label}</strong>
@@ -284,7 +284,7 @@ export function ActivityWorkView({
         </section>
       ) : null}
 
-      <section className="activity-section" aria-label="Qué revisar">
+      <section className="activity-section tone-revisar" aria-label="Qué revisar">
         <h2>Qué revisar</h2>
         {def.data_collection_methods.length > 0 ? (
           <ul>
@@ -305,7 +305,7 @@ export function ActivityWorkView({
         ) : null}
       </section>
 
-      <section className="activity-section" aria-label="Evidencia que debes obtener">
+      <section className="activity-section tone-evidencia" aria-label="Evidencia que debes obtener">
         <h2>Evidencia que debes obtener</h2>
         {provenance ? <p>{provenance}</p> : null}
         {def.evidence_required.length > 0 ? (
@@ -318,14 +318,14 @@ export function ActivityWorkView({
       </section>
 
       {def.deliverable.trim() !== "" ? (
-        <section className="activity-section" aria-label="Entregable">
+        <section className="activity-section tone-entregable" aria-label="Entregable">
           <h2>Entregable</h2>
           <p>{def.deliverable}</p>
         </section>
       ) : null}
 
       {def.interlocutors.length > 0 ? (
-        <section className="activity-section" aria-label="Con quién hablar">
+        <section className="activity-section tone-interlocutores" aria-label="Con quién hablar">
           <h2>Con quién hablar</h2>
           <ul>
             {def.interlocutors.map((s) => (
@@ -335,7 +335,7 @@ export function ActivityWorkView({
         </section>
       ) : null}
 
-      <section className="activity-section" aria-label="Fundamento">
+      <section className="activity-section tone-fundamento" aria-label="Fundamento">
         <h2>Fundamento</h2>
         <p>{grounds}</p>
         <details>
@@ -352,7 +352,7 @@ export function ActivityWorkView({
       </section>
 
       {def.activity_dependencies.length > 0 ? (
-        <section className="activity-section" aria-label="Se relaciona con">
+        <section className="activity-section tone-relaciones" aria-label="Se relaciona con">
           <h2>Se relaciona con</h2>
           <ul>
             {def.activity_dependencies
@@ -379,7 +379,7 @@ export function ActivityWorkView({
       ) : null}
 
       {visibleOutcomeAction || firstDependencyDef ? (
-        <section className="activity-section" aria-label="Siguiente paso" data-testid="actividad-siguiente">
+        <section className="activity-section tone-siguiente" aria-label="Siguiente paso" data-testid="actividad-siguiente">
           <h2>Siguiente paso</h2>
           {visibleOutcomeAction ? (
             <p>

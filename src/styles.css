@@ -738,6 +738,109 @@ h3 {
   padding: 0;
 }
 
+/* ---------- Tonos identificadores de sección (vista de actividad) ----------
+   Matices claros con barra lateral y título teñidos. El significado nunca
+   depende solo del color: cada sección conserva su título en texto. */
+
+.activity-section[class*="tone-"] {
+  border-left-width: 4px;
+}
+
+.activity-section[class*="tone-"] h2 {
+  color: inherit;
+}
+
+.activity-section.tone-accion {
+  background: #e7f0f8;
+  border-color: #c4d6e8;
+  border-left-color: #1f5c8b;
+  color: #174a71;
+}
+
+.activity-section.tone-objetivo {
+  background: #ebeef9;
+  border-color: #ccd1ec;
+  border-left-color: #46539e;
+  color: #39448a;
+}
+
+.activity-section.tone-conflicto {
+  background: #faefee;
+  border-color: #ecc9c6;
+  border-left-color: #b3372f;
+  color: #93302a;
+}
+
+.activity-section.tone-juicio {
+  background: #ebf5ee;
+  border-color: #c6e2cf;
+  border-left-color: #247a4c;
+  color: #1c633d;
+}
+
+.activity-section.tone-stale {
+  background: #fdf4df;
+  border-color: #eddcb4;
+  border-left-color: #9a6a14;
+  color: #7d560f;
+}
+
+.activity-section.tone-resultado {
+  background: #e6f4f2;
+  border-color: #c2e2dd;
+  border-left-color: #0f766e;
+  color: #0d5f59;
+}
+
+.activity-section.tone-revisar {
+  background: #ecf0f6;
+  border-color: #ccd5e2;
+  border-left-color: #475b77;
+  color: #3a4a63;
+}
+
+.activity-section.tone-evidencia {
+  background: #f0ebf9;
+  border-color: #d5c9ec;
+  border-left-color: #6b4fa1;
+  color: #574186;
+}
+
+.activity-section.tone-entregable {
+  background: #faefe3;
+  border-color: #ecd3b8;
+  border-left-color: #a85b1f;
+  color: #874919;
+}
+
+.activity-section.tone-interlocutores {
+  background: #faeaf0;
+  border-color: #efc6d4;
+  border-left-color: #a83a5d;
+  color: #88304c;
+}
+
+.activity-section.tone-fundamento {
+  background: #f2f0ea;
+  border-color: #d9d4c7;
+  border-left-color: #6b7686;
+  color: #4a5568;
+}
+
+.activity-section.tone-relaciones {
+  background: #edf3e2;
+  border-color: #d3ddb8;
+  border-left-color: #5f7023;
+  color: #4d5b1c;
+}
+
+.activity-section.tone-siguiente {
+  background: #dee9f4;
+  border-color: #b4c9e0;
+  border-left-color: #174a71;
+  color: #143d5d;
+}
+
 .trace-table {
   width: 100%;
   border-collapse: collapse;

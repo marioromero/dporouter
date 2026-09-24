@@ -269,3 +269,38 @@ Candidates serve routing, UX hints and resume; they never
 substitute the future protocol decision and never write
 canonical state. D5 protocols (zero active) remain manually
 openable; structural coherence warnings stay runtime-only.
+
+## 18. D6 third-party relationship capture (Punto 0, no protocols yet)
+
+Treatment-owned `thirdPartyRelationships[]` (ADR-054,
+`DATA_CONTRACTS.md` §48) is the shared local structure for future
+D6.01–D6.07: one record per relationship, exactly one juridical
+type, `actorId` referencing the untouched D2.02 `ActorRecord`,
+same-treatment purpose/data references, international tri-state as
+routing only, and optional subordinate assessments
+(`cessionAssessment`, `processorAssessment`,
+`subprocessorAssessment`). Editing it writes nothing canonical.
+
+Read-only derived projections prepare routing without concluding:
+treatment-level `derived.treatment.d6_*` (23 keys: map existence,
+structural completeness, unknown classifications, international
+existence, and per-dimension processor/subprocessor aggregates) and
+purpose-level `derived.purpose.d6_*` (11 keys: relevant cessions
+for the purpose, lawfulness and instrument dimensions, and the
+D6.03 ready-positive vs blocked-by-lawfulness vs incomplete
+separation). Empty sets never produce a positive value; no
+per-relationship derived fact and no dynamic fact key exists.
+
+The future contract is frozen at capture level, not at protocol
+level: definitive D6.01 requires one treatment-scoped
+ReasoningRecord referencing every current relationship through exact
+`third_party_relationship:<id>` tokens; definitive D6.02 requires a
+purpose-scoped record referencing every current cession linked to
+that purpose; D6.03 may conclude positively only when all relevant
+instruments are validated and all lawfulness supported, and is
+blocked — not remediable — when a validated instrument sits on an
+unsupported cession. Execution stays treatment/purpose: no
+relationship scope, no per-relationship protocol session, no
+selector-as-context. D6 protocols (zero active) remain manually
+openable; canonical totals and readiness are unchanged by this
+infrastructure.

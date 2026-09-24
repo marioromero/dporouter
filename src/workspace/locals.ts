@@ -5,16 +5,32 @@ import type {
   AutomatedUseLegalPath,
   AutomatedUseRecord,
   AutomatedUseSafeguards,
+  CessionAssessment,
   CompanyState,
   DataItemRecord,
   DataPurposeLink,
+  ProcessorAssessment,
   RetentionRuleRecord,
   SafeguardCheck,
   SourceRecord,
+  SubprocessorAssessment,
+  ThirdPartyRelationshipRecord,
+  ThirdPartyRelationshipType,
   TreatmentScopedState,
   TriStateSignal,
 } from "./types";
 import { newId } from "./types";
+import {
+  hasValidParent,
+  indexRelationships,
+  isInternationalDimension,
+  isRelationshipType,
+  isValidCessionAssessment,
+  isValidProcessorAssessment,
+  isValidSubprocessorAssessment,
+  parentIssues,
+  relationshipInvariantIssues,
+} from "./thirdParty";
 
 /**
  * CRUD de value objects locales D2/D4 dentro de un TreatmentContext.
@@ -189,7 +205,7 @@ export function updateActor(
   });
 }
 
-/** El rol muere con la entrada; sin refs externas que purgar. */
+/** El rol muere con la entrada; sin refs externas que purgar, salvo relationships D6. */
 export function deleteActor(
   company: CompanyState,
   treatmentId: string,
@@ -197,6 +213,12 @@ export function deleteActor(
 ): CompanyState | null {
   return withTreatment(company, treatmentId, (t) => {
     if (!t.actors?.[id]) return null;
+    // Punto 0 D6 (ADR-054): un actor referenciado por ≥1 relationship
+    // no puede eliminarse en silencio (ni cascade ni strip). El
+    // profesional debe eliminar/reasignar relationships primero.
+    if ((t.thirdPartyRelationships ?? []).some((r) => r.actorId === id)) {
+      return null;
+    }
     const actors = { ...t.actors };
     delete actors[id];
     return { ...t, actors };
@@ -339,8 +361,9 @@ export function updateDataItem(
 }
 
 /**
- * Purga técnica: remueve links, strip del ID en reglas. Las reglas que
- * queden vacías se conservan (el profesional decide eliminarlas).
+ * Purga técnica: remueve links, strip del ID en reglas y en
+ * relationships D6. Las reglas que queden vacías se conservan (el
+ * profesional decide eliminarlas).
  */
 export function deleteDataItem(
   company: CompanyState,
@@ -361,7 +384,17 @@ export function deleteDataItem(
         dataItemIds: r.dataItemIds.filter((d) => d !== id),
       };
     }
-    return { ...t, dataItems, dataPurposeLinks, retentionRules };
+    // Punto 0 D6: strip sin auto-delete de la relationship.
+    // Ausencia legacy se preserva (no se materializa colección vacía).
+    const stripped = { ...t, dataItems, dataPurposeLinks, retentionRules };
+    if (t.thirdPartyRelationships !== undefined) {
+      stripped.thirdPartyRelationships = t.thirdPartyRelationships.map((r) =>
+        r.dataItemIds.includes(id)
+          ? { ...r, dataItemIds: r.dataItemIds.filter((d) => d !== id) }
+          : r,
+      );
+    }
+    return stripped;
   });
 }
 
@@ -953,4 +986,386 @@ export function deleteAutomatedUse(
     if (!uses.some((u) => u.id === id)) return null;
     return { ...t, automatedUses: uses.filter((u) => u.id !== id) };
   });
+}
+
+// ---------------------------------------------------------------------------
+// Third-party relationships (D6.01–D6.07, Punto 0, ADR-054)
+// ---------------------------------------------------------------------------
+
+export interface ThirdPartyRelationshipInput {
+  actorId: string;
+  label: string;
+  relationshipType?: ThirdPartyRelationshipType;
+  purposeIds?: string[];
+  dataItemIds?: string[];
+  internationalDimension?: TriStateSignal;
+  parentRelationshipId?: string;
+  evidenceRef?: string;
+  cessionAssessment?: CessionAssessment;
+  processorAssessment?: ProcessorAssessment;
+  subprocessorAssessment?: SubprocessorAssessment;
+}
+
+export interface ThirdPartyRelationshipPatch {
+  actorId?: string;
+  label?: string;
+  relationshipType?: ThirdPartyRelationshipType;
+  purposeIds?: string[];
+  dataItemIds?: string[];
+  internationalDimension?: TriStateSignal;
+  /** null retira el parent. */
+  parentRelationshipId?: string | null;
+  /** null retira la referencia. */
+  evidenceRef?: string | null;
+  /** null retira el objeto; parcial fusiona sobre el vigente compatible. */
+  cessionAssessment?: Partial<CessionAssessment> | null;
+  processorAssessment?: Partial<ProcessorAssessment> | null;
+  subprocessorAssessment?: Partial<SubprocessorAssessment> | null;
+}
+
+/** Refs multi-valued: strings únicos existentes en el conjunto válido. */
+function cleanRelRefs(
+  refs: string[] | undefined,
+  valid: ReadonlySet<string>,
+): string[] | null {
+  if (refs === undefined) return [];
+  if (!Array.isArray(refs)) return null;
+  const seen = new Set<string>();
+  for (const r of refs) {
+    if (typeof r !== "string" || seen.has(r) || !valid.has(r)) return null;
+    seen.add(r);
+  }
+  return [...seen];
+}
+
+/**
+ * Valida un record candidato contra el treatment: actor/purposes/data
+ * existentes mismo-treatment, enums, invariante tipo↔assessments↔parent
+ * y padre válido (existente, tipo compatible, acíclico). `siblings` es
+ * la colección con el candidato ya sustituido (para ciclos en update).
+ */
+function checkRelationshipCandidate(
+  t: TreatmentScopedState,
+  candidate: ThirdPartyRelationshipRecord,
+  siblings: readonly ThirdPartyRelationshipRecord[],
+): boolean {
+  if (typeof candidate.id !== "string" || candidate.id.trim() === "") return false;
+  if (!t.actors?.[candidate.actorId]) return false;
+  if (!nonEmpty(candidate.label)) return false;
+  if (!isRelationshipType(candidate.relationshipType)) return false;
+  if (!isInternationalDimension(candidate.internationalDimension)) return false;
+  const purposeIds = new Set(Object.keys(t.purposes ?? {}));
+  const dataIds = new Set(Object.keys(t.dataItems ?? {}));
+  if (!cleanRelRefs(candidate.purposeIds, purposeIds)) return false;
+  // Duplicados en refs se rechazan (estricto, como cleanSourceRefs).
+  if (
+    !Array.isArray(candidate.purposeIds) ||
+    new Set(candidate.purposeIds).size !== candidate.purposeIds.length
+  ) {
+    return false;
+  }
+  if (
+    !Array.isArray(candidate.dataItemIds) ||
+    new Set(candidate.dataItemIds).size !== candidate.dataItemIds.length ||
+    !candidate.dataItemIds.every((d) => dataIds.has(d))
+  ) {
+    return false;
+  }
+  if (
+    candidate.evidenceRef !== undefined &&
+    typeof candidate.evidenceRef !== "string"
+  ) {
+    return false;
+  }
+  if (relationshipInvariantIssues(candidate).length > 0) return false;
+  const byId = indexRelationships(siblings);
+  if (parentIssues(candidate, byId).length > 0) return false;
+  return true;
+}
+
+function buildRelationshipRecord(
+  id: string,
+  input: {
+    actorId: string;
+    label: string;
+    relationshipType: ThirdPartyRelationshipType;
+    purposeIds: string[];
+    dataItemIds: string[];
+    internationalDimension: TriStateSignal;
+    parentRelationshipId?: string;
+    evidenceRef?: string;
+    cessionAssessment?: CessionAssessment;
+    processorAssessment?: ProcessorAssessment;
+    subprocessorAssessment?: SubprocessorAssessment;
+  },
+): ThirdPartyRelationshipRecord {
+  const record: ThirdPartyRelationshipRecord = {
+    id,
+    actorId: input.actorId,
+    label: input.label.trim(),
+    relationshipType: input.relationshipType,
+    purposeIds: input.purposeIds,
+    dataItemIds: input.dataItemIds,
+    internationalDimension: input.internationalDimension,
+    ...(input.parentRelationshipId !== undefined
+      ? { parentRelationshipId: input.parentRelationshipId }
+      : {}),
+    ...(nonEmpty(input.evidenceRef) ? { evidenceRef: input.evidenceRef as string } : {}),
+    ...(input.cessionAssessment !== undefined
+      ? { cessionAssessment: input.cessionAssessment }
+      : {}),
+    ...(input.processorAssessment !== undefined
+      ? { processorAssessment: input.processorAssessment }
+      : {}),
+    ...(input.subprocessorAssessment !== undefined
+      ? { subprocessorAssessment: input.subprocessorAssessment }
+      : {}),
+  };
+  return record;
+}
+
+export function addThirdPartyRelationship(
+  company: CompanyState,
+  treatmentId: string,
+  input: ThirdPartyRelationshipInput,
+): { company: CompanyState; id: string } | null {
+  if (typeof input.actorId !== "string" || !nonEmpty(input.label)) return null;
+  const type = input.relationshipType ?? "unknown";
+  if (!isRelationshipType(type)) return null;
+  const intl = input.internationalDimension ?? "unknown";
+  if (!isInternationalDimension(intl)) return null;
+  if (
+    input.cessionAssessment !== undefined &&
+    !isValidCessionAssessment(input.cessionAssessment)
+  ) {
+    return null;
+  }
+  if (
+    input.processorAssessment !== undefined &&
+    !isValidProcessorAssessment(input.processorAssessment)
+  ) {
+    return null;
+  }
+  if (
+    input.subprocessorAssessment !== undefined &&
+    !isValidSubprocessorAssessment(input.subprocessorAssessment)
+  ) {
+    return null;
+  }
+  if (input.evidenceRef !== undefined && !nonEmpty(input.evidenceRef)) return null;
+  const id = newId("rel");
+  let out: { company: CompanyState; id: string } | null = null;
+  const next = withTreatment(company, treatmentId, (t) => {
+    // Unicidad local defensiva (import la exige; newId la hace
+    // prácticamente imposible, el contrato no la asume).
+    if ((t.thirdPartyRelationships ?? []).some((x) => x.id === id)) return null;
+    const purposeIds = cleanRelRefs(input.purposeIds, new Set(Object.keys(t.purposes ?? {})));
+    if (purposeIds === null) return null;
+    const dataIds = new Set(Object.keys(t.dataItems ?? {}));
+    const dataItemIds = cleanRelRefs(input.dataItemIds, dataIds);
+    if (dataItemIds === null) return null;
+    const candidate = buildRelationshipRecord(id, {
+      actorId: input.actorId,
+      label: input.label,
+      relationshipType: type,
+      purposeIds,
+      dataItemIds,
+      internationalDimension: intl,
+      ...(input.parentRelationshipId !== undefined
+        ? { parentRelationshipId: input.parentRelationshipId }
+        : {}),
+      ...(input.evidenceRef !== undefined ? { evidenceRef: input.evidenceRef } : {}),
+      ...(input.cessionAssessment !== undefined
+        ? { cessionAssessment: input.cessionAssessment }
+        : {}),
+      ...(input.processorAssessment !== undefined
+        ? { processorAssessment: input.processorAssessment }
+        : {}),
+      ...(input.subprocessorAssessment !== undefined
+        ? { subprocessorAssessment: input.subprocessorAssessment }
+        : {}),
+    });
+    const siblings = [...(t.thirdPartyRelationships ?? []), candidate];
+    if (!checkRelationshipCandidate(t, candidate, siblings)) return null;
+    return {
+      ...t,
+      thirdPartyRelationships: [...(t.thirdPartyRelationships ?? []), candidate],
+    };
+  });
+  if (next) out = { company: next, id };
+  return out;
+}
+
+export function updateThirdPartyRelationship(
+  company: CompanyState,
+  treatmentId: string,
+  id: string,
+  patch: ThirdPartyRelationshipPatch,
+): CompanyState | null {
+  return withTreatment(company, treatmentId, (t) => {
+    const rels = t.thirdPartyRelationships ?? [];
+    const idx = rels.findIndex((r) => r.id === id);
+    if (idx < 0) return null;
+    const current = rels[idx];
+    if (patch.actorId !== undefined && !t.actors?.[patch.actorId]) return null;
+    if (patch.label !== undefined && !nonEmpty(patch.label)) return null;
+    if (patch.relationshipType !== undefined && !isRelationshipType(patch.relationshipType)) {
+      return null;
+    }
+    if (
+      patch.internationalDimension !== undefined &&
+      !isInternationalDimension(patch.internationalDimension)
+    ) {
+      return null;
+    }
+    if (
+      patch.evidenceRef !== undefined &&
+      patch.evidenceRef !== null &&
+      !nonEmpty(patch.evidenceRef)
+    ) {
+      return null;
+    }
+    let purposeIds = current.purposeIds;
+    if (patch.purposeIds !== undefined) {
+      const cleaned = cleanRelRefs(patch.purposeIds, new Set(Object.keys(t.purposes ?? {})));
+      if (cleaned === null) return null;
+      purposeIds = cleaned;
+    }
+    let dataItemIds = current.dataItemIds;
+    if (patch.dataItemIds !== undefined) {
+      const cleaned = cleanRelRefs(patch.dataItemIds, new Set(Object.keys(t.dataItems ?? {})));
+      if (cleaned === null) return null;
+      dataItemIds = cleaned;
+    }
+    const newType = patch.relationshipType ?? current.relationshipType;
+    const typeChanged =
+      patch.relationshipType !== undefined &&
+      patch.relationshipType !== current.relationshipType;
+    // Cambio de tipo: normalización estructural atómica. Se retiran
+    // assessments y parent incompatibles; no se convierten resultados
+    // entre tipos (sin inferencia jurídica).
+    let cession = typeChanged ? undefined : current.cessionAssessment;
+    let processor = typeChanged ? undefined : current.processorAssessment;
+    let subprocessor = typeChanged ? undefined : current.subprocessorAssessment;
+    let parent = typeChanged ? undefined : current.parentRelationshipId;
+    if (patch.parentRelationshipId !== undefined) {
+      parent = patch.parentRelationshipId === null ? undefined : patch.parentRelationshipId;
+    }
+    if (patch.cessionAssessment !== undefined) {
+      if (patch.cessionAssessment === null) cession = undefined;
+      else {
+        const merged = { ...(cession ?? { lawfulness: "unknown", instrument: "unknown" }), ...patch.cessionAssessment };
+        if (!isValidCessionAssessment(merged)) return null;
+        cession = merged;
+      }
+    }
+    if (patch.processorAssessment !== undefined) {
+      if (patch.processorAssessment === null) processor = undefined;
+      else {
+        const merged = {
+          ...(processor ?? { contract: "unknown", instructions: "unknown", operational: "unknown" }),
+          ...patch.processorAssessment,
+        };
+        if (!isValidProcessorAssessment(merged)) return null;
+        processor = merged;
+      }
+    }
+    if (patch.subprocessorAssessment !== undefined) {
+      if (patch.subprocessorAssessment === null) subprocessor = undefined;
+      else {
+        const merged = { ...(subprocessor ?? { authorization: "unknown" }), ...patch.subprocessorAssessment };
+        if (!isValidSubprocessorAssessment(merged)) return null;
+        subprocessor = merged;
+      }
+    }
+    const candidate: ThirdPartyRelationshipRecord = {
+      ...current,
+      ...(patch.actorId !== undefined ? { actorId: patch.actorId } : {}),
+      ...(patch.label !== undefined ? { label: patch.label.trim() } : {}),
+      relationshipType: newType,
+      purposeIds,
+      dataItemIds,
+      ...(patch.internationalDimension !== undefined
+        ? { internationalDimension: patch.internationalDimension }
+        : {}),
+      ...(cession !== undefined ? { cessionAssessment: cession } : {}),
+      ...(processor !== undefined ? { processorAssessment: processor } : {}),
+      ...(subprocessor !== undefined ? { subprocessorAssessment: subprocessor } : {}),
+    };
+    // Limpieza explícita de opcionales retirados por normalización.
+    if (cession === undefined) delete candidate.cessionAssessment;
+    if (processor === undefined) delete candidate.processorAssessment;
+    if (subprocessor === undefined) delete candidate.subprocessorAssessment;
+    if (parent === undefined) delete candidate.parentRelationshipId;
+    else candidate.parentRelationshipId = parent;
+    if (patch.evidenceRef !== undefined) {
+      if (patch.evidenceRef === null) delete candidate.evidenceRef;
+      else candidate.evidenceRef = patch.evidenceRef;
+    }
+    const siblings = rels.map((r, i) => (i === idx ? candidate : r));
+    if (!checkRelationshipCandidate(t, candidate, siblings)) return null;
+    // Revalidación de hijos: si el candidato cambió de tipo o fue
+    // eliminado como padre posible, cualquier relación que lo
+    // referencie quedaría estructuralmente inválida (y el import
+    // rechazaría el treatment completo). Se rechaza el update.
+    const newById = indexRelationships(siblings);
+    for (const sib of siblings) {
+      if (
+        sib.parentRelationshipId !== undefined &&
+        parentIssues(sib, newById).length > 0
+      ) {
+        return null;
+      }
+    }
+    return { ...t, thirdPartyRelationships: siblings };
+  });
+}
+
+/** Lectura direccionada por ancestry válida; cross-treatment imposible. */
+export function getThirdPartyRelationship(
+  company: CompanyState,
+  treatmentId: string,
+  id: string,
+): ThirdPartyRelationshipRecord | undefined {
+  return getTreatment(company, treatmentId)?.thirdPartyRelationships?.find(
+    (r) => r.id === id,
+  );
+}
+
+/** Lista de relationships del treatment (vacía si ausente/legacy). */
+export function listThirdPartyRelationships(
+  company: CompanyState,
+  treatmentId: string,
+): ThirdPartyRelationshipRecord[] {
+  return getTreatment(company, treatmentId)?.thirdPartyRelationships ?? [];
+}
+
+/**
+ * Hard-delete sin hijos. Con hijos (`parentRelationshipId = id`):
+ * reject — sin cascada. Reasignar/eliminar hijos primero.
+ * Sin tombstone, sin historial.
+ */
+export function deleteThirdPartyRelationship(
+  company: CompanyState,
+  treatmentId: string,
+  id: string,
+): CompanyState | null {
+  return withTreatment(company, treatmentId, (t) => {
+    const rels = t.thirdPartyRelationships ?? [];
+    if (!rels.some((r) => r.id === id)) return null;
+    if (rels.some((r) => r.parentRelationshipId === id)) return null;
+    return { ...t, thirdPartyRelationships: rels.filter((r) => r.id !== id) };
+  });
+}
+
+/** ¿Tiene este relationship un padre válido en su treatment? */
+export function thirdPartyRelationshipHasParent(
+  company: CompanyState,
+  treatmentId: string,
+  id: string,
+): boolean {
+  const t = getTreatment(company, treatmentId);
+  const r = t?.thirdPartyRelationships?.find((x) => x.id === id);
+  if (!t || !r) return false;
+  return hasValidParent(r, indexRelationships(t.thirdPartyRelationships ?? []));
 }

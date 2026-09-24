@@ -100,6 +100,33 @@ function ctxT(companyId: string, treatmentId: string) {
   return { scope: "treatment", companyId, treatmentId } as const;
 }
 
+/** Colección D6 vacía: los 23 agregados estructurales en "no". */
+const D6_TREATMENT_EMPTY: Record<string, string> = {
+  "derived.treatment.d6_relationships_exist": "no",
+  "derived.treatment.d6_map_complete": "no",
+  "derived.treatment.d6_map_unknown_exist": "no",
+  "derived.treatment.d6_international_exist": "no",
+  "derived.treatment.d6_processors_exist": "no",
+  "derived.treatment.d6_processors_contract_known": "no",
+  "derived.treatment.d6_processors_contract_validated": "no",
+  "derived.treatment.d6_processors_contract_remediation": "no",
+  "derived.treatment.d6_processors_contract_unknown": "no",
+  "derived.treatment.d6_processors_instructions_known": "no",
+  "derived.treatment.d6_processors_instructions_controlled": "no",
+  "derived.treatment.d6_processors_instructions_remediation": "no",
+  "derived.treatment.d6_processors_instructions_unknown": "no",
+  "derived.treatment.d6_processors_operational_known": "no",
+  "derived.treatment.d6_processors_operational_controlled": "no",
+  "derived.treatment.d6_processors_operational_remediation": "no",
+  "derived.treatment.d6_processors_operational_unknown": "no",
+  "derived.treatment.d6_subprocessors_exist": "no",
+  "derived.treatment.d6_subprocessors_parents_complete": "no",
+  "derived.treatment.d6_subprocessors_authorization_known": "no",
+  "derived.treatment.d6_subprocessors_authorization_controlled": "no",
+  "derived.treatment.d6_subprocessors_authorization_remediation": "no",
+  "derived.treatment.d6_subprocessors_authorization_unknown": "no",
+};
+
 describe("derived session facts", () => {
   it("determinismo: mismo estado + contexto → mismo mapa", () => {
     const { c, idA } = companyAB();
@@ -179,6 +206,7 @@ describe("derived session facts", () => {
       "derived.treatment.automated_uses_safeguards_complete": "no",
       "derived.treatment.automated_uses_safeguards_enabled": "no",
       "derived.treatment.automated_uses_safeguards_deficient": "no",
+      ...D6_TREATMENT_EMPTY,
     });
   });
 
@@ -233,6 +261,7 @@ describe("derived session facts", () => {
       "derived.treatment.automated_uses_safeguards_complete": "no",
       "derived.treatment.automated_uses_safeguards_enabled": "no",
       "derived.treatment.automated_uses_safeguards_deficient": "no",
+      ...D6_TREATMENT_EMPTY,
     });
   });
 

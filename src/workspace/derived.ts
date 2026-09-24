@@ -1,6 +1,18 @@
 import { getPurpose, getTreatment } from "./scope";
 import { deriveD5Candidates, readLawfulnessRoute } from "./specialRegime";
-import type { AutomatedUseRecord, CompanyState, ExecutionContext } from "./types";
+import {
+  cessionsForPurpose,
+  hasValidParent,
+  indexRelationships,
+  processorsOf,
+  subprocessorsOf,
+} from "./thirdParty";
+import type {
+  AutomatedUseRecord,
+  CompanyState,
+  ExecutionContext,
+  ThirdPartyRelationshipRecord,
+} from "./types";
 import type { FactMap } from "../../content/protocols/types";
 
 /**
@@ -136,6 +148,7 @@ function deriveTreatmentFacts(
     "derived.treatment.automated_uses_safeguards_deficient": yesNo(
       covered.some((u) => safeguardsDeficient(u)),
     ),
+    ...deriveD6TreatmentFacts(t.thirdPartyRelationships ?? []),
   };
 }
 
@@ -171,6 +184,199 @@ function safeguardsEnabled(u: AutomatedUseRecord): boolean {
 
 function safeguardsDeficient(u: AutomatedUseRecord): boolean {
   return safeguardValues(u).some((v) => v === "no");
+}
+
+/**
+ * Derivados D6 Punto 0 (ADR-054): proyecciones mecánicas de la
+ * colección `thirdPartyRelationships[]`. Vacío nunca es completo ni
+ * positivo: sin conjunción vacía hacia cumplimiento. Ningún juicio
+ * jurídico; las conclusiones viven en futuros protocolos D6 con
+ * ReasoningRecord y finalización explícita.
+ */
+function deriveD6TreatmentFacts(
+  rels: readonly ThirdPartyRelationshipRecord[],
+): FactMap {
+  const byId = indexRelationships(rels);
+  const processors = processorsOf(rels);
+  const subprocessors = subprocessorsOf(rels);
+  const complete = (r: ThirdPartyRelationshipRecord): boolean =>
+    r.relationshipType !== "unknown" &&
+    r.internationalDimension !== "unknown" &&
+    (r.relationshipType !== "subprocessor" || hasValidParent(r, byId));
+  const contractOf = (r: ThirdPartyRelationshipRecord): string | undefined =>
+    r.processorAssessment?.contract;
+  const instructionsOf = (r: ThirdPartyRelationshipRecord): string | undefined =>
+    r.processorAssessment?.instructions;
+  const operationalOf = (r: ThirdPartyRelationshipRecord): string | undefined =>
+    r.processorAssessment?.operational;
+  const authorizationOf = (r: ThirdPartyRelationshipRecord): string | undefined =>
+    r.subprocessorAssessment?.authorization;
+  return {
+    // D6.01 routing: existencia, completitud estructural, unknowns,
+    // dimensión internacional. Vacío ≠ completo.
+    "derived.treatment.d6_relationships_exist": yesNo(rels.length > 0),
+    "derived.treatment.d6_map_complete": yesNo(
+      rels.length > 0 && rels.every(complete),
+    ),
+    "derived.treatment.d6_map_unknown_exist": yesNo(
+      rels.some(
+        (r) =>
+          r.relationshipType === "unknown" ||
+          r.internationalDimension === "unknown",
+      ),
+    ),
+    "derived.treatment.d6_international_exist": yesNo(
+      rels.some((r) => r.internationalDimension === "yes"),
+    ),
+    // D6.04: conjunto processor. Cero processors ≠ validado.
+    "derived.treatment.d6_processors_exist": yesNo(processors.length > 0),
+    "derived.treatment.d6_processors_contract_known": yesNo(
+      processors.length > 0 &&
+        processors.every(
+          (r) => contractOf(r) === "validated" || contractOf(r) === "remediation_required",
+        ),
+    ),
+    "derived.treatment.d6_processors_contract_validated": yesNo(
+      processors.length > 0 && processors.every((r) => contractOf(r) === "validated"),
+    ),
+    "derived.treatment.d6_processors_contract_remediation": yesNo(
+      processors.some((r) => contractOf(r) === "remediation_required"),
+    ),
+    "derived.treatment.d6_processors_contract_unknown": yesNo(
+      processors.some((r) => contractOf(r) !== "validated" && contractOf(r) !== "remediation_required"),
+    ),
+    // D6.05: instrucciones del mismo conjunto.
+    "derived.treatment.d6_processors_instructions_known": yesNo(
+      processors.length > 0 &&
+        processors.every(
+          (r) =>
+            instructionsOf(r) === "controlled" ||
+            instructionsOf(r) === "remediation_required",
+        ),
+    ),
+    "derived.treatment.d6_processors_instructions_controlled": yesNo(
+      processors.length > 0 && processors.every((r) => instructionsOf(r) === "controlled"),
+    ),
+    "derived.treatment.d6_processors_instructions_remediation": yesNo(
+      processors.some((r) => instructionsOf(r) === "remediation_required"),
+    ),
+    "derived.treatment.d6_processors_instructions_unknown": yesNo(
+      processors.some(
+        (r) => instructionsOf(r) !== "controlled" && instructionsOf(r) !== "remediation_required",
+      ),
+    ),
+    // D6.07: controles operacionales del mismo conjunto.
+    "derived.treatment.d6_processors_operational_known": yesNo(
+      processors.length > 0 &&
+        processors.every(
+          (r) =>
+            operationalOf(r) === "controlled" ||
+            operationalOf(r) === "remediation_required",
+        ),
+    ),
+    "derived.treatment.d6_processors_operational_controlled": yesNo(
+      processors.length > 0 && processors.every((r) => operationalOf(r) === "controlled"),
+    ),
+    "derived.treatment.d6_processors_operational_remediation": yesNo(
+      processors.some((r) => operationalOf(r) === "remediation_required"),
+    ),
+    "derived.treatment.d6_processors_operational_unknown": yesNo(
+      processors.some(
+        (r) => operationalOf(r) !== "controlled" && operationalOf(r) !== "remediation_required",
+      ),
+    ),
+    // D6.06: conjunto subprocessor. Vacío ≠ controlado; "none recorded"
+    // no es `not_applicable` (eso exige mapa D6.01 revisado/completo).
+    "derived.treatment.d6_subprocessors_exist": yesNo(subprocessors.length > 0),
+    "derived.treatment.d6_subprocessors_parents_complete": yesNo(
+      subprocessors.length > 0 &&
+        subprocessors.every((r) => hasValidParent(r, byId)),
+    ),
+    "derived.treatment.d6_subprocessors_authorization_known": yesNo(
+      subprocessors.length > 0 &&
+        subprocessors.every(
+          (r) =>
+            authorizationOf(r) === "controlled" ||
+            authorizationOf(r) === "remediation_required",
+        ),
+    ),
+    "derived.treatment.d6_subprocessors_authorization_controlled": yesNo(
+      subprocessors.length > 0 &&
+        subprocessors.every((r) => authorizationOf(r) === "controlled"),
+    ),
+    "derived.treatment.d6_subprocessors_authorization_remediation": yesNo(
+      subprocessors.some((r) => authorizationOf(r) === "remediation_required"),
+    ),
+    "derived.treatment.d6_subprocessors_authorization_unknown": yesNo(
+      subprocessors.some(
+        (r) => authorizationOf(r) !== "controlled" && authorizationOf(r) !== "remediation_required",
+      ),
+    ),
+  };
+}
+
+/**
+ * Derivados D6.02/D6.03 por purpose: cesiones relevantes (type cession
+ * con la purpose en `purposeIds`). Incluye la precisión D6.03
+ * (instrumento vs licitud independientes): `ready_positive` solo con
+ * todo supported + todo validated; `blocked_by_lawfulness` con todo
+ * validated pero alguna licitud not_supported (bloqueado, NO
+ * remediación de instrumento).
+ */
+function deriveD6PurposeFacts(
+  rels: readonly ThirdPartyRelationshipRecord[],
+  purposeId: string,
+): FactMap {
+  const cessions = cessionsForPurpose(rels, purposeId);
+  const lawfulnessOf = (r: ThirdPartyRelationshipRecord): string | undefined =>
+    r.cessionAssessment?.lawfulness;
+  const instrumentOf = (r: ThirdPartyRelationshipRecord): string | undefined =>
+    r.cessionAssessment?.instrument;
+  const determined = (v: string | undefined, ok: readonly string[]): boolean =>
+    v !== undefined && (ok as readonly string[]).includes(v);
+  return {
+    "derived.purpose.d6_cessions_exist": yesNo(cessions.length > 0),
+    "derived.purpose.d6_cessions_lawfulness_known": yesNo(
+      cessions.length > 0 &&
+        cessions.every((r) => determined(lawfulnessOf(r), ["supported", "not_supported"])),
+    ),
+    "derived.purpose.d6_cessions_lawfulness_supported": yesNo(
+      cessions.length > 0 && cessions.every((r) => lawfulnessOf(r) === "supported"),
+    ),
+    "derived.purpose.d6_cessions_lawfulness_blocked": yesNo(
+      cessions.some((r) => lawfulnessOf(r) === "not_supported"),
+    ),
+    "derived.purpose.d6_cessions_lawfulness_unknown": yesNo(
+      cessions.some((r) => lawfulnessOf(r) !== "supported" && lawfulnessOf(r) !== "not_supported"),
+    ),
+    "derived.purpose.d6_cessions_instrument_known": yesNo(
+      cessions.length > 0 &&
+        cessions.every((r) =>
+          determined(instrumentOf(r), ["validated", "remediation_required"]),
+        ),
+    ),
+    "derived.purpose.d6_cessions_instrument_validated": yesNo(
+      cessions.length > 0 && cessions.every((r) => instrumentOf(r) === "validated"),
+    ),
+    "derived.purpose.d6_cessions_instrument_remediation": yesNo(
+      cessions.some((r) => instrumentOf(r) === "remediation_required"),
+    ),
+    "derived.purpose.d6_cessions_instrument_unknown": yesNo(
+      cessions.some(
+        (r) => instrumentOf(r) !== "validated" && instrumentOf(r) !== "remediation_required",
+      ),
+    ),
+    "derived.purpose.d6_cession_ready_positive": yesNo(
+      cessions.length > 0 &&
+        cessions.every((r) => lawfulnessOf(r) === "supported") &&
+        cessions.every((r) => instrumentOf(r) === "validated"),
+    ),
+    "derived.purpose.d6_cession_blocked_by_lawfulness": yesNo(
+      cessions.length > 0 &&
+        cessions.every((r) => instrumentOf(r) === "validated") &&
+        cessions.some((r) => lawfulnessOf(r) === "not_supported"),
+    ),
+  };
 }
 
 /**
@@ -214,6 +420,11 @@ export function deriveSessionFacts(
           ctx.purposeId,
           readLawfulnessRoute(company, ctx.treatmentId, ctx.purposeId),
         ),
+      );
+      // D6 Punto 0: routing de cesiones relevantes por purpose.
+      Object.assign(
+        out,
+        deriveD6PurposeFacts(t.thirdPartyRelationships ?? [], ctx.purposeId),
       );
     }
   }

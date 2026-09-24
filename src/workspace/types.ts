@@ -129,6 +129,12 @@ export interface TreatmentScopedState {
   retentionRules?: Record<string, RetentionRuleRecord>;
   dataPurposeLinks?: DataPurposeLink[];
   /**
+   * Relaciones con terceros locales D6.01–D6.07 (Punto 0, ADR-054).
+   * Colección compartida dentro del mismo treatment. Ausente equivale
+   * estructuralmente a vacía (workspaces previos). Ver ADR-054.
+   */
+  thirdPartyRelationships?: ThirdPartyRelationshipRecord[];
+  /**
    * Usos automatizados locales D4.08/D4.09. Colección compartida por
    * ambas actividades dentro del mismo treatment. Ausente equivale
    * estructuralmente a vacía (workspaces previos). Ver ADR-052.
@@ -292,6 +298,82 @@ export interface AutomatedUseRecord {
   legalPath: AutomatedUseLegalPath;
   /** Solo corresponde cuando coverage = covered. */
   safeguards?: AutomatedUseSafeguards;
+}
+
+/**
+ * Relación con un tercero dentro de un treatment (D6 Punto 0, ADR-054).
+ * Value object treatment-owned con identidad local para edición y
+ * referencia interna. Sin execution scope, workflow, reasoning,
+ * progreso, lifecycle, owner, deadline, historial ni alcance global:
+ * NO es una entidad jurídica nueva ni un scope. Ver ADR-054.
+ *
+ * Actor = quién es (ActorRecord, source-of-truth D2.02, intacto).
+ * Relationship = qué relación jurídica/operacional tiene con este
+ * treatment. Un mismo actor puede sostener N relaciones (p. ej.
+ * processor para una purpose y cesionario para otra): cada una es un
+ * record propio con exactamente UN `relationshipType`.
+ *
+ * Las assessments (`cessionAssessment`, `processorAssessment`,
+ * `subprocessorAssessment`) son determinaciones profesionales locales
+ * y subordinadas: no son canonical facts independientes y editarlas
+ * no materializa efectos jurídicos. Los agregados canónicos D6 viven
+ * en facts treatment/purpose-level materializados solo por
+ * finalización explícita de futuros protocolos.
+ */
+export type ThirdPartyRelationshipType =
+  | "unknown"
+  | "communication"
+  | "cession"
+  | "processor"
+  | "subprocessor";
+
+/** Determinación local de licitud de cesión (D6.02, subordinada). */
+export interface CessionAssessment {
+  lawfulness: "supported" | "not_supported" | "unknown";
+  instrument: "validated" | "remediation_required" | "unknown";
+}
+
+/** Determinaciones locales del encargo (D6.04/D6.05/D6.07, subordinadas). */
+export interface ProcessorAssessment {
+  contract: "validated" | "remediation_required" | "unknown";
+  instructions: "controlled" | "remediation_required" | "unknown";
+  operational: "controlled" | "remediation_required" | "unknown";
+}
+
+/** Determinación local de subencargo (D6.06, subordinada). */
+export interface SubprocessorAssessment {
+  authorization: "controlled" | "remediation_required" | "unknown";
+}
+
+export interface ThirdPartyRelationshipRecord {
+  /** Id estable, único dentro del treatment (no global). */
+  id: string;
+  /** Actor del MISMO treatment. Rol/nombre/kind se resuelven en ActorRecord. */
+  actorId: string;
+  /** Identificación humana de la relación (no del actor). */
+  label: string;
+  /** Exactamente un tipo; `unknown` = sin clasificar. */
+  relationshipType: ThirdPartyRelationshipType;
+  /** Purposes del mismo treatment tocadas por la relación. Vacío = draft. */
+  purposeIds: string[];
+  /** Data items del mismo treatment (alcance abstracto). Vacío válido. */
+  dataItemIds: string[];
+  /** Dimensión internacional tri-estado; solo routing futuro D7. */
+  internationalDimension: TriStateSignal;
+  /**
+   * Relación padre (delegación/subencargo) del mismo treatment.
+   * Solo corresponde con `relationshipType = subprocessor`; ausente =
+   * draft pendiente (futuro D6.06 lo considera incompleto).
+   */
+  parentRelationshipId?: string;
+  /** Referencia documental de la relación, nunca evidencia de un titular. */
+  evidenceRef?: string;
+  /** Solo con `relationshipType = cession`. */
+  cessionAssessment?: CessionAssessment;
+  /** Solo con `relationshipType = processor`. */
+  processorAssessment?: ProcessorAssessment;
+  /** Solo con `relationshipType = subprocessor`. */
+  subprocessorAssessment?: SubprocessorAssessment;
 }
 
 /**

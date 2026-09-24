@@ -426,18 +426,30 @@ export function deletePurpose(
     delete next.purposeId;
     return next;
   });
+  // Punto 0 D6: strip del purpose en relationships (se preservan).
+  // Sin auto-delete, sin escrituras canónicas; un futuro guard de
+  // current-state puede detectar conclusiones stale.
+  const thirdPartyRelationships =
+    t.thirdPartyRelationships === undefined
+      ? undefined
+      : t.thirdPartyRelationships.map((r) =>
+          r.purposeIds.includes(purposeId)
+            ? { ...r, purposeIds: r.purposeIds.filter((p) => p !== purposeId) }
+            : r,
+        );
   const next = touchCompany({
     ...company,
     treatments: {
       ...(company.treatments ?? {}),
       [treatmentId]: {
-        ...t,
-        purposes,
-        automatedUses,
-        dataPurposeLinks: (t.dataPurposeLinks ?? []).filter(
-          (l) => l.purposeId !== purposeId,
-        ),
-      },
+          ...t,
+          purposes,
+          automatedUses,
+          ...(thirdPartyRelationships !== undefined ? { thirdPartyRelationships } : {}),
+          dataPurposeLinks: (t.dataPurposeLinks ?? []).filter(
+            (l) => l.purposeId !== purposeId,
+          ),
+        },
     },
   });
   if (

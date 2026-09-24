@@ -11,6 +11,16 @@ import type {
   WorkspaceData,
 } from "./types";
 import { ACTIVITY_WORK_STATUSES, emptyWorkspace, nowIso } from "./types";
+import {
+  indexRelationships,
+  isInternationalDimension,
+  isRelationshipType,
+  isValidCessionAssessment,
+  isValidProcessorAssessment,
+  isValidSubprocessorAssessment,
+  parentIssues,
+  relationshipInvariantIssues,
+} from "./thirdParty";
 
 /**
  * Persistencia local Stage 1 (localStorage del navegador, sin backend).
@@ -453,6 +463,84 @@ function checkAutomatedUseRecord(v: unknown, purposeIds: Set<string>): boolean {
 }
 
 /**
+ * Valida una relationship D6 (Punto 0, ADR-054): identidad, actorId
+ * mismo-treatment, label, tipo cerrado, refs multi-valued
+ * deduplicadas mismo-treatment, internacional tri-estado, invariante
+ * tipo↔assessments↔parent y padre resoluble (ciclos se verifican a
+ * nivel colección). Estricta: lo inválido rechaza.
+ */
+function checkThirdPartyRelationshipRecord(
+  v: unknown,
+  actorIds: Set<string>,
+  purposeIds: Set<string>,
+  dataIds: Set<string>,
+): boolean {
+  if (!isRecord(v)) return false;
+  if (typeof v.id !== "string" || v.id.trim() === "") return false;
+  if (typeof v.actorId !== "string" || !actorIds.has(v.actorId)) return false;
+  if (typeof v.label !== "string" || v.label.trim() === "") return false;
+  if (!isRelationshipType(v.relationshipType)) return false;
+  if (!isInternationalDimension(v.internationalDimension)) return false;
+  for (const [field, valid] of [
+    ["purposeIds", purposeIds],
+    ["dataItemIds", dataIds],
+  ] as const) {
+    if (!Array.isArray(v[field])) return false;
+    const seen = new Set<string>();
+    for (const r of v[field] as unknown[]) {
+      if (typeof r !== "string" || seen.has(r) || !valid.has(r)) return false;
+      seen.add(r);
+    }
+  }
+  if (v.evidenceRef !== undefined && typeof v.evidenceRef !== "string") {
+    return false;
+  }
+  if (
+    v.cessionAssessment !== undefined &&
+    !isValidCessionAssessment(v.cessionAssessment)
+  ) {
+    return false;
+  }
+  if (
+    v.processorAssessment !== undefined &&
+    !isValidProcessorAssessment(v.processorAssessment)
+  ) {
+    return false;
+  }
+  if (
+    v.subprocessorAssessment !== undefined &&
+    !isValidSubprocessorAssessment(v.subprocessorAssessment)
+  ) {
+    return false;
+  }
+  const candidate = v as unknown as Parameters<typeof relationshipInvariantIssues>[0];
+  if (relationshipInvariantIssues(candidate).length > 0) return false;
+  if (
+    v.parentRelationshipId !== undefined &&
+    typeof v.parentRelationshipId !== "string"
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Valida la colección completa: IDs únicos + padre resoluble a
+ * processor/subprocessor sin self-reference ni ciclos. Requiere el
+ * array ya validado entrada por entrada.
+ */
+function checkRelationshipParents(
+  rels: Record<string, unknown>[],
+): boolean {
+  const typed = rels as unknown as Parameters<typeof indexRelationships>[0];
+  const byId = indexRelationships(typed);
+  for (const r of typed) {
+    if (parentIssues(r, byId).length > 0) return false;
+  }
+  return true;
+}
+
+/**
  * Valida colecciones locales de un treatment ya migrado (IDs únicos por
  * construcción de mapa + refs existentes). Devuelve el treatment
  * normalizado o null si es inválido.
@@ -506,6 +594,25 @@ function checkLocalCollections(
       if (!checkAutomatedUseRecord(u, purposeIds)) return null;
     }
   }
+  // Relationships D6: array con IDs únicos; ausente = válido (legacy).
+  // Todo o nada como automatedUses: una entrada inválida, un parent
+  // colgado o un ciclo rechaza (nunca poda silenciosa).
+  if (t.thirdPartyRelationships !== undefined) {
+    if (!Array.isArray(t.thirdPartyRelationships)) return null;
+    const actorIds = new Set(Object.keys(actors));
+    const seen = new Set<string>();
+    const rels: Record<string, unknown>[] = [];
+    for (const r of t.thirdPartyRelationships) {
+      if (!isRecord(r)) return null;
+      if (typeof r.id !== "string" || seen.has(r.id)) return null;
+      seen.add(r.id);
+      if (!checkThirdPartyRelationshipRecord(r, actorIds, purposeIds, dataIds)) {
+        return null;
+      }
+      rels.push(r);
+    }
+    if (!checkRelationshipParents(rels)) return null;
+  }
   return { actors, dataItems, sources, retentionRules, dataPurposeLinks: links };
 }
 
@@ -528,6 +635,7 @@ function normalizeLocalCollections(
   retentionRules: Record<string, unknown>;
   dataPurposeLinks: unknown[];
   automatedUses: unknown[];
+  thirdPartyRelationships?: unknown[];
 } | null {
   const actors: Record<string, unknown> = {};
   if (isRecord(t.actors)) {
@@ -617,7 +725,37 @@ function normalizeLocalCollections(
       automatedUses.push(u);
     }
   }
-  return { actors, dataItems, sources, retentionRules, dataPurposeLinks, automatedUses };
+  // thirdPartyRelationships: sin legacy posible; misma disciplina
+  // todo-o-nada. Ausente se preserva ausente (no se materializa
+  // colección vacía). Parent y ciclos se verifican sobre el array
+  // completo ya validado.
+  let thirdPartyRelationships: unknown[] | undefined;
+  if (t.thirdPartyRelationships !== undefined) {
+    if (!Array.isArray(t.thirdPartyRelationships)) return null;
+    const actorIds = new Set(Object.keys(actors));
+    const seen = new Set<string>();
+    const rels: Record<string, unknown>[] = [];
+    for (const r of t.thirdPartyRelationships) {
+      if (!isRecord(r)) return null;
+      if (typeof r.id !== "string" || seen.has(r.id)) return null;
+      seen.add(r.id);
+      if (!checkThirdPartyRelationshipRecord(r, actorIds, purposeIds, dataIds)) {
+        return null;
+      }
+      rels.push(r);
+    }
+    if (!checkRelationshipParents(rels)) return null;
+    thirdPartyRelationships = [...t.thirdPartyRelationships];
+  }
+  return {
+    actors,
+    dataItems,
+    sources,
+    retentionRules,
+    dataPurposeLinks,
+    automatedUses,
+    ...(thirdPartyRelationships !== undefined ? { thirdPartyRelationships } : {}),
+  };
 }
 
 function pruneAnswerMaps(v: unknown): Record<string, Record<string, FactRecord>> {

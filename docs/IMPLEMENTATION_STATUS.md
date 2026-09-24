@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-24 (D6 canonical import, 7 activities, 61 total; guided retrofit pending)
+Last controlled update: 2026-09-24 (D6 Punto 0 third-party relationship capture infrastructure, ADR-054; D6 protocols still 0)
 
 ## Functional baseline
 
@@ -276,6 +276,14 @@ D6 canonical coverage:
 D6.01 (`third_party.relationship_map`, assessment, con juicio) y D6.02 (`cession.lawfulness_assess`, assessment, con juicio) requieren ReasoningRecord; D6.03–D6.07 (`cession.instrument_validate`, `processor.contract_validate`, `processor.instruction_controls_validate`, `subprocessor.authorization_validate`, `processor.security_exit_validate`) son `implementation` sin juicio. Las 7 con `applicable_role = responsible`, `evidence_basis = agency_standard`, `relationship_effect = []`, `conditions_applicability = []` (aplicabilidad conceptual en trigger/objetivo/pasos; sin taxonomía machine-readable hasta el capture audit). Scopes conceptuales: D6.01 treatment, D6.02 purpose, D6.03 purpose, D6.04–D6.07 treatment (sin scope de tercero, sin `ThirdPartyContext`, sin modificar `ActorRecord`). Única dependencia: D6.03 → D6.02 (`completion_dependency`); D2.02 es contexto relacionado, no dependencia. Fronteras congeladas: Stage 1 sin eventos/transacciones/historiales; D6 solo identifica dimensión internacional (licitud en D7, sin dependencia D6→D7); D2.09 es source-of-truth de calidad (D6.03 sin fact propio); D6.07 complementa sin sustituir D9 (sin facts D9). D1–D5 intactos. D6 no resuelve pending refs (siguen 2).
 
 Readiness D6: canonical 7, protocols 0, execution-ready 0, product-ready 0 (`D6 canonical content imported; guided retrofit pending`). Canonical total 61, protocols total 54, pending refs 2 (`risk.mpi_sync`, `mpi.diffusion`).
+
+D6 Punto 0 capture infrastructure (ADR-054; canon D6 intact, sin protocolos nuevos):
+
+* `TreatmentScopedState.thirdPartyRelationships?`: colección local treatment-owned compartida por D6.01–D6.07; un record por relación con `relationshipType` único (`unknown|communication|cession|processor|subprocessor`); mismo actor con N relaciones = N records; `actorId` referencia `ActorRecord` sin tocarlo (rol D2 jamás se escribe automáticamente); `purposeIds[]`/`dataItemIds[]` same-treatment dedupe estricto (vacío = draft, nunca negativo); `internationalDimension` tri-estado solo routing D7 (sin licitud, sin efectos D6/D7); `parentRelationshipId` exclusivo de `subprocessor`, sin self/ciclos, ausente = draft incompleto para D6.06; assessments locales subordinadas (`cessionAssessment`, `processorAssessment`, `subprocessorAssessment`) con invariante tipo↔assessment y normalización atómica al cambiar tipo (sin conversión de resultados); edición/creación/borrado no escribe canonical facts, answers, reasoning ni effects.
+* Borrado: actor referenciado → delete rechazado (sin cascade ni strip); relationship con hijos → reject; delete purpose/dataItem → strip de refs preservando records. Import estricto todo-o-nada (dup IDs, refs colgadas/cruzadas, self-parent, ciclos, enums inválidos, incompatibilidades rechazan; legacy ausente válido; roles nunca migrados).
+* Tokens `third_party_relationship:<id>` exactos en `facts_considered[]` (helpers format/extract/unknown/considered); rationale/evidence nunca se parsean; futuro D6.01 = un record treatment-scoped contra todas las relaciones; futuro D6.02 = record purpose-scoped contra todas las cesiones de la purpose; execution sigue treatment/purpose (sin selector-as-context, sin protocolo por relación).
+* Derived read-only: 23 claves `derived.treatment.d6_*` (existencia, completitud estructural del mapa —vacío≠completo—, unknowns, internacional, agregados contract/instructions/operational/authorization y padres) + 11 claves `derived.purpose.d6_*` (cesiones relevantes por purpose, dimensiones lawfulness/instrument independientes y la precisión D6.03 congelada: ready-positive solo con todo supported+todo validated; `blocked_by_lawfulness` con instrumentos validados y licitud fallida —nunca remediation por eso—; unknown = incomplete). Ningún derived persiste ni concluye legalidad.
+* Readiness sin inflación: canonical total 61, protocols total 54, pending refs 2; D6 sigue canonical 7 / protocols 0 / execution-ready 0 / product-ready 0. Sin cuarto scope, sin `ThirdPartyContext`, sin eventos/historial/workflow, sin UI nueva.
 
 Pending canonical cross-domain targets:
 

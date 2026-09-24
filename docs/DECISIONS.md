@@ -746,3 +746,85 @@ references and treatment descriptions only — never real
 sensitive data, diagnoses, locations, debts, individual minors,
 biometric templates or persons. D5 readiness is unchanged by
 this infrastructure (canonical 7, protocols 0).
+
+---
+
+## ADR-054 — D6 third-party relationships as treatment-owned local value objects
+
+Status: ACCEPTED
+
+`TreatmentScopedState.thirdPartyRelationships[]` is a local
+collection owned exclusively by one `TreatmentContext` (ADR-046),
+shared by D6.01–D6.07. It is structure, not execution: no per-use
+protocol sessions, progress, outcomes, owner, deadline, lifecycle,
+history or events exist, and editing records never writes canonical
+facts. There is no second list and no duplicated truth.
+
+Frozen invariants:
+
+* `ActorRecord` is untouched and remains D2.02 source of truth for
+  actor identity and role; a relationship references `actorId` and
+  never copies or mutates name/kind/role; the role is never written
+  automatically from a relationship (D6.05 legal-consequence
+  guidance stays narrative).
+* One relationship has exactly one `relationshipType`
+  (`unknown | communication | cession | processor | subprocessor`);
+  the same actor may hold several relationship records in the same
+  treatment; no `relationshipTypes[]`.
+* `purposeIds[]` / `dataItemIds[]` are same-treatment unique
+  references for routing and targeting, never scopes; empty lists
+  are valid drafts, never negatives.
+* `internationalDimension` is a tri-state routing signal for future
+  D7 only: no adequacy, SCC, safeguards or legality; editing writes
+  nothing canonical.
+* `parentRelationshipId` expresses delegation only for
+  `subprocessor`, resolves same-treatment to `processor`/
+  `subprocessor`, never self, never cycles; absent parent is an
+  accepted draft that future D6.06 treats as incomplete.
+* Type/assessment compatibility is a hard invariant; a type change
+  atomically clears incompatible assessments and parent
+  (structural normalization, never conversion of juridical
+  results). Assessments are subordinate professional
+  determinations; canonical D6 aggregates materialize only through
+  explicit protocol finalization, always at treatment or purpose
+  level, never per relationship.
+* D6.03 precision frozen: instrument and lawfulness are
+  independent dimensions. Instruments all validated + lawfulness
+  all supported is the only future positive; instruments all
+  validated + any `not_supported` is blocked/non-finalizable —
+  never an instrument remediation caused by lawfulness failure.
+* Empty collections never satisfy completeness (no vacuous
+  controlled/validated/complete); D6.06 `not_applicable` remains a
+  reviewed-map judgment, never "none recorded".
+* Reasoning references use exact `third_party_relationship:<id>`
+  tokens inside `ReasoningRecord.facts_considered[]`
+  (treatment-subordinated; identical IDs in different treatments do
+  not collide); `rationale` and `evidence_refs` are never parsed.
+  Future definitive D6.01 references all current relationships
+  (one treatment-scoped record); definitive D6.02 references all
+  current cessions of the purpose (purpose-scoped record). No new
+  ReasoningRecord schema.
+* Read-only deterministic `derived.treatment.d6_*` (23 keys) and
+  `derived.purpose.d6_*` (11 keys) projections never persist,
+  never write and never conclude legality.
+* Delete/import: referenced actor delete rejects (no cascade, no
+  strip); relationship with children delete rejects; purpose/data
+  deletes strip references only; import rejects duplicate IDs,
+  dangling/cross-treatment/self-parent references, cycles, invalid
+  enums and type/assessment incompatibilities; legacy absence is
+  valid and roles are never migrated from `ActorRecord.role`.
+
+Discarded: extending `ActorRecord` (destroys D2 semantics and
+single-role-per-actor identity); a fourth scope or
+`ThirdPartyContext` (a relationship address is data, never an
+execution context); protocol-per-relationship and dynamic fact
+keys (hidden scope, same rejection as ADR-052); manual-only
+capture (no routing, no staleness, ambiguous D6.02/D6.03
+targeting); event/transaction/history structures; automatic role
+conversion; a generic relationship graph engine.
+
+Stage 1 boundary: identity references, abstract classification,
+juridical links, international tri-state and subordinate
+determinations only — never disclosures, transfers, subjects,
+incidents, timers or workflow. D6 readiness is unchanged by this
+infrastructure (canonical 7, protocols 0, total 61).

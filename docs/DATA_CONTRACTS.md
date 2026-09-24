@@ -1151,3 +1151,107 @@ Rules:
   protocol session, dynamic fact key or persisted warning
   framework is introduced.
 
+## 48. D6 Third-Party Relationship Capture (Punto 0)
+
+Local value-object collection `TreatmentScopedState.thirdPartyRelationships?`
+supporting repeatable D6.01–D6.07 evaluation over multiple third-party
+relationships inside one treatment (see ADR-054). Structure is never a
+legal conclusion; local assessments are never canonical results.
+
+```text
+ThirdPartyRelationshipRecord:
+  id (stable, unique within the treatment)
+  actorId (existing ActorRecord in the same treatment)
+  label (human identification of the relationship)
+  relationshipType (unknown | communication | cession | processor | subprocessor)
+  purposeIds[] (same-treatment purposes; unique; may be empty draft)
+  dataItemIds[] (same-treatment data items; unique; may be empty)
+  internationalDimension (yes | no | unknown; default unknown)
+  parentRelationshipId? (delegation chain; subprocessor only)
+  evidenceRef? (documentary reference, never subject evidence)
+  cessionAssessment? { lawfulness: supported|not_supported|unknown;
+    instrument: validated|remediation_required|unknown }
+  processorAssessment? { contract: validated|remediation_required|unknown;
+    instructions: controlled|remediation_required|unknown;
+    operational: controlled|remediation_required|unknown }
+  subprocessorAssessment? { authorization: controlled|remediation_required|unknown }
+```
+
+Rules:
+
+* One relationship has exactly one type. An actor holding two different
+  relationships (e.g. processor for one purpose, cession recipient for
+  another) is recorded as two relationship records. No
+  `relationshipTypes[]`.
+* `ActorRecord` stays untouched and remains D2.02 source of truth for
+  actor identity and role. A relationship never copies name/kind/role
+  and never writes the actor role automatically.
+* Purpose and data references resolve only inside the same treatment
+  (cross-parent rejected at write and import). References exist for
+  routing, targeting and traceability; empty lists are valid drafts,
+  never negative conclusions.
+* `internationalDimension` is routing metadata for future D7 only:
+  no adequacy, no SCC, no transfer safeguards, no legality, and
+  editing it writes no D6/D7 canonical fact.
+* `parentRelationshipId` expresses delegation only: valid only for
+  `subprocessor`, must resolve in the same treatment to a `processor`
+  or `subprocessor`, never self-reference, never cycles. Absent parent
+  on a subprocessor is an accepted draft (future D6.06 treats it as
+  incomplete).
+* Type/assessment compatibility is a hard invariant:
+  `cessionAssessment` only with `cession`, `processorAssessment` only
+  with `processor`, `subprocessorAssessment` only with `subprocessor`;
+  `unknown` and `communication` carry none; only `subprocessor` may
+  carry a parent. Changing `relationshipType` atomically clears
+  incompatible assessments and parent. This is structural
+  normalization, never legal conversion of results.
+* Assessments are subordinate professional determinations: creating,
+  editing or deleting records never writes canonical facts, answers,
+  reasoning records or effects. Canonical D6 aggregates materialize
+  only through explicit protocol finalization (future protocols).
+* D6.03 precision frozen: instrument state and cession lawfulness are
+  independent dimensions. All instruments validated with at least one
+  lawfulness `not_supported` yields a blocked/non-finalizable state:
+  neither `instrument_status = validated` nor a remediation effect
+  caused solely by the lawfulness failure.
+* Empty collection never means complete, controlled or validated:
+  every positive aggregate projection requires at least one relevant
+  record. For subprocessors, "none recorded" is structurally `no
+  exist`; `not_applicable` remains a future reviewed-map judgment,
+  never vacuous success.
+* Read-only deterministic `derived.treatment.d6_*` (23 keys) and
+  `derived.purpose.d6_*` (11 keys) projections expose existence,
+  structural completeness, per-dimension assessment aggregation and
+  the D6.03 ready/blocked/incomplete separation. They never persist,
+  never write facts and never conclude legality.
+* Reasoning references use exact `third_party_relationship:<id>`
+  tokens inside `ReasoningRecord.facts_considered[]` (local ID,
+  treatment-subordinated; same ID in another treatment does not
+  collide); `rationale` and `evidence_refs` are never parsed. Future
+  D6.01 validates one treatment-scoped record against all current
+  relationships; future D6.02 validates a purpose-scoped record
+  against all current cessions linked to that purpose. Execution
+  scope remains treatment/purpose; no per-relationship protocol,
+  session or context exists.
+* Delete behavior: an actor referenced by ≥1 relationship cannot be
+  deleted (reject, never silent cascade or strip); a relationship
+  with children cannot be deleted (reject, no cascade); deleting a
+  purpose strips its ID from `purposeIds[]` and deleting a data item
+  strips its ID from `dataItemIds[]`, both preserving records and
+  writing nothing canonical.
+* Import/export: legacy absence is valid (absent = empty structurally,
+  collection not materialized); duplicate local IDs, dangling actor,
+  purpose, data or parent references, cross-treatment references,
+  self-parents, cycles, invalid enums, type/assessment
+  incompatibilities and wrong shapes reject explicitly; no ID
+  regeneration and no silent repair. Derived projections never
+  persist. Roles from `ActorRecord` are never migrated into
+  relationships.
+* Stage 1 boundary: the collection stores third-party reference,
+  abstract classification, juridical links, international tri-state
+  and abstract determinations only — never individual disclosures,
+  transfer payloads, data subjects, incidents, events, timestamps,
+  transaction history, owners, deadlines or workflow instances. No
+  fourth scope, no `ThirdPartyContext`, no `ClientActivityInstance`.
+
+

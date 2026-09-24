@@ -1,11 +1,14 @@
 import { useWorkspace } from "../workspace/context";
 import { getTreatment } from "../workspace/scope";
 import {
+  deriveD5CandidatesForPurpose,
+  D5_CANDIDATE_KEYS,
+  linkedItems,
   resolveItemSignal,
   resolveProfile,
   validateSpecialRegimeCoherence,
 } from "../workspace/specialRegime";
-import type { TriStateSignal } from "../workspace/types";
+import type { CompanyState, ExecutionContext, TriStateSignal } from "../workspace/types";
 
 /**
  * Captura estructural D5 (Punto 0, ADR-053): controles profesionales
@@ -155,6 +158,81 @@ export function PurposeProfileEditor({
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Contexto estructural de la finalidad direccionada para guías D5
+ * (trabajo primero, sin claves técnicas): datos vinculados,
+ * candidaturas vigentes y advertencias. Solo lectura: no edita, no
+ * concluye, no persiste. Satisface la trazabilidad visible de
+ * datos vinculados sin persistencia adicional ni answers por item.
+ */
+export function SpecialRegimeGuideContext({
+  company,
+  ctx,
+}: {
+  company: CompanyState;
+  ctx: ExecutionContext;
+}) {
+  if (ctx.scope !== "purpose") return null;
+  const treatment = getTreatment(company, ctx.treatmentId);
+  if (!treatment) return null;
+  const items = linkedItems(treatment, ctx.purposeId);
+  const candidates =
+    deriveD5CandidatesForPurpose(company, ctx.treatmentId, ctx.purposeId) ?? {};
+  const warnings = validateSpecialRegimeCoherence(company, ctx.treatmentId, ctx.purposeId);
+  const entries: { label: string; state: string }[] = [
+    { label: "Datos sensibles", state: candidates[D5_CANDIDATE_KEYS.sensitive] },
+    { label: "Salud y perfil biológico", state: candidates[D5_CANDIDATE_KEYS.healthBiological] },
+    { label: "Biometría", state: candidates[D5_CANDIDATE_KEYS.biometric] },
+    { label: "Niños, niñas y adolescentes", state: candidates[D5_CANDIDATE_KEYS.minors] },
+    { label: "Investigación de interés público", state: candidates[D5_CANDIDATE_KEYS.research] },
+    { label: "Geolocalización", state: candidates[D5_CANDIDATE_KEYS.geolocation] },
+    { label: "Título III", state: candidates[D5_CANDIDATE_KEYS.titleIII] },
+  ].map((e) => ({
+    label: e.label,
+    state:
+      e.state === "yes"
+        ? "revisión indicada"
+        : e.state === "no"
+          ? "no indicada por captura actual"
+          : "por determinar",
+  }));
+  return (
+    <section className="activity-section" aria-label="Contexto estructural de la finalidad">
+      <h2>Contexto estructural de la finalidad</h2>
+      {items.length === 0 ? (
+        <p>Esta finalidad aún no tiene datos vinculados.</p>
+      ) : (
+        <>
+          <h3>Datos vinculados</h3>
+          <ul>
+            {items.map((i) => (
+              <li key={i.id}>{i.label.trim() === "" ? "Dato vinculado" : i.label}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      <h3>Revisiones indicadas por la captura</h3>
+      <ul>
+        {entries.map((e) => (
+          <li key={e.label}>
+            {e.label}: {e.state}
+          </li>
+        ))}
+      </ul>
+      {warnings.length > 0 ? (
+        <>
+          <h3>Revisar clasificación</h3>
+          <ul>
+            {warnings.map((w, i) => (
+              <li key={i}>{w.reason}</li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </section>
   );
 }
 

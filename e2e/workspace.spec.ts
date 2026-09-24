@@ -24,10 +24,12 @@ test("vista normal sin máquina, sin trazabilidad y con vigencia única", async 
   await expect(page.getByText("Guía operativa pendiente de incorporar")).toHaveCount(0);
 });
 
-test("actividad sin protocolo declara guía pendiente sin fingir", async ({ page }) => {
+test("actividad con protocolo ofrece guía sin fingir pendiente", async ({ page }) => {
   await page.goto("/actividad/minors.processing_assess");
-  await expect(page.getByText("Guía operativa pendiente de incorporar")).toBeVisible();
-  await expect(page.getByTestId("actividad-guia")).toHaveCount(0);
+  await expect(page.getByText("Guía operativa pendiente de incorporar")).toHaveCount(0);
+  const guideLink = page.getByTestId("actividad-accion").getByRole("link");
+  await expect(guideLink).toBeVisible();
+  await expect(guideLink).toHaveAttribute("href", /\/actividad\/minors\.processing_assess\/guia/);
 });
 
 test("sticky context nav con dominios, actividades y anterior/siguiente", async ({ page }) => {

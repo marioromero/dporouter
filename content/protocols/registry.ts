@@ -50,6 +50,10 @@ import { AUTOMATED_DECISION_SAFEGUARDS_ENABLE_PROTOCOL } from "./automated_decis
 import { SENSITIVE_LAWFULNESS_ASSESS_PROTOCOL } from "./sensitive.lawfulness_assess";
 import { SENSITIVE_HEALTH_BIOLOGICAL_ASSESS_PROTOCOL } from "./sensitive.health_biological_assess";
 import { SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL } from "./sensitive.biometric_assess";
+import { MINORS_PROCESSING_ASSESS_PROTOCOL } from "./minors.processing_assess";
+import { RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL } from "./research.public_interest_assess";
+import { GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL } from "./geolocation.requirements_assess";
+import { FINANCIAL_TITLEIII_SCOPE_PROTOCOL } from "./financial.titleIII_scope";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -114,6 +118,10 @@ const PROTOCOLS: ExecutionProtocol[] = [
   SENSITIVE_LAWFULNESS_ASSESS_PROTOCOL,
   SENSITIVE_HEALTH_BIOLOGICAL_ASSESS_PROTOCOL,
   SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL,
+  MINORS_PROCESSING_ASSESS_PROTOCOL,
+  RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL,
+  GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL,
+  FINANCIAL_TITLEIII_SCOPE_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

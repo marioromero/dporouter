@@ -418,7 +418,7 @@ function SpecialRegimeGuideStatus({
 }: {
   company: NonNullable<ReturnType<typeof useWorkspace>["company"]>;
   ctx: ExecutionContext;
-  guardRegime: "sensitive" | "health" | "biometric";
+  guardRegime: "sensitive" | "health" | "biometric" | "minors" | "research" | "titleIII";
   candidateKey: string;
   extraItemIds: string[];
   onToggleItem: (id: string) => void;
@@ -437,16 +437,22 @@ function SpecialRegimeGuideStatus({
     const item = items.find((i) => i.id === id);
     return resolveItemSignal(item, field);
   };
+  const sensitiveIds = items
+    .filter((i) => signalOf(i.id, "sensitive") === "yes")
+    .map((i) => i.id);
+  const healthIds = items
+    .filter((i) => signalOf(i.id, "health") === "yes" || signalOf(i.id, "biologicalProfile") === "yes")
+    .map((i) => i.id);
   const requiredIds =
-    guardRegime === "sensitive"
-      ? items.filter((i) => signalOf(i.id, "sensitive") === "yes").map((i) => i.id)
+    guardRegime === "sensitive" || guardRegime === "minors" || guardRegime === "research"
+      ? sensitiveIds
       : guardRegime === "health"
-        ? items
-            .filter((i) => signalOf(i.id, "health") === "yes" || signalOf(i.id, "biologicalProfile") === "yes")
-            .map((i) => i.id)
-        : [];
+        ? healthIds
+        : guardRegime === "titleIII"
+          ? items.map((i) => i.id)
+          : [];
   const pendingCount =
-    guardRegime === "sensitive"
+    guardRegime === "sensitive" || guardRegime === "minors" || guardRegime === "research"
       ? items.filter((i) => signalOf(i.id, "sensitive") === "unknown").length
       : guardRegime === "health"
         ? items.filter(
@@ -474,6 +480,10 @@ function SpecialRegimeGuideStatus({
       </p>
       {items.length === 0 ? (
         <p>Esta finalidad aún no tiene datos vinculados.</p>
+      ) : guardRegime === "titleIII" ? (
+        <p>
+          {items.length} {items.length === 1 ? "dato vinculado" : "datos vinculados"} bajo análisis de ámbito.
+        </p>
       ) : (
         <p>
           {items.length} {items.length === 1 ? "dato vinculado" : "datos vinculados"}

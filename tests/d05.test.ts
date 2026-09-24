@@ -329,21 +329,9 @@ describe("contenido canónico D5", () => {
     }
   });
 
-  it("19. D5.01–D5.03 con protocolos; D5.04–D5.07 sin protocolos", () => {
-    for (const k of [
-      "sensitive.lawfulness_assess",
-      "sensitive.health_biological_assess",
-      "sensitive.biometric_assess",
-    ]) {
+  it("19. D5.01–D5.07 con protocolos (7/7, D5 CLOSED)", () => {
+    for (const k of EXPECTED_KEYS) {
       expect(getProtocolForActivity(k), k).toBeTruthy();
-    }
-    for (const k of [
-      "minors.processing_assess",
-      "research.public_interest_assess",
-      "geolocation.requirements_assess",
-      "financial.titleIII_scope",
-    ]) {
-      expect(getProtocolForActivity(k), k).toBeUndefined();
     }
     expect(ALL_ACTIVITIES).toHaveLength(54);
   });

@@ -443,9 +443,9 @@ describe("Activity View V2", () => {
       (a) => !getProtocolForActivity(a.activity_key),
     );
     if (!pending) {
-      // D1+D2+D3 con cobertura total y D4.01–D4.07 con guía (20 + 12 + 6 + 7):
-      // solo D4.08/D4.09 quedan pendientes. La rama honesta sigue existiendo.
-      expect(ALL_ACTIVITIES).toHaveLength(47);
+      // Cobertura total D1–D5 (20 + 12 + 6 + 9 + 7 = 54): ninguna
+      // actividad sin guía. La rama honesta sigue existiendo.
+      expect(ALL_ACTIVITIES).toHaveLength(54);
       for (const a of ALL_ACTIVITIES) {
         expect(getProtocolForActivity(a.activity_key), a.activity_key).toBeTruthy();
       }

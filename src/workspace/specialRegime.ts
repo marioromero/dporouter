@@ -227,10 +227,30 @@ export function deriveD5Candidates(
 }
 
 /**
+ * Lee un answer almacenado en la purpose direccionada, escaneando
+ * los maps del address por fact key: si varias fuentes discrepan,
+ * el valor queda indeterminado (unknown) en lugar de elegir en
+ * silencio. Solo lectura.
+ */
+export function scanPurposeAnswer(
+  company: CompanyState,
+  treatmentId: string,
+  purposeId: string,
+  factKey: string,
+): string | undefined {
+  const maps =
+    getPurpose(company, treatmentId, purposeId)?.protocolAnswers ?? {};
+  const values = new Set<string>();
+  for (const m of Object.values(maps)) {
+    const v = m[factKey]?.value;
+    if (v !== undefined) values.add(v);
+  }
+  return values.size === 1 ? [...values][0] : undefined;
+}
+
+/**
  * Lee la ruta de licitud almacenada en la purpose direccionada
- * (answers propias; ausente = sin truth). Escanea los maps del
- * address por fact key: si varias fuentes discrepan, el valor queda
- * indeterminado (unknown) en lugar de elegir en silencio.
+ * (answers propias; ausente = sin truth).
  * Solo lectura para el bridge D5.07.
  */
 export function readLawfulnessRoute(
@@ -238,17 +258,10 @@ export function readLawfulnessRoute(
   treatmentId: string,
   purposeId: string,
 ): { consent?: string; source?: string } {
-  const maps =
-    getPurpose(company, treatmentId, purposeId)?.protocolAnswers ?? {};
-  const scan = (factKey: string): string | undefined => {
-    const values = new Set<string>();
-    for (const m of Object.values(maps)) {
-      const v = m[factKey]?.value;
-      if (v !== undefined) values.add(v);
-    }
-    return values.size === 1 ? [...values][0] : undefined;
+  return {
+    consent: scanPurposeAnswer(company, treatmentId, purposeId, CONSENT_FACT),
+    source: scanPurposeAnswer(company, treatmentId, purposeId, SOURCE_FACT),
   };
-  return { consent: scan(CONSENT_FACT), source: scan(SOURCE_FACT) };
 }
 
 /** Candidaturas D5 para una purpose existente (null si contexto inválido). */

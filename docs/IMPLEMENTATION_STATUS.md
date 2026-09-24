@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-24 (D5.01–D5.03 guided batch; D5.04–D5.07 protocol-less)
+Last controlled update: 2026-09-24 (D5.04–D5.07 guided batch, D5 CLOSED)
 
 ## Functional baseline
 
@@ -221,11 +221,11 @@ Stage 1 canonical activities:
 
 Guided protocols:
 
-`50`
+`54`
 
 Protocol coverage:
 
-`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3), D4.01–D4.09 (D4.01–D4.07 company-scope; D4.08 decision + D4.09 checklist treatment-scope sobre automatedUses[] compartida). D5.01–D5.03 decision purpose-scope con juicio y guards estructurales; D5.04–D5.07 sin protocolos (guided retrofit parcial)`
+`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3), D4.01–D4.09 (D4.01–D4.07 company-scope; D4.08 decision + D4.09 checklist treatment-scope sobre automatedUses[] compartida). D5.01–D5.07 con ExecutionProtocols (D5.01–D5.05 + D5.07 decision con juicio y guards; D5.06 checklist sin reasoning; D5 guided retrofit CLOSED)`
 
 D4 canonical coverage:
 
@@ -258,6 +258,17 @@ D5.01–D5.03 guided batch (decision, purpose, con juicio profesional):
 
 Readiness D5 actual: canonical 7, protocols 3, execution-ready 3, product-ready 3; pendientes D5.04–D5.07. Canonical total 54, protocols total 50, pending refs 2.
 
+D5.04–D5.07 guided batch (D5 CLOSED):
+
+* D5.04 (`minors.processing_assess`, decision purpose con juicio): candidatura por perfil, precondiciones (≥1 link, sensitive clasificado), población abstracta en tres answers (niños/adolescentes/<16 sensibles, sin datos reales), subregla <16 exigible solo con sensitive=yes, refs sensibles + snapshots de población para staleness;
+* D5.05 (`research.public_interest_assess`, decision purpose con juicio): exclusividad e interés público por gate, rama de riesgo solo con sensibles, publicación con anonimización (unknown bloquea favorable), refs sensibles;
+* D5.06 (`geolocation.requirements_assess`, checklist purpose sin reasoning): contexto D2 consumido read-only (vía art. 12/13 evaluada; sin vía → incomplete + next a D2.05), cuatro elementos informativos, rama de terceros separada (unknown → incomplete, nunca remediación), finalización scope-aware existente e idempotente;
+* D5.07 (`financial.titleIII_scope`, decision purpose con juicio): bridge D2 sin modificarlo, refs = todos los vinculados, ámbito/requisitos en answers con snapshots, tres outcomes definitivos con effects exactos (out/in+satisfied/in+remediation), combinaciones imposibles bloqueadas, out_of_scope sin escritura a D2;
+* guards D5 por dispatch estructural (sin literales): cobertura, refs, cautelas propias, snapshots `answer:<fact>=<value>`, conclusiones definitivas;
+* UI: estado estructural extendido a los 7 regímenes + contexto estructural en guías D5 (datos vinculados, candidaturas, advertencias; sin claves).
+
+Readiness D5 final: canonical 7, protocols 7, execution-ready 7, product-ready 7 (`D5 guided retrofit CLOSED`). Canonical total 54, protocols total 54, pending refs 2 (`risk.mpi_sync`, `mpi.diffusion`).
+
 Pending canonical cross-domain targets:
 
 * `risk.mpi_sync`
@@ -265,7 +276,7 @@ Pending canonical cross-domain targets:
 
 Still not implemented:
 
-* guided protocols for D5.04–D5.07 and D6–D12 activities;
+* guided protocols for D06–D12 activities;
 * D06-D12;
 * real characterization UI;
 * backend persistent client context (local treatment/purpose workspace exists);

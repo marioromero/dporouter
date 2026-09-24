@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { SENSITIVE_LAWFULNESS_ASSESS_PROTOCOL as P501 } from "../content/protocols/sensitive.lawfulness_assess";
 import { SENSITIVE_HEALTH_BIOLOGICAL_ASSESS_PROTOCOL as P502 } from "../content/protocols/sensitive.health_biological_assess";
 import { SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL as P503 } from "../content/protocols/sensitive.biometric_assess";
+import { MINORS_PROCESSING_ASSESS_PROTOCOL as P504 } from "../content/protocols/minors.processing_assess";
+import { RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL as P505 } from "../content/protocols/research.public_interest_assess";
+import { GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL as P506 } from "../content/protocols/geolocation.requirements_assess";
+import { FINANCIAL_TITLEIII_SCOPE_PROTOCOL as P507 } from "../content/protocols/financial.titleIII_scope";
 import type { ExecutionProtocol, FactMap } from "../content/protocols/types";
 import {
   getProtocolForActivity,
@@ -16,7 +20,15 @@ import {
 import { deriveSessionFacts } from "../src/workspace/derived";
 import { newCompany } from "../src/workspace/types";
 import type { CompanyState, ExecutionContext } from "../src/workspace/types";
-import { createPurpose, createTreatment } from "../src/workspace/scope";
+import {
+  createPurpose,
+  createTreatment,
+  saveScopedProtocolAnswer,
+} from "../src/workspace/scope";
+import {
+  applyScopedProcedureFinalization,
+  validateScopedProcedureFinalization,
+} from "../src/workspace/finalize";
 import {
   addDataItem,
   addDataPurposeLink,
@@ -27,8 +39,10 @@ import {
 import { setSpecialRegimeProfile } from "../src/workspace/scope";
 import {
   deriveD5CandidatesForPurpose,
+  readLawfulnessRoute,
   validateSpecialRegimeCoherence,
 } from "../src/workspace/specialRegime";
+import { isSpecialRegimeGuideProtocol } from "../src/workspace/specialRegimeGuards";
 import { getSpecialRegimeGuard } from "../src/workspace/specialRegimeGuards";
 import { getCanonicalActivity } from "../content/registry";
 import { D05_ACTIVITIES } from "../content/domains/d05";
@@ -908,6 +922,271 @@ describe("D5.03 sensitive.biometric_assess (decision, purpose)", () => {
   });
 });
 
+describe("D5.04 minors.processing_assess (decision, purpose)", () => {
+  it("25. registrado con modo, scope, reasoning y efectos canónicos", () => {
+    expect(getProtocolForActivity("minors.processing_assess")).toBe(P504);
+    expect(P504.protocol_key).toBe("minors.processing_assess.v1");
+    expect(P504.mode).toBe("decision");
+    expect(P504.execution_scope).toBe("purpose");
+    expect(P504.version).toBe(1);
+    expect(getCanonicalActivity(P504.activity_key)?.human_code).toBe("D5.04");
+    expect(getCanonicalActivity(P504.activity_key)?.reasoning_record_required).toBe(true);
+    expect(validateProtocolStructure(P504)).toEqual([]);
+    expect(P504.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      [
+        "minor_processing_supported",
+        "minor_processing_not_supported",
+        "assessment_incomplete",
+        "classification_incomplete",
+        "regime_not_indicated",
+      ].sort(),
+    );
+  });
+
+  it("26. candidatura yes/no/unknown gobierna la entrada", () => {
+    const { company, ctx1 } = setup();
+    expect(evaluateProtocol(P504, sessionFacts(company, ctx1, {
+      "derived.purpose.d5_minors_candidate": "yes",
+    })).status).toBe("awaiting_facts");
+    expect(
+      mustOutcome(P504, sessionFacts(company, ctx1, {
+        "derived.purpose.d5_minors_candidate": "no",
+      })).outcome_key,
+    ).toBe("regime_not_indicated");
+    expect(
+      mustOutcome(P504, sessionFacts(company, ctx1)).outcome_key,
+    ).toBe("classification_incomplete");
+  });
+
+  it("27. ramas de población y canon completo sin datos reales", () => {
+    const keys = P504.nodes.map((n) => n.node_key);
+    for (const k of [
+      "children-present",
+      "adolescents-present",
+      "adolescent-sensitive-u16",
+      "superior-interest",
+      "progressive-autonomy",
+      "children-consent",
+      "adolescent-rules",
+      "adolescent-sensitive-rule",
+      "authorization-norm",
+      "operational-design",
+      "reinforced-protection",
+      "education-obligations",
+    ]) {
+      expect(keys, k).toContain(k);
+    }
+    const blob = JSON.stringify(P504).toLowerCase();
+    for (const forbidden of ["fecha de nacimiento", "edad individual", "nombre del menor", "representante individual"]) {
+      expect(blob, forbidden).not.toContain(forbidden);
+    }
+    expect(P504.decision_fact_keys).toEqual([
+      "derived.purpose.d5_minors_candidate",
+      "minors04.items_reviewed",
+      "minors04.analysis_ready",
+    ]);
+  });
+
+  it("28. precondiciones: sin links o sensitive unknown bloquean", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, { involvesMinors: "yes" });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const guard = getSpecialRegimeGuard(P504);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "minors04.items_reviewed": "yes",
+      "minors04.analysis_ready": "yes",
+    };
+    // Cero links → bloqueado aunque candidate yes.
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P504,
+        conclusion: "minor_processing_supported", extras: [],
+        facts: sessionFacts(company, ctx1, ready),
+      }),
+    ).toEqual([
+      "Sin datos vinculados no hay evaluación operacional que cerrar: vincula al menos un dato a la finalidad.",
+    ]);
+    const a = mustItem(company, treatmentId, "A", { sensitive: "unknown" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P504,
+        conclusion: "minor_processing_supported", extras: [],
+        facts: sessionFacts(company, ctx1, ready),
+      }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("29. subregla <16: sin sensitive=yes no se exige; con yes exige población", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, { involvesMinors: "yes" });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    // Todos no sensibles: subregla no exigible, vía libre con u16 unknown.
+    const a = mustItem(company, treatmentId, "A", { sensitive: "no" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const guard = getSpecialRegimeGuard(P504);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "minors04.items_reviewed": "yes",
+      "minors04.analysis_ready": "yes",
+    };
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P504,
+        conclusion: "minor_processing_supported", extras: [],
+        facts: sessionFacts(company, ctx1, ready),
+      }),
+    ).toEqual([]);
+    // Con sensitive=yes y población u16 unknown → bloqueado.
+    const b = mustItem(company, treatmentId, "B", { sensitive: "yes" });
+    company = b.company;
+    company = mustLink(company, treatmentId, b.id, p1);
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P504,
+        conclusion: "minor_processing_supported",
+        extras: [`data_item:${b.id}`],
+        facts: sessionFacts(company, ctx1, ready),
+      }),
+    ).toEqual([
+      "Determina si la finalidad involucra datos sensibles de adolescentes menores de dieciséis años antes de concluir.",
+    ]);
+    // Población determinada (no) → vía libre; refs exigidas para el yes.
+    const ans = saveScopedProtocolAnswer(
+      company, ctx1, P504.protocol_key, "minors04.adolescent_sensitive_u16", "no", P504.protocol_key,
+    );
+    if (!ans) throw new Error("sin answer");
+    company = ans;
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P504,
+        conclusion: "minor_processing_supported",
+        extras: [`data_item:${b.id}`],
+        facts: sessionFacts(company, ctx1, ready),
+      }),
+    ).toEqual([]);
+  });
+
+  it("30. supported/not_supported con effects; falta de info no es not_supported", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, { involvesMinors: "yes" });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "no" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const guard = getSpecialRegimeGuard(P504);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "minors04.items_reviewed": "yes",
+      "minors04.analysis_ready": "yes",
+      "minors04.children_present": "yes",
+      "minors04.superior_interest": "yes",
+    };
+    const facts = sessionFacts(company, ctx1, ready);
+    const res = finalizeJudgment({
+      protocol: P504, company, facts,
+      draft: { ...draftFor("minor_processing_supported"), extra_facts_considered: [] },
+      legalBasis: basisFor("minors.processing_assess"), ctx: ctx1,
+    });
+    if (!res.ok) throw new Error(`debió finalizar: ${JSON.stringify(res)}`);
+    expect(res.effects).toEqual([
+      { fact_key: "minors.processing_status", value: "supported" },
+    ]);
+    const applied = applyScopedFinalization(company, P504, ctx1, res.record, res.effects);
+    if (!applied) throw new Error("sin apply");
+    expect(
+      getRecordedJudgment(P504, applied, sessionFacts(applied, ctx1, ready), ctx1).status,
+    ).toBe("valid");
+    // Sin base analizada no hay not_supported.
+    expect(
+      finalizeJudgment({
+        protocol: P504, company,
+        facts: sessionFacts(company, ctx1),
+        draft: draftFor("minor_processing_not_supported"),
+        legalBasis: basisFor("minors.processing_assess"), ctx: ctx1,
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("31. refs sensibles y staleness ante población/items/links", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, { involvesMinors: "yes" });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "yes" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const pop = saveScopedProtocolAnswer(
+      company, ctx1, P504.protocol_key, "minors04.adolescent_sensitive_u16", "no", P504.protocol_key,
+    );
+    if (!pop) throw new Error("sin población");
+    company = pop;
+    const guard = getSpecialRegimeGuard(P504);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "minors04.items_reviewed": "yes",
+      "minors04.analysis_ready": "yes",
+    };
+    const extras = guard.composeRefs(company, ctx1, []);
+    expect(extras).toContain(`data_item:${a.id}`);
+    expect(extras.some((e) => e.startsWith("answer:minors04."))).toBe(true);
+    const facts = sessionFacts(company, ctx1, ready);
+    const res = finalizeJudgment({
+      protocol: P504, company, facts,
+      draft: { ...draftFor("minor_processing_supported"), extra_facts_considered: extras },
+      legalBasis: basisFor("minors.processing_assess"), ctx: ctx1,
+    });
+    if (!res.ok) throw new Error("debió finalizar");
+    const applied = applyScopedFinalization(company, P504, ctx1, res.record, res.effects);
+    if (!applied) throw new Error("sin apply");
+    const validFacts = sessionFacts(applied, ctx1, ready);
+    expect(getRecordedJudgment(P504, applied, validFacts, ctx1).status).toBe("valid");
+    // Cambio de población → stale.
+    const ch = saveScopedProtocolAnswer(
+      applied, ctx1, P504.protocol_key, "minors04.adolescent_sensitive_u16", "yes", P504.protocol_key,
+    );
+    if (!ch) throw new Error("sin cambio");
+    expect(
+      getRecordedJudgment(P504, ch, sessionFacts(ch, ctx1, ready), ctx1).status,
+    ).toBe("stale");
+    // Nuevo sensitive → stale; unlink → stale.
+    const n = mustItem(applied, treatmentId, "Nuevo", { sensitive: "yes" });
+    const moved = mustLink(n.company, treatmentId, n.id, p1);
+    expect(
+      getRecordedJudgment(P504, moved, sessionFacts(moved, ctx1, ready), ctx1).status,
+    ).toBe("stale");
+    const un = removeDataPurposeLink(applied, treatmentId, { dataId: a.id, purposeId: p1 });
+    if (!un) throw new Error("sin unlink");
+    expect(
+      getRecordedJudgment(P504, un, sessionFacts(un, ctx1, ready), ctx1).status,
+    ).toBe("stale");
+  });
+
+  it("32. aislamiento entre purposes", () => {
+    let { company, treatmentId, p1, p2, ctx2 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, { involvesMinors: "yes" });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "no" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    expect(
+      deriveD5CandidatesForPurpose(company, treatmentId, p2)?.[
+        "derived.purpose.d5_minors_candidate"
+      ],
+    ).toBeUndefined();
+    expect(
+      getRecordedJudgment(P504, company, sessionFacts(company, ctx2), ctx2).status,
+    ).toBe("none");
+  });
+});
+
 describe("D5 integración rama sensible→salud→biometría", () => {
   it("21. caso A: solo sensible general", () => {
     let { company, treatmentId, p1 } = setup();
@@ -1021,5 +1300,1096 @@ describe("D5 integración rama sensible→salud→biometría", () => {
       });
       expect(errors, key).toEqual([]);
     }
+  });
+});
+
+describe("D5.05 research.public_interest_assess (decision, purpose)", () => {
+  it("33. registrado con modo, scope, reasoning y efectos canónicos", () => {
+    expect(getProtocolForActivity("research.public_interest_assess")).toBe(P505);
+    expect(P505.protocol_key).toBe("research.public_interest_assess.v1");
+    expect(P505.mode).toBe("decision");
+    expect(P505.execution_scope).toBe("purpose");
+    expect(P505.version).toBe(1);
+    expect(getCanonicalActivity(P505.activity_key)?.human_code).toBe("D5.05");
+    expect(getCanonicalActivity(P505.activity_key)?.reasoning_record_required).toBe(true);
+    expect(validateProtocolStructure(P505)).toEqual([]);
+    expect(P505.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      [
+        "special_regime_supported",
+        "special_regime_not_supported",
+        "assessment_incomplete",
+        "classification_incomplete",
+        "regime_not_indicated",
+      ].sort(),
+    );
+    expect(P505.decision_fact_keys).toEqual([
+      "derived.purpose.d5_research_candidate",
+      "res05.items_reviewed",
+      "res05.exclusivity_verified",
+      "res05.public_interest_verified",
+      "res05.analysis_ready",
+    ]);
+  });
+
+  it("34. candidatura gobierna la entrada", () => {
+    const { company, ctx1 } = setup();
+    expect(evaluateProtocol(P505, sessionFacts(company, ctx1, {
+      "derived.purpose.d5_research_candidate": "yes",
+    })).status).toBe("awaiting_facts");
+    expect(
+      mustOutcome(P505, sessionFacts(company, ctx1, {
+        "derived.purpose.d5_research_candidate": "no",
+      })).outcome_key,
+    ).toBe("regime_not_indicated");
+    expect(
+      mustOutcome(P505, sessionFacts(company, ctx1)).outcome_key,
+    ).toBe("classification_incomplete");
+  });
+
+  it("35. completitud: ≥1 link y sensitive clasificado", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, {
+      researchPublicInterestCandidate: "yes",
+    });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const guard = getSpecialRegimeGuard(P505);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "res05.items_reviewed": "yes",
+      "res05.exclusivity_verified": "yes",
+      "res05.public_interest_verified": "yes",
+      "res05.analysis_ready": "yes",
+    };
+    // Cero links → bloqueado.
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P505,
+        conclusion: "special_regime_supported", extras: [],
+        facts: sessionFacts(company, ctx1, ready),
+      }),
+    ).toEqual([
+      "Sin datos vinculados no hay evaluación operacional que cerrar: vincula al menos un dato a la finalidad.",
+    ]);
+    const a = mustItem(company, treatmentId, "A", { sensitive: "unknown" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P505,
+        conclusion: "special_regime_supported", extras: [],
+        facts: sessionFacts(company, ctx1, ready),
+      }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("36. exclusividad e interés público exigidos por gate", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, {
+      researchPublicInterestCandidate: "yes",
+    });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "no" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    // Sin exclusividad verificada no hay conclusión definitiva.
+    expect(
+      finalizeJudgment({
+        protocol: P505, company,
+        facts: sessionFacts(company, ctx1, {
+          "res05.items_reviewed": "yes",
+          "res05.public_interest_verified": "yes",
+          "res05.analysis_ready": "yes",
+        }),
+        draft: draftFor("special_regime_supported"),
+        legalBasis: basisFor("research.public_interest_assess"), ctx: ctx1,
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("37. rama de riesgo solo con sensibles; publicación con anonimización", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, {
+      researchPublicInterestCandidate: "yes",
+    });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "yes" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const guard = getSpecialRegimeGuard(P505);
+    if (!guard) throw new Error("sin guard");
+    const base: FactMap = {
+      "res05.items_reviewed": "yes",
+      "res05.exclusivity_verified": "yes",
+      "res05.public_interest_verified": "yes",
+      "res05.analysis_ready": "yes",
+      "res05.publishes_results": "no",
+    };
+    const extras = guard.composeRefs(company, ctx1, []);
+    // Riesgo sin evaluar → supported bloqueado.
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P505,
+        conclusion: "special_regime_supported", extras,
+        facts: sessionFacts(company, ctx1, base),
+      }).length,
+    ).toBeGreaterThan(0);
+    // Riesgo + mitigación + resto → vía libre y supported con effects.
+    const full = sessionFacts(company, ctx1, {
+      ...base,
+      "res05.risk_assessed": "yes",
+      "res05.mitigation_sufficient": "yes",
+    });
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P505,
+        conclusion: "special_regime_supported", extras, facts: full,
+      }),
+    ).toEqual([]);
+    const res = finalizeJudgment({
+      protocol: P505, company, facts: full,
+      draft: { ...draftFor("special_regime_supported"), extra_facts_considered: extras },
+      legalBasis: basisFor("research.public_interest_assess"), ctx: ctx1,
+    });
+    if (!res.ok) throw new Error(`debió finalizar: ${JSON.stringify(res)}`);
+    expect(res.effects).toEqual([
+      { fact_key: "research.public_interest_status", value: "supported" },
+    ]);
+    // Publicación sin anonimización bloquea supported; unknown también.
+    for (const pub of ["yes", "unknown"] as const) {
+      const f = sessionFacts(company, ctx1, {
+        ...base,
+        "res05.risk_assessed": "yes",
+        "res05.mitigation_sufficient": "yes",
+        "res05.publishes_results": pub,
+        ...(pub === "yes" ? { "res05.publication_anonymized": "no" } : {}),
+      });
+      expect(
+        guard.validateFinalization({
+          company, ctx: ctx1, protocol: P505,
+          conclusion: "special_regime_supported", extras, facts: f,
+        }).length,
+        `publishes=${pub}`,
+      ).toBeGreaterThan(0);
+    }
+    // Publicación anonimizada → vía libre.
+    const pubOk = sessionFacts(company, ctx1, {
+      ...base,
+      "res05.risk_assessed": "yes",
+      "res05.mitigation_sufficient": "yes",
+      "res05.publishes_results": "yes",
+      "res05.publication_anonymized": "yes",
+    });
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P505,
+        conclusion: "special_regime_supported", extras, facts: pubOk,
+      }),
+    ).toEqual([]);
+  });
+
+  it("38. sin sensibles la rama de riesgo no bloquea; refs y staleness", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, {
+      researchPublicInterestCandidate: "yes",
+    });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "no" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const guard = getSpecialRegimeGuard(P505);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "res05.items_reviewed": "yes",
+      "res05.exclusivity_verified": "yes",
+      "res05.public_interest_verified": "yes",
+      "res05.analysis_ready": "yes",
+      "res05.publishes_results": "no",
+    };
+    const facts = sessionFacts(company, ctx1, ready);
+    expect(
+      guard.validateFinalization({
+        company, ctx: ctx1, protocol: P505,
+        conclusion: "special_regime_supported", extras: [], facts,
+      }),
+    ).toEqual([]);
+    const res = finalizeJudgment({
+      protocol: P505, company, facts,
+      draft: draftFor("special_regime_supported"),
+      legalBasis: basisFor("research.public_interest_assess"), ctx: ctx1,
+    });
+    if (!res.ok) throw new Error("debió finalizar");
+    const applied = applyScopedFinalization(company, P505, ctx1, res.record, res.effects);
+    if (!applied) throw new Error("sin apply");
+    expect(
+      getRecordedJudgment(P505, applied, sessionFacts(applied, ctx1, ready), ctx1).status,
+    ).toBe("valid");
+    // Nuevo sensitive → stale.
+    const n = mustItem(applied, treatmentId, "Nuevo", { sensitive: "yes" });
+    const moved = mustLink(n.company, treatmentId, n.id, p1);
+    expect(
+      getRecordedJudgment(P505, moved, sessionFacts(moved, ctx1, ready), ctx1).status,
+    ).toBe("stale");
+  });
+});
+
+describe("D5.06 geolocation.requirements_assess (checklist, purpose)", () => {
+  it("39. registrado checklist purpose sin reasoning", () => {
+    expect(getProtocolForActivity("geolocation.requirements_assess")).toBe(P506);
+    expect(P506.protocol_key).toBe("geolocation.requirements_assess.v1");
+    expect(P506.mode).toBe("checklist");
+    expect(P506.execution_scope).toBe("purpose");
+    expect(getCanonicalActivity(P506.activity_key)?.human_code).toBe("D5.06");
+    expect(getCanonicalActivity(P506.activity_key)?.reasoning_record_required).toBe(false);
+    expect(validateProtocolStructure(P506)).toEqual([]);
+    expect(P506.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      [
+        "requirements_satisfied",
+        "remediation_required",
+        "assessment_incomplete",
+        "classification_incomplete",
+        "regime_not_indicated",
+      ].sort(),
+    );
+  });
+
+  // Sin candidatura hardcodeada: los tests de síntesis la aportan
+  // explícitamente; los de reevaluación usan la derivada real del
+  // estado (sessionFacts) para no enmascarar cambios estructurales.
+  function geoFacts(over: FactMap = {}): FactMap {
+    return {
+      "lawful.consent_applies": "consent_yes",
+      "geo06.items_classified": "yes",
+      "geo06.info_clear": "yes",
+      "geo06.info_type": "yes",
+      "geo06.info_purpose": "yes",
+      "geo06.info_duration": "yes",
+      "geo06.third_party_sharing": "no",
+      "geo06.third_party_disclosed": "na",
+      ...over,
+    };
+  }
+
+  it("40. candidatura gobierna; contexto D2 desconocido deja incompleto", () => {
+    expect(
+      mustOutcome(P506, geoFacts({ "derived.purpose.d5_geolocation_candidate": "yes" })).outcome_key,
+    ).toBe("requirements_satisfied");
+    expect(
+      mustOutcome(P506, geoFacts({ "derived.purpose.d5_geolocation_candidate": "no" })).outcome_key,
+    ).toBe("regime_not_indicated");
+    expect(mustOutcome(P506, {}).outcome_key).toBe("classification_incomplete");
+    // Parcial (candidatura sin checks) queda en espera, sin inventar.
+    expect(
+      evaluateProtocol(P506, {
+        "derived.purpose.d5_geolocation_candidate": "yes",
+        "lawful.consent_applies": "consent_yes",
+      }).status,
+    ).toBe("awaiting_facts");
+    // Sin vía evaluada (sin facts D2) → incomplete con next a D2.05.
+    const noRoute = mustOutcome(
+      P506,
+      geoFacts({
+        "derived.purpose.d5_geolocation_candidate": "yes",
+        "lawful.consent_applies": "unknown",
+      }),
+    );
+    expect(noRoute.outcome_key).toBe("assessment_incomplete");
+    // Vía art. 13 también vale como contexto evaluado (parcial: en espera).
+    const art13 = evaluateProtocol(P506, {
+      "derived.purpose.d5_geolocation_candidate": "yes",
+      "lawful.consent_applies": "consent_no",
+      "lawful.art13_source": "legal_obligation",
+      "geo06.items_classified": "yes",
+    });
+    expect(art13.status).toBe("awaiting_facts");
+    if (art13.status !== "awaiting_facts") throw new Error("se esperaba espera");
+    expect(art13.current_node_key).toBe("check-clear-info");
+  });
+
+  it("41. satisfied con todo verificado; finalización addressed idempotente", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const a = mustItem(company, treatmentId, "A", { geolocation: "yes" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const facts = sessionFacts(company, ctx1, geoFacts());
+    expect(facts["derived.purpose.d5_geolocation_candidate"]).toBe("yes");
+    expect(mustOutcome(P506, facts).outcome_key).toBe("requirements_satisfied");
+    const validated = validateScopedProcedureFinalization(
+      { protocol: P506, company, facts, outcomeKey: "requirements_satisfied" },
+      ctx1,
+    );
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) throw new Error("debió validar");
+    const once = applyScopedProcedureFinalization(company, P506, ctx1, validated.effects);
+    if (!once) throw new Error("sin apply");
+    expect(once.applied).toEqual(["geolocation.requirements_status"]);
+    expect(
+      once.company.treatments?.[treatmentId]?.purposes[p1]?.protocolAnswers[P506.protocol_key]?.[
+        "geolocation.requirements_status"
+      ]?.value,
+    ).toBe("satisfied");
+    // Idempotente: segunda aplicación no reescribe.
+    const twice = applyScopedProcedureFinalization(once.company, P506, ctx1, validated.effects);
+    if (!twice) throw new Error("sin re-apply");
+    expect(twice.applied).toEqual([]);
+    expect(twice.skipped).toEqual(["geolocation.requirements_status"]);
+    // Sin ReasoningRecord en ningún lado.
+    expect(Object.keys(once.company.treatments?.[treatmentId]?.purposes[p1]?.reasoningRecords ?? {})).toEqual([]);
+  });
+
+  it("42. rama de terceros: yes exige disclosure; unknown deja incompleto", () => {
+    const cand = { "derived.purpose.d5_geolocation_candidate": "yes" };
+    // sharing yes + disclosed no → remediation.
+    expect(
+      mustOutcome(
+        P506,
+        geoFacts({ ...cand, "geo06.third_party_sharing": "yes", "geo06.third_party_disclosed": "no" }),
+      ).outcome_key,
+    ).toBe("remediation_required");
+    // sharing yes + disclosed yes → satisfied.
+    expect(
+      mustOutcome(
+        P506,
+        geoFacts({ ...cand, "geo06.third_party_sharing": "yes", "geo06.third_party_disclosed": "yes" }),
+      ).outcome_key,
+    ).toBe("requirements_satisfied");
+    // sharing unknown → incomplete (nunca remediation).
+    expect(
+      mustOutcome(P506, geoFacts({ ...cand, "geo06.third_party_sharing": "unknown" })).outcome_key,
+    ).toBe("assessment_incomplete");
+    // sharing no ignora disclosure.
+    expect(
+      mustOutcome(
+        P506,
+        geoFacts({ ...cand, "geo06.third_party_sharing": "no", "geo06.third_party_disclosed": "unknown" }),
+      ).outcome_key,
+    ).toBe("requirements_satisfied");
+  });
+
+  it("43. unknown informativo no es remediación; contexto cruzado rechazado", () => {
+    const { company, treatmentId, p2 } = setup();
+    const cand = { "derived.purpose.d5_geolocation_candidate": "yes" };
+    expect(
+      mustOutcome(P506, geoFacts({ ...cand, "geo06.info_type": "unknown" })).outcome_key,
+    ).toBe("assessment_incomplete");
+    expect(
+      mustOutcome(P506, geoFacts({ ...cand, "geo06.info_type": "no" })).outcome_key,
+    ).toBe("remediation_required");
+    // Finalizar en purpose inexistente → inválido.
+    const bad = validateScopedProcedureFinalization(
+      { protocol: P506, company, facts: geoFacts(), outcomeKey: "requirements_satisfied" },
+      { scope: "purpose", companyId: company.id, treatmentId, purposeId: "inexistente" },
+    );
+    expect(bad.ok).toBe(false);
+    // P2 sin links ni clasificación: candidate ausente → classification.
+    const ctx2: ExecutionContext = {
+      scope: "purpose", companyId: company.id, treatmentId, purposeId: p2,
+    };
+    expect(
+      mustOutcome(P506, sessionFacts(company, ctx2, {
+        "lawful.consent_applies": "consent_yes",
+        "geo06.items_classified": "yes",
+      })).outcome_key,
+    ).toBe("classification_incomplete");
+  });
+
+  it("44. reevaluación ante cambios de signals, links y contexto D2", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const a = mustItem(company, treatmentId, "A", { geolocation: "yes" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const base = sessionFacts(company, ctx1, geoFacts());
+    expect(mustOutcome(P506, base).outcome_key).toBe("requirements_satisfied");
+    // Señal a no → candidate no → régimen no indicado.
+    const off = updateDataItem(company, treatmentId, a.id, { geolocation: "no" });
+    if (!off) throw new Error("sin update");
+    expect(mustOutcome(P506, sessionFacts(off, ctx1, geoFacts())).outcome_key).toBe(
+      "regime_not_indicated",
+    );
+    // Unlink → candidate ausente → clasificación incompleta.
+    const un = removeDataPurposeLink(company, treatmentId, { dataId: a.id, purposeId: p1 });
+    if (!un) throw new Error("sin unlink");
+    expect(mustOutcome(P506, sessionFacts(un, ctx1, geoFacts())).outcome_key).toBe(
+      "classification_incomplete",
+    );
+    // Contexto D2 a unknown → verificación incompleta.
+    expect(
+      mustOutcome(P506, sessionFacts(company, ctx1, geoFacts({ "lawful.consent_applies": "unknown" }))).outcome_key,
+    ).toBe("assessment_incomplete");
+  });
+});
+
+describe("D5.07 financial.titleIII_scope (decision, purpose)", () => {
+  function answerD2(s: { company: CompanyState; treatmentId: string; p1: string }, consent: string, source: string) {
+    const ctx: ExecutionContext = {
+      scope: "purpose", companyId: s.company.id, treatmentId: s.treatmentId, purposeId: s.p1,
+    };
+    const a = saveScopedProtocolAnswer(s.company, ctx, "lawful_basis.assign.v1", "lawful.consent_applies", consent, "lawful_basis.assign.v1");
+    if (!a) throw new Error("sin consent");
+    s.company = a;
+    const b = saveScopedProtocolAnswer(s.company, ctx, "lawful_basis.assign.v1", "lawful.art13_source", source, "lawful_basis.assign.v1");
+    if (!b) throw new Error("sin source");
+    s.company = b;
+  }
+
+  it("45. registrado; tres outcomes definitivos con effects exactos", () => {
+    expect(getProtocolForActivity("financial.titleIII_scope")).toBe(P507);
+    expect(P507.protocol_key).toBe("financial.titleIII_scope.v1");
+    expect(P507.mode).toBe("decision");
+    expect(P507.execution_scope).toBe("purpose");
+    expect(validateProtocolStructure(P507)).toEqual([]);
+    expect(P507.outcomes.map((o) => o.outcome_key).sort()).toEqual(
+      [
+        "titleIII_out_of_scope",
+        "titleIII_in_scope_requirements_satisfied",
+        "titleIII_in_scope_remediation_required",
+        "assessment_incomplete",
+        "classification_incomplete",
+        "regime_not_indicated",
+      ].sort(),
+    );
+    const eff = (k: string) =>
+      P507.outcomes.find((o) => o.outcome_key === k)?.canonical_fact_effects;
+    expect(eff("titleIII_out_of_scope")).toEqual([
+      { fact_key: "financial.titleIII_scope_status", value: "out_of_scope" },
+    ]);
+    expect(eff("titleIII_in_scope_requirements_satisfied")).toEqual([
+      { fact_key: "financial.titleIII_scope_status", value: "in_scope" },
+      { fact_key: "financial.titleIII_requirements_status", value: "satisfied" },
+    ]);
+    expect(eff("titleIII_in_scope_remediation_required")).toEqual([
+      { fact_key: "financial.titleIII_scope_status", value: "in_scope" },
+      { fact_key: "financial.titleIII_requirements_status", value: "remediation_required" },
+    ]);
+    const keys = P507.nodes.map((n) => n.node_key);
+    for (const k of [
+      "route-confirm", "obligation-nature", "art17-fit", "art17-exclusions",
+      "art17-special", "decree-conditions", "prescription-capacity",
+      "five-year-rule", "payment-extinction", "judicial-context",
+      "creditor-notification", "debtor-request", "downstream-update",
+      "update-deadline", "temp-blocking", "scope-select", "requirements-select",
+    ]) {
+      expect(keys, k).toContain(k);
+    }
+  });
+
+  it("46. candidatura desde el bridge D2 vigente", () => {
+    const s = setup();
+    expect(
+      deriveD5CandidatesForPurpose(s.company, s.treatmentId, s.p1)?.["derived.purpose.d5_titleIII_candidate"],
+    ).toBeUndefined();
+    answerD2(s, "consent_no", "financial_titleIII");
+    expect(
+      deriveD5CandidatesForPurpose(s.company, s.treatmentId, s.p1)?.["derived.purpose.d5_titleIII_candidate"],
+    ).toBe("yes");
+    expect(
+      evaluateProtocol(P507, sessionFacts(s.company, { scope: "purpose", companyId: s.company.id, treatmentId: s.treatmentId, purposeId: s.p1 })).status,
+    ).toBe("awaiting_facts");
+    // Otra ruta afirmada → régimen no indicado.
+    const s2 = setup();
+    answerD2(s2, "consent_no", "legal_obligation");
+    expect(
+      mustOutcome(
+        P507,
+        sessionFacts(s2.company, { scope: "purpose", companyId: s2.company.id, treatmentId: s2.treatmentId, purposeId: s2.p1 }),
+      ).outcome_key,
+    ).toBe("regime_not_indicated");
+  });
+
+  it("47. sin links no hay ámbito; todos los vinculados exigidos", () => {
+    const s = setup();
+    answerD2(s, "consent_no", "financial_titleIII");
+    const guard = getSpecialRegimeGuard(P507);
+    if (!guard) throw new Error("sin guard");
+    const ctx: ExecutionContext = {
+      scope: "purpose", companyId: s.company.id, treatmentId: s.treatmentId, purposeId: s.p1,
+    };
+    const ready: FactMap = {
+      "fin07.items_reviewed": "yes",
+      "fin07.analysis_ready": "yes",
+    };
+    expect(
+      guard.validateFinalization({
+        company: s.company, ctx, protocol: P507,
+        conclusion: "titleIII_in_scope_requirements_satisfied", extras: [],
+        facts: sessionFacts(s.company, ctx, ready),
+      }),
+    ).toEqual([
+      "Sin datos vinculados no hay ámbito material que evaluar: vincula al menos un dato a la finalidad.",
+    ]);
+    const a = mustItem(s.company, s.treatmentId, "A", {});
+    let c = a.company;
+    const b = mustItem(c, s.treatmentId, "B", {});
+    c = b.company;
+    c = mustLink(c, s.treatmentId, a.id, s.p1);
+    c = mustLink(c, s.treatmentId, b.id, s.p1);
+    // Falta un vinculado → error con su etiqueta.
+    const partial = guard.validateFinalization({
+      company: c, ctx, protocol: P507,
+      conclusion: "titleIII_in_scope_requirements_satisfied",
+      extras: [`data_item:${a.id}`],
+      facts: sessionFacts(c, ctx, ready),
+    });
+    expect(partial.length).toBeGreaterThan(0);
+    expect(partial.join(" ")).toContain("B");
+    // Todos → sin error de refs (puede seguir faltando ámbito determinado).
+    const full = guard.validateFinalization({
+      company: c, ctx, protocol: P507,
+      conclusion: "titleIII_in_scope_requirements_satisfied",
+      extras: [`data_item:${a.id}`, `data_item:${b.id}`],
+      facts: sessionFacts(c, ctx, ready),
+    });
+    expect(full.join(" ")).not.toContain("B");
+  });
+
+  it("48. compatibilidad conclusión↔ámbito; combinaciones imposibles bloqueadas", () => {
+    const s = setup();
+    answerD2(s, "consent_no", "financial_titleIII");
+    const a = mustItem(s.company, s.treatmentId, "A", {});
+    s.company = a.company;
+    s.company = mustLink(s.company, s.treatmentId, a.id, s.p1);
+    const guard = getSpecialRegimeGuard(P507);
+    if (!guard) throw new Error("sin guard");
+    const ctx: ExecutionContext = {
+      scope: "purpose", companyId: s.company.id, treatmentId: s.treatmentId, purposeId: s.p1,
+    };
+    const ready: FactMap = {
+      "fin07.items_reviewed": "yes",
+      "fin07.analysis_ready": "yes",
+    };
+    const scopeIn = saveScopedProtocolAnswer(
+      s.company, ctx, P507.protocol_key, "fin07.scope_assessed", "in_scope", P507.protocol_key,
+    );
+    if (!scopeIn) throw new Error("sin scope");
+    s.company = scopeIn;
+    const reqSat = saveScopedProtocolAnswer(
+      s.company, ctx, P507.protocol_key, "fin07.requirements_assessed", "satisfied", P507.protocol_key,
+    );
+    if (!reqSat) throw new Error("sin req");
+    s.company = reqSat;
+    const extras = [`data_item:${a.id}`];
+    // satisfied con ámbito+requisitos determinados → vía libre.
+    expect(
+      guard.validateFinalization({
+        company: s.company, ctx, protocol: P507,
+        conclusion: "titleIII_in_scope_requirements_satisfied", extras,
+        facts: sessionFacts(s.company, ctx, ready),
+      }),
+    ).toEqual([]);
+    // satisfied con scope out → imposible.
+    const scopeOut = saveScopedProtocolAnswer(
+      s.company, ctx, P507.protocol_key, "fin07.scope_assessed", "out_of_scope", P507.protocol_key,
+    );
+    if (!scopeOut) throw new Error("sin scope out");
+    expect(
+      guard.validateFinalization({
+        company: scopeOut, ctx, protocol: P507,
+        conclusion: "titleIII_in_scope_requirements_satisfied", extras,
+        facts: sessionFacts(scopeOut, ctx, ready),
+      }).length,
+    ).toBeGreaterThan(0);
+    // out_of_scope con scope in → imposible.
+    expect(
+      guard.validateFinalization({
+        company: s.company, ctx, protocol: P507,
+        conclusion: "titleIII_out_of_scope", extras,
+        facts: sessionFacts(s.company, ctx, ready),
+      }).length,
+    ).toBeGreaterThan(0);
+    // out_of_scope con scope out → vía libre.
+    expect(
+      guard.validateFinalization({
+        company: scopeOut, ctx, protocol: P507,
+        conclusion: "titleIII_out_of_scope", extras,
+        facts: sessionFacts(scopeOut, ctx, ready),
+      }),
+    ).toEqual([]);
+  });
+
+  it("49. out_of_scope finaliza sin tocar D2; effects exactos e idempotencia", () => {
+    const s = setup();
+    answerD2(s, "consent_no", "financial_titleIII");
+    const a = mustItem(s.company, s.treatmentId, "A", {});
+    s.company = a.company;
+    s.company = mustLink(s.company, s.treatmentId, a.id, s.p1);
+    const ctx: ExecutionContext = {
+      scope: "purpose", companyId: s.company.id, treatmentId: s.treatmentId, purposeId: s.p1,
+    };
+    const scopeOut = saveScopedProtocolAnswer(
+      s.company, ctx, P507.protocol_key, "fin07.scope_assessed", "out_of_scope", P507.protocol_key,
+    );
+    if (!scopeOut) throw new Error("sin scope");
+    s.company = scopeOut;
+    const guard = getSpecialRegimeGuard(P507);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "fin07.items_reviewed": "yes",
+      "fin07.analysis_ready": "yes",
+    };
+    const facts = sessionFacts(s.company, ctx, ready);
+    const extras = guard.composeRefs(s.company, ctx, []);
+    const res = finalizeJudgment({
+      protocol: P507, company: s.company, facts,
+      draft: { ...draftFor("titleIII_out_of_scope"), extra_facts_considered: extras },
+      legalBasis: basisFor("financial.titleIII_scope"), ctx,
+    });
+    if (!res.ok) throw new Error(`debió finalizar: ${JSON.stringify(res)}`);
+    expect(res.effects).toEqual([
+      { fact_key: "financial.titleIII_scope_status", value: "out_of_scope" },
+    ]);
+    const applied = applyScopedFinalization(s.company, P507, ctx, res.record, res.effects);
+    if (!applied) throw new Error("sin apply");
+    // D2 intacto: la ruta sigue afirmada, sin requirements positivo.
+    const t = applied.treatments?.[s.treatmentId];
+    expect(t?.purposes[s.p1]?.protocolAnswers["lawful_basis.assign.v1"]?.["lawful.art13_source"]?.value).toBe(
+      "financial_titleIII",
+    );
+    expect(
+      t?.purposes[s.p1]?.protocolAnswers[P507.protocol_key]?.["financial.titleIII_requirements_status"],
+    ).toBeUndefined();
+    expect(
+      getRecordedJudgment(P507, applied, sessionFacts(applied, ctx, ready), ctx).status,
+    ).toBe("valid");
+    // Idempotente: re-finalizar no duplica ni falla.
+    const again = finalizeJudgment({
+      protocol: P507, company: applied, facts: sessionFacts(applied, ctx, ready),
+      draft: { ...draftFor("titleIII_out_of_scope"), extra_facts_considered: extras },
+      legalBasis: basisFor("financial.titleIII_scope"), ctx,
+    });
+    expect(again.ok).toBe(true);
+  });
+
+  it("50. stale ante mapping, ruta D2 y respuestas materiales", () => {
+    const s = setup();
+    answerD2(s, "consent_no", "financial_titleIII");
+    const a = mustItem(s.company, s.treatmentId, "A", {});
+    s.company = a.company;
+    s.company = mustLink(s.company, s.treatmentId, a.id, s.p1);
+    const ctx: ExecutionContext = {
+      scope: "purpose", companyId: s.company.id, treatmentId: s.treatmentId, purposeId: s.p1,
+    };
+    const scopeIn = saveScopedProtocolAnswer(
+      s.company, ctx, P507.protocol_key, "fin07.scope_assessed", "in_scope", P507.protocol_key,
+    );
+    if (!scopeIn) throw new Error("sin scope");
+    s.company = scopeIn;
+    const reqSat = saveScopedProtocolAnswer(
+      s.company, ctx, P507.protocol_key, "fin07.requirements_assessed", "satisfied", P507.protocol_key,
+    );
+    if (!reqSat) throw new Error("sin req");
+    s.company = reqSat;
+    const guard = getSpecialRegimeGuard(P507);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "fin07.items_reviewed": "yes",
+      "fin07.analysis_ready": "yes",
+    };
+    const facts = sessionFacts(s.company, ctx, ready);
+    const res = finalizeJudgment({
+      protocol: P507, company: s.company, facts,
+      draft: {
+        ...draftFor("titleIII_in_scope_requirements_satisfied"),
+        extra_facts_considered: guard.composeRefs(s.company, ctx, []),
+      },
+      legalBasis: basisFor("financial.titleIII_scope"), ctx,
+    });
+    if (!res.ok) throw new Error("debió finalizar");
+    const applied = applyScopedFinalization(s.company, P507, ctx, res.record, res.effects);
+    if (!applied) throw new Error("sin apply");
+    const vf = sessionFacts(applied, ctx, ready);
+    expect(getRecordedJudgment(P507, applied, vf, ctx).status).toBe("valid");
+    // Nuevo link → stale.
+    const n = mustItem(applied, s.treatmentId, "Nuevo", {});
+    const moved = mustLink(n.company, s.treatmentId, n.id, s.p1);
+    expect(
+      getRecordedJudgment(P507, moved, sessionFacts(moved, ctx, ready), ctx).status,
+    ).toBe("stale");
+    // Ruta D2 cambia → stale (candidatura ausente).
+    const route = saveScopedProtocolAnswer(
+      applied, ctx, "lawful_basis.assign.v1", "lawful.art13_source", "legal_obligation", "lawful_basis.assign.v1",
+    );
+    if (!route) throw new Error("sin cambio ruta");
+    expect(
+      getRecordedJudgment(P507, route, sessionFacts(route, ctx, ready), ctx).status,
+    ).toBe("stale");
+    // Respuesta material cambia (scope in→out) → stale por snapshot.
+    const flip = saveScopedProtocolAnswer(
+      applied, ctx, P507.protocol_key, "fin07.scope_assessed", "out_of_scope", P507.protocol_key,
+    );
+    if (!flip) throw new Error("sin flip");
+    expect(
+      getRecordedJudgment(P507, flip, sessionFacts(flip, ctx, ready), ctx).status,
+    ).toBe("stale");
+    // Unlink → stale.
+    const un = removeDataPurposeLink(applied, s.treatmentId, { dataId: a.id, purposeId: s.p1 });
+    if (!un) throw new Error("sin unlink");
+    expect(
+      getRecordedJudgment(P507, un, sessionFacts(un, ctx, ready), ctx).status,
+    ).toBe("stale");
+  });
+});
+
+describe("D5 revisión (hallazgos corregidos)", () => {
+  it("56. staleness D5.05 ante cambios en riesgo/publicación", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, {
+      researchPublicInterestCandidate: "yes",
+    });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "yes" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const guard = getSpecialRegimeGuard(P505);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "res05.items_reviewed": "yes",
+      "res05.exclusivity_verified": "yes",
+      "res05.public_interest_verified": "yes",
+      "res05.analysis_ready": "yes",
+      "res05.publishes_results": "no",
+      "res05.risk_assessed": "yes",
+      "res05.mitigation_sufficient": "yes",
+    };
+    // Registrar riesgo/publicación como answers para el snapshot.
+    for (const [k, v] of Object.entries({
+      "res05.risk_assessed": "yes",
+      "res05.mitigation_sufficient": "yes",
+      "res05.publishes_results": "no",
+    })) {
+      const w = saveScopedProtocolAnswer(company, ctx1, P505.protocol_key, k, v, P505.protocol_key);
+      if (!w) throw new Error("sin answer");
+      company = w;
+    }
+    const facts = sessionFacts(company, ctx1, ready);
+    const res = finalizeJudgment({
+      protocol: P505, company, facts,
+      draft: {
+        ...draftFor("special_regime_supported"),
+        extra_facts_considered: guard.composeRefs(company, ctx1, []),
+      },
+      legalBasis: basisFor("research.public_interest_assess"), ctx: ctx1,
+    });
+    if (!res.ok) throw new Error("debió finalizar");
+    const applied = applyScopedFinalization(company, P505, ctx1, res.record, res.effects);
+    if (!applied) throw new Error("sin apply");
+    expect(
+      getRecordedJudgment(P505, applied, sessionFacts(applied, ctx1, ready), ctx1).status,
+    ).toBe("valid");
+    // Flip en mitigación → stale por snapshot.
+    const flip = saveScopedProtocolAnswer(
+      applied, ctx1, P505.protocol_key, "res05.mitigation_sufficient", "no", P505.protocol_key,
+    );
+    if (!flip) throw new Error("sin flip");
+    expect(
+      getRecordedJudgment(P505, flip, sessionFacts(flip, ctx1, ready), ctx1).status,
+    ).toBe("stale");
+  });
+
+  it("57. Título III: requirements residual no bloquea out_of_scope", () => {
+    // Los flujos no lineales pueden determinar requisitos antes que el
+    // ámbito; sin des-respuesta individual, bloquear sería callejón sin
+    // salida. La combinación imposible de EFFECTS ya es inexpresable
+    // (out_of_scope solo escribe scope_status).
+    let { company, treatmentId, p1 } = setup();
+    const s = { company, treatmentId, p1 };
+    const ctx: ExecutionContext = {
+      scope: "purpose", companyId: company.id, treatmentId, purposeId: p1,
+    };
+    for (const [k, v] of [
+      ["lawful.consent_applies", "consent_no"],
+      ["lawful.art13_source", "financial_titleIII"],
+    ] as const) {
+      const r = saveScopedProtocolAnswer(s.company, ctx, "lawful_basis.assign.v1", k, v, "lawful_basis.assign.v1");
+      if (!r) throw new Error(`sin ${k}`);
+      s.company = r;
+    }
+    const w = saveScopedProtocolAnswer(
+      s.company, ctx, P507.protocol_key, "fin07.scope_assessed", "out_of_scope", P507.protocol_key,
+    );
+    if (!w) throw new Error("sin scope");
+    s.company = w;
+    const w2 = saveScopedProtocolAnswer(
+      s.company, ctx, P507.protocol_key, "fin07.requirements_assessed", "satisfied", P507.protocol_key,
+    );
+    if (!w2) throw new Error("sin req");
+    s.company = w2;
+    const a = mustItem(s.company, treatmentId, "A", {});
+    s.company = a.company;
+    s.company = mustLink(s.company, treatmentId, a.id, p1);
+    const guard = getSpecialRegimeGuard(P507);
+    if (!guard) throw new Error("sin guard");
+    expect(
+      guard.validateFinalization({
+        company: s.company, ctx, protocol: P507,
+        conclusion: "titleIII_out_of_scope",
+        extras: [`data_item:${a.id}`],
+        facts: sessionFacts(s.company, ctx, {
+          "fin07.items_reviewed": "yes", "fin07.analysis_ready": "yes",
+        }),
+      }),
+    ).toEqual([]);
+  });
+
+  it("57b. vía por decreto exige norma identificada y staleness de ref", () => {
+    let { company, treatmentId, p1 } = setup();
+    const s = { company, treatmentId, p1 };
+    const ctx0: ExecutionContext = {
+      scope: "purpose", companyId: company.id, treatmentId, purposeId: p1,
+    };
+    for (const [k, v] of [
+      ["lawful.consent_applies", "consent_no"],
+      ["lawful.art13_source", "financial_titleIII"],
+    ] as const) {
+      const w = saveScopedProtocolAnswer(s.company, ctx0, "lawful_basis.assign.v1", k, v, "lawful_basis.assign.v1");
+      if (!w) throw new Error(`sin ${k}`);
+      s.company = w;
+    }
+    const ctx: ExecutionContext = {
+      scope: "purpose", companyId: company.id, treatmentId, purposeId: p1,
+    };
+    const ans = (k: string, v: string) => {
+      const w = saveScopedProtocolAnswer(s.company, ctx, P507.protocol_key, k, v, P507.protocol_key);
+      if (!w) throw new Error(`sin ${k}`);
+      s.company = w;
+    };
+    ans("fin07.scope_assessed", "in_scope");
+    ans("fin07.requirements_assessed", "satisfied");
+    ans("fin07.decree_conditions", "yes");
+    const a = mustItem(s.company, treatmentId, "A", {});
+    s.company = a.company;
+    s.company = mustLink(s.company, treatmentId, a.id, p1);
+    const guard = getSpecialRegimeGuard(P507);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "fin07.items_reviewed": "yes",
+      "fin07.analysis_ready": "yes",
+      "fin07.decree_conditions": "yes",
+    };
+    const extras = [`data_item:${a.id}`];
+    // Sin norma citada → supported bloqueado.
+    expect(
+      guard.validateFinalization({
+        company: s.company, ctx, protocol: P507,
+        conclusion: "titleIII_in_scope_requirements_satisfied", extras,
+        facts: sessionFacts(s.company, ctx, ready),
+      }),
+    ).toContain(
+      "Identifica el decreto o norma invocada antes de concluir con la vía por decreto.",
+    );
+    ans("fin07.decree_ref", "DS 123");
+    const readyFull: FactMap = { ...ready, "fin07.decree_ref": "DS 123" };
+    expect(
+      guard.validateFinalization({
+        company: s.company, ctx, protocol: P507,
+        conclusion: "titleIII_in_scope_requirements_satisfied",
+        extras: guard.composeRefs(s.company, ctx, []),
+        facts: sessionFacts(s.company, ctx, readyFull),
+      }),
+    ).toEqual([]);
+    // Editar la ref post-record → stale por snapshot.
+    const res = finalizeJudgment({
+      protocol: P507, company: s.company,
+      facts: sessionFacts(s.company, ctx, ready),
+      draft: {
+        ...draftFor("titleIII_in_scope_requirements_satisfied"),
+        extra_facts_considered: guard.composeRefs(s.company, ctx, []),
+      },
+      legalBasis: basisFor("financial.titleIII_scope"), ctx,
+    });
+    if (!res.ok) throw new Error("debió finalizar");
+    const applied = applyScopedFinalization(s.company, P507, ctx, res.record, res.effects);
+    if (!applied) throw new Error("sin apply");
+    const edit = saveScopedProtocolAnswer(
+      applied, ctx, P507.protocol_key, "fin07.decree_ref", "DS 456", P507.protocol_key,
+    );
+    if (!edit) throw new Error("sin edit");
+    expect(
+      getRecordedJudgment(P507, edit, sessionFacts(edit, ctx, ready), ctx).status,
+    ).toBe("stale");
+  });
+
+  it("58. decreto invocado exige norma citada; contexto visible en D5.06", () => {
+    expect(isSpecialRegimeGuideProtocol(P506)).toBe(true);
+    expect(isSpecialRegimeGuideProtocol(P501)).toBe(true);
+    expect(isSpecialRegimeGuideProtocol(P505)).toBe(true);
+    // Checklist no-juicio genérico fuera de D5: sin contexto estructural.
+    expect(
+      isSpecialRegimeGuideProtocol(
+        getProtocolForActivity("consent.proof_design")!,
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("D5 integración multirrégimen (casos A–E)", () => {
+  it("51. caso A: NNA + sensible, D5.01 y D5.04 independientes", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, { involvesMinors: "yes" });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "yes" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const c = deriveD5CandidatesForPurpose(company, treatmentId, p1);
+    expect(c?.["derived.purpose.d5_sensitive_candidate"]).toBe("yes");
+    expect(c?.["derived.purpose.d5_minors_candidate"]).toBe("yes");
+    const guard = getSpecialRegimeGuard(P501);
+    if (!guard) throw new Error("sin guard");
+    const res = finalizeJudgment({
+      protocol: P501, company,
+      facts: sessionFacts(company, ctx1, {
+        "sens01.items_reviewed": "yes", "sens01.analysis_ready": "yes",
+      }),
+      draft: {
+        ...draftFor("lawful_path_supported"),
+        extra_facts_considered: guard.composeRefs(company, ctx1, []),
+      },
+      legalBasis: basisFor("sensitive.lawfulness_assess"), ctx: ctx1,
+    });
+    if (!res.ok) throw new Error("debió finalizar D5.01");
+    const applied = applyScopedFinalization(company, P501, ctx1, res.record, res.effects);
+    if (!applied) throw new Error("sin apply");
+    expect(
+      getRecordedJudgment(P504, applied, sessionFacts(applied, ctx1), ctx1).status,
+    ).toBe("none");
+  });
+
+  it("52. caso B: investigación + sensible, rama de riesgo D5.05", () => {
+    let { company, treatmentId, p1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, {
+      researchPublicInterestCandidate: "yes",
+    });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "yes" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const c = deriveD5CandidatesForPurpose(company, treatmentId, p1);
+    expect(c?.["derived.purpose.d5_sensitive_candidate"]).toBe("yes");
+    expect(c?.["derived.purpose.d5_research_candidate"]).toBe("yes");
+    // Rama de riesgo exigible: sin risk_assessed no hay supported.
+    const guard = getSpecialRegimeGuard(P505);
+    if (!guard) throw new Error("sin guard");
+    const ready: FactMap = {
+      "res05.items_reviewed": "yes",
+      "res05.exclusivity_verified": "yes",
+      "res05.public_interest_verified": "yes",
+      "res05.analysis_ready": "yes",
+      "res05.publishes_results": "no",
+    };
+    expect(
+      guard.validateFinalization({
+        company,
+        ctx: { scope: "purpose", companyId: company.id, treatmentId, purposeId: p1 },
+        protocol: P505,
+        conclusion: "special_regime_supported",
+        extras: guard.composeRefs(
+          company,
+          { scope: "purpose", companyId: company.id, treatmentId, purposeId: p1 },
+          [],
+        ),
+        facts: sessionFacts(company, {
+          scope: "purpose", companyId: company.id, treatmentId, purposeId: p1,
+        }, ready),
+      }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("53. caso C: solo geolocalización, sin inferencia sensible", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const a = mustItem(company, treatmentId, "A", {
+      sensitive: "no",
+      geolocation: "yes",
+    });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const c = deriveD5CandidatesForPurpose(company, treatmentId, p1);
+    expect(c?.["derived.purpose.d5_geolocation_candidate"]).toBe("yes");
+    expect(c?.["derived.purpose.d5_sensitive_candidate"]).toBe("no");
+    expect(
+      mustOutcome(P506, sessionFacts(company, ctx1, {
+        "derived.purpose.d5_geolocation_candidate": "yes",
+        "lawful.consent_applies": "consent_yes",
+        "geo06.items_classified": "yes",
+        "geo06.info_clear": "yes",
+        "geo06.info_type": "yes",
+        "geo06.info_purpose": "yes",
+        "geo06.info_duration": "yes",
+        "geo06.third_party_sharing": "no",
+        "geo06.third_party_disclosed": "na",
+      })).outcome_key,
+    ).toBe("requirements_satisfied");
+  });
+
+  it("54. caso D: ruta financiera con out_of_scope sin tocar D2", () => {
+    const s = setup();
+    const ans = (consent: string, source: string) => {
+      const ctx: ExecutionContext = {
+        scope: "purpose", companyId: s.company.id, treatmentId: s.treatmentId, purposeId: s.p1,
+      };
+      const a = saveScopedProtocolAnswer(s.company, ctx, "lawful_basis.assign.v1", "lawful.consent_applies", consent, "lawful_basis.assign.v1");
+      if (!a) throw new Error("sin consent");
+      s.company = a;
+      const b = saveScopedProtocolAnswer(s.company, ctx, "lawful_basis.assign.v1", "lawful.art13_source", source, "lawful_basis.assign.v1");
+      if (!b) throw new Error("sin source");
+      s.company = b;
+    };
+    ans("consent_no", "financial_titleIII");
+    const a = mustItem(s.company, s.treatmentId, "A", {});
+    s.company = a.company;
+    s.company = mustLink(s.company, s.treatmentId, a.id, s.p1);
+    expect(
+      deriveD5CandidatesForPurpose(s.company, s.treatmentId, s.p1)?.["derived.purpose.d5_titleIII_candidate"],
+    ).toBe("yes");
+    // D2 sigue afirmando la ruta mientras D5.07 evalúa ámbito.
+    expect(
+      readLawfulnessRoute(s.company, s.treatmentId, s.p1).source,
+    ).toBe("financial_titleIII");
+  });
+
+  it("55. caso E: misma purpose con resultados canónicos coexistentes", () => {
+    let { company, treatmentId, p1, ctx1 } = setup();
+    const prof = setSpecialRegimeProfile(company, treatmentId, p1, { involvesMinors: "yes" });
+    if (!prof) throw new Error("sin profile");
+    company = prof;
+    const a = mustItem(company, treatmentId, "A", { sensitive: "no" });
+    company = a.company;
+    company = mustLink(company, treatmentId, a.id, p1);
+    const ready01: FactMap = {
+      "sens01.items_reviewed": "yes", "sens01.analysis_ready": "yes",
+    };
+    const g01 = getSpecialRegimeGuard(P501);
+    if (!g01) throw new Error("sin guard");
+    // D5.01 candidate no (all no) → no puede finalizar supported; D5.04 sí.
+    expect(
+      deriveD5CandidatesForPurpose(company, treatmentId, p1)?.["derived.purpose.d5_sensitive_candidate"],
+    ).toBe("no");
+    const ready04: FactMap = {
+      "minors04.items_reviewed": "yes", "minors04.analysis_ready": "yes",
+    };
+    const g04 = getSpecialRegimeGuard(P504);
+    if (!g04) throw new Error("sin guard");
+    const res = finalizeJudgment({
+      protocol: P504, company,
+      facts: sessionFacts(company, ctx1, ready04),
+      draft: { ...draftFor("minor_processing_supported"), extra_facts_considered: [] },
+      legalBasis: basisFor("minors.processing_assess"), ctx: ctx1,
+    });
+    if (!res.ok) throw new Error("debió finalizar D5.04");
+    const applied = applyScopedFinalization(company, P504, ctx1, res.record, res.effects);
+    if (!applied) throw new Error("sin apply");
+    // Coexisten sin conflicto: D5.04 supported + D5.01 sin juicio.
+    expect(
+      applied.treatments?.[treatmentId]?.purposes[p1]?.protocolAnswers[P504.protocol_key]?.[
+        "minors.processing_status"
+      ]?.value,
+    ).toBe("supported");
+    expect(
+      getRecordedJudgment(P501, applied, sessionFacts(applied, ctx1, ready01), ctx1).status,
+    ).toBe("none");
   });
 });

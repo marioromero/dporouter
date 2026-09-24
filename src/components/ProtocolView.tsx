@@ -26,6 +26,8 @@ import { CopyLinkButton, ProvenanceBadge, provenanceHuman } from "./ui";
 import { ConflictResolver } from "./ConflictResolver";
 import { modeStartLabel } from "./ActivityWorkView";
 import { useWorkspace } from "../workspace/context";
+import { SpecialRegimeGuideContext } from "./SpecialRegimeCapture";
+import { isSpecialRegimeGuideProtocol } from "../workspace/specialRegimeGuards";
 import { getFactStatus } from "../workspace/facts";
 import {
   activeExecutionContext,
@@ -793,6 +795,11 @@ export function ProtocolNodeView({
           </>
         ) : null}
       </section>
+      {isSpecialRegimeGuideProtocol(protocol) &&
+      company != null &&
+      session.ctx?.scope === "purpose" ? (
+        <SpecialRegimeGuideContext company={company} ctx={session.ctx} />
+      ) : null}
       <AnsweredFactsPanel
         protocol={protocol}
         activity={activity}

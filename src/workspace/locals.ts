@@ -12,6 +12,7 @@ import type {
   SafeguardCheck,
   SourceRecord,
   TreatmentScopedState,
+  TriStateSignal,
 } from "./types";
 import { newId } from "./types";
 
@@ -43,6 +44,18 @@ const USE_LEGAL_PATHS = [
   "not_applicable",
 ] as const;
 const USE_CHECKS = ["yes", "no", "unknown"] as const;
+/**
+ * Señales estructurales tri-estado D5 (Punto 0, ADR-053). Vocabulario
+ * cerrado compartido por DataItemRecord y SpecialRegimeProfile.
+ */
+const TRI_STATE_SIGNALS = ["yes", "no", "unknown"] as const;
+
+export function isTriStateSignal(v: unknown): v is TriStateSignal {
+  return (
+    typeof v === "string" &&
+    (TRI_STATE_SIGNALS as readonly string[]).includes(v)
+  );
+}
 const SAFEGUARD_CHECK_FIELDS = [
   "informationTransparency",
   "explanation",
@@ -59,6 +72,7 @@ export const LOCAL_VOCABS = {
   useCoverages: USE_COVERAGES,
   useLegalPaths: USE_LEGAL_PATHS,
   safeguardChecks: USE_CHECKS,
+  triStateSignals: TRI_STATE_SIGNALS,
 };
 
 function nonEmpty(v: unknown): v is string {
@@ -198,6 +212,21 @@ export interface DataItemInput {
   category?: string;
   sourceRefs?: string[];
   note?: string;
+  /**
+   * Características estructurales D5 (Punto 0). Cada una ausente =
+   * `unknown`. Valor inválido rechaza la creación (null).
+   */
+  sensitive?: TriStateSignal;
+  health?: TriStateSignal;
+  biologicalProfile?: TriStateSignal;
+  geolocation?: TriStateSignal;
+}
+
+export interface DataItemSignalPatch {
+  sensitive?: TriStateSignal;
+  health?: TriStateSignal;
+  biologicalProfile?: TriStateSignal;
+  geolocation?: TriStateSignal;
 }
 
 function cleanSourceRefs(
@@ -220,6 +249,14 @@ export function addDataItem(
   input: DataItemInput,
 ): { company: CompanyState; id: string } | null {
   if (!nonEmpty(input.label)) return null;
+  for (const s of [
+    input.sensitive,
+    input.health,
+    input.biologicalProfile,
+    input.geolocation,
+  ]) {
+    if (s !== undefined && !isTriStateSignal(s)) return null;
+  }
   const id = newId("data");
   let out: { company: CompanyState; id: string } | null = null;
   const next = withTreatment(company, treatmentId, (t) => {
@@ -231,6 +268,12 @@ export function addDataItem(
       ...(nonEmpty(input.category) ? { category: input.category } : {}),
       sourceRefs,
       ...(nonEmpty(input.note) ? { note: input.note } : {}),
+      // Estado inicial explícito: las cuatro señales quedan unknown.
+      // Ausencia también equivale a unknown (legacy); sin inferencias.
+      sensitive: input.sensitive ?? "unknown",
+      health: input.health ?? "unknown",
+      biologicalProfile: input.biologicalProfile ?? "unknown",
+      geolocation: input.geolocation ?? "unknown",
     };
     return { ...t, dataItems: { ...(t.dataItems ?? {}), [id]: record } };
   });
@@ -247,7 +290,7 @@ export function updateDataItem(
     category?: string | null;
     sourceRefs?: string[];
     note?: string | null;
-  },
+  } & DataItemSignalPatch,
 ): CompanyState | null {
   return withTreatment(company, treatmentId, (t) => {
     const current = t.dataItems?.[id];
@@ -255,6 +298,17 @@ export function updateDataItem(
     if (patch.label !== undefined && !nonEmpty(patch.label)) return null;
     if (patch.note !== undefined && patch.note !== null && !nonEmpty(patch.note)) {
       return null;
+    }
+    // Señales estructurales: valor inválido rechaza; NUNCA se infiere
+    // ni se propaga a otra señal. Editar una no toca las demás ni
+    // escribe facts, reasoning ni effects.
+    for (const s of [
+      patch.sensitive,
+      patch.health,
+      patch.biologicalProfile,
+      patch.geolocation,
+    ]) {
+      if (s !== undefined && !isTriStateSignal(s)) return null;
     }
     let sourceRefs = current.sourceRefs;
     if (patch.sourceRefs !== undefined) {
@@ -267,6 +321,12 @@ export function updateDataItem(
       ...(patch.label !== undefined ? { label: patch.label.trim() } : {}),
       sourceRefs,
       ...(nonEmpty(patch.note) ? { note: patch.note } : {}),
+      ...(patch.sensitive !== undefined ? { sensitive: patch.sensitive } : {}),
+      ...(patch.health !== undefined ? { health: patch.health } : {}),
+      ...(patch.biologicalProfile !== undefined
+        ? { biologicalProfile: patch.biologicalProfile }
+        : {}),
+      ...(patch.geolocation !== undefined ? { geolocation: patch.geolocation } : {}),
     };
     if (patch.category !== undefined) {
       if (patch.category === null) delete record.category;

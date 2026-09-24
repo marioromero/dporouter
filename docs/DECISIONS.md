@@ -681,3 +681,68 @@ Stage 1 boundary: no new scope, entity, workflow, owner, deadline,
 history, lifecycle, events or per-subject records. Collection
 absence stays valid for legacy workspaces; deletion is local
 hard-delete with technical cascade only.
+
+---
+
+## ADR-053 — D5 special-regime hybrid capture (Punto 0)
+
+Status: ACCEPTED
+
+Stage 1 captures the minimal structured state that will later
+allow machine-readable D5 candidacy, freezing structure apart
+from legal conclusion and candidacy apart from canonical result.
+
+Hybrid capture, three layers, no more:
+
+* intrinsic tri-state declarations on `DataItemRecord`
+  (`sensitive`, `health`, `biologicalProfile`, `geolocation`,
+  each `yes | no | unknown`); new items default to `unknown`;
+  `category` stays free text;
+* contextual tri-state object `PurposeScopedState.specialRegimeProfile`
+  (`biometricIdentificationUse`, `involvesMinors`,
+  `researchPublicInterestCandidate`); purpose-owned, no IDs, no
+  collection, no lifecycle; absent is valid legacy and equals all
+  `unknown`;
+* read-only derived purpose candidates
+  (`derived.purpose.d5_*_candidate`, seven static keys) computed
+  from live `DataPurposeLink`s plus existing D2.05 route truth;
+  `yes`/`no` only, absence means `unknown`; empty links mean
+  `unknown`, never `no`.
+
+Frozen semantics:
+
+* `unknown != false` everywhere; no automatic inference between
+  signals in any direction; editing writes no other signal and no
+  canonical fact, answer, reasoning record, effect or work status;
+* coherence validators (`health_sensitive_mismatch`,
+  `biological_sensitive_mismatch`, `biometric_context_mismatch`)
+  are pure and non-mutating: warn with treatment/purpose/item
+  references, never fix, never alter candidacy; the biometric
+  check fires only on sufficient explicit information;
+* D5.07 creates no financial flag: the Title III candidate maps
+  the affirmed article 13(a) route read-only and never
+  materializes `purpose.lawful_basis`;
+* reasoning references use exact `data_item:<id>` tokens inside
+  `ReasoningRecord.facts_considered[]`; `rationale` and
+  `evidence_refs` are never parsed;
+* import/export keeps legacy absence valid, rejects invalid
+  enums/types, preserves enum-valid suspicious combinations for
+  runtime reporting, and never persists derived candidates or
+  warnings.
+
+Discarded: boolean flags (cannot express `unknown`);
+`specialCategories[]`/`regimes[]` taxonomies (prejudge the
+juridical model); item-only classification (loses
+purpose×item pair semantics); purpose-profile-only capture
+(duplicates intrinsic datum truth); a fourth scope, a
+SpecialRegime entity, per-purpose collections, per-item
+protocol sessions, dynamic fact keys, a global tri-state
+derived engine, automatic legal inference, automatic canonical
+effects, a persisted global warning framework, and any D2.05
+modification.
+
+Stage 1 boundary: abstract categories, characteristics, item
+references and treatment descriptions only — never real
+sensitive data, diagnoses, locations, debts, individual minors,
+biometric templates or persons. D5 readiness is unchanged by
+this infrastructure (canonical 7, protocols 0).

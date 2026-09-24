@@ -141,6 +141,32 @@ export interface PurposeScopedState {
   purpose: TreatmentPurpose;
   protocolAnswers: Record<string, Record<string, FactRecord>>;
   reasoningRecords: Record<string, ProtocolReasoningRecord>;
+  /**
+   * Perfil contextual de regímenes especiales (Punto 0 D5, ADR-053).
+   * Objeto local purpose-owned, NO entidad: sin IDs, sin colección,
+   * sin lifecycle. Ausente = válido (workspaces legacy) y equivale a
+   * todo `unknown`. Nunca guarda datos personales reales.
+   */
+  specialRegimeProfile?: SpecialRegimeProfile;
+}
+
+/**
+ * Señal estructural tri-estado (Punto 0 D5, ADR-053).
+ * Declaración del profesional sobre la naturaleza del dato o el
+ * contexto de la finalidad. Nunca es conclusión jurídica; `unknown`
+ * (o ausencia) jamás equivale a `no`.
+ */
+export type TriStateSignal = "yes" | "no" | "unknown";
+
+/**
+ * Contexto purpose-owned de regímenes especiales (Punto 0 D5).
+ * Tres señales contextuales, siempre las tres juntas cuando el
+ * objeto existe. Ver ADR-053 para semántica de cada campo.
+ */
+export interface SpecialRegimeProfile {
+  biometricIdentificationUse: TriStateSignal;
+  involvesMinors: TriStateSignal;
+  researchPublicInterestCandidate: TriStateSignal;
 }
 
 /**
@@ -168,6 +194,18 @@ export interface DataItemRecord {
   category?: string;
   sourceRefs: string[];
   note?: string;
+  /**
+   * Características estructurales intrínsecas (Punto 0 D5, ADR-053).
+   * Declaraciones sobre la naturaleza del dato para efectos de
+   * análisis, NO conclusiones jurídicas y NO candidaturas D5.
+   * Ausente = `unknown` (workspaces legacy). Ninguna señal se
+   * infiere automáticamente desde otra: editar una jamás escribe
+   * otra ni ningún canonical fact.
+   */
+  sensitive?: TriStateSignal;
+  health?: TriStateSignal;
+  biologicalProfile?: TriStateSignal;
+  geolocation?: TriStateSignal;
 }
 
 /** Origen local de datos. Vocabulario cerrado canónico D2.04. */

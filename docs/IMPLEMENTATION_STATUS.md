@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-24 (D5 canonical import, 7 activities; guided retrofit pending)
+Last controlled update: 2026-09-24 (D5 Punto 0 capture infrastructure, ADR-053; D5 protocols still 0)
 
 ## Functional baseline
 
@@ -240,6 +240,17 @@ D5 canonical coverage:
 `D5.01–D5.07 (7 ActivityDefinitions, 0 ExecutionProtocols; canon importado, guided retrofit pendiente)`
 
 D5.01–D5.07 son `assessment` purpose-scoped (la finalidad activa es la unidad jurídica principal), `applicable_role = responsible`, `evidence_basis = agency_standard`, `relationship_effect = []`, `conditions_applicability = []` (aplicabilidad conceptual en trigger/objetivo/pasos; sin taxonomía machine-readable), sin dependencias propias. Reasoning requerido en D5.01–D5.05 y D5.07; D5.06 sin juicio (verifica requisitos adicionales sin redefinir licitud D2). D5.01 (`sensitive.lawfulness_assess`) y D5.07 (`financial.titleIII_scope`) resuelven las dos pending references de D2.05 por existencia de los keys canónicos; D2.05 intacto. Frontera Stage 1: D5 evalúa el tratamiento, no almacena datos personales especiales reales (sin registros por titular, sin casos individuales, sin temporizadores operacionales). Captura estructurada de categorías/regímenes diferida a auditoría específica (`D5 SPECIAL-REGIME CAPTURE AUDIT`); `DataItemRecord.category` intacto.
+
+D5 Punto 0 capture infrastructure (ADR-053; canon D5 intacto, sin protocolos nuevos):
+
+* `DataItemRecord` con cuatro señales estructurales tri-estado (`sensitive`, `health`, `biologicalProfile`, `geolocation`; nuevos default `unknown`; legacy ausente = `unknown`; sin inferencias entre señales; sin escrituras canónicas por edición);
+* `PurposeScopedState.specialRegimeProfile?` (`biometricIdentificationUse`, `involvesMinors`, `researchPublicInterestCandidate`; ausente = todo `unknown`; sin IDs/entidad/lifecycle);
+* siete candidaturas derivadas `derived.purpose.d5_*_candidate` (read-only, no persistidas; ausencia = `unknown`; links vivos como única fuente de contexto; puente D5.07 solo sobre truth D2.05 existente sin materializar `purpose.lawful_basis`);
+* validadores de coherencia puros no mutantes (`health_sensitive_mismatch`, `biological_sensitive_mismatch`, `biometric_context_mismatch`; advierten, nunca corrigen ni alteran candidaturas);
+* refs de razonamiento `data_item:<id>` para futuro uso en `ReasoningRecord.facts_considered[]`;
+* validación/import estricta (enum inválido rechaza; sospechoso enum-válido se preserva; legacy válido; derivados/warnings fuera del JSON).
+
+Readiness D5 sin cambios por esta infraestructura: canonical 7, protocols 0, execution-ready 0, product-ready 0. Canonical total 54, protocols total 47, pending refs 2.
 
 Pending canonical cross-domain targets:
 

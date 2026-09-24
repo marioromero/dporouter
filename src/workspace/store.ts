@@ -197,7 +197,10 @@ function checkPurposeState(v: unknown, treatmentId: string): boolean {
   if (typeof p.description !== "string") return false;
   if (!checkProtocolAnswerMaps(v.protocolAnswers)) return false;
   if (!isRecord(v.reasoningRecords)) return false;
-  return Object.values(v.reasoningRecords).every(checkReasoningRecord);
+  if (!Object.values(v.reasoningRecords).every(checkReasoningRecord)) {
+    return false;
+  }
+  return checkSpecialRegimeProfile(v.specialRegimeProfile);
 }
 
 function checkTreatmentState(v: unknown, companyId: string): boolean {
@@ -262,11 +265,35 @@ function checkActorRecord(v: unknown): boolean {
   return v.evidenceRef === undefined || typeof v.evidenceRef === "string";
 }
 
+const TRI_STATE_SIGNALS = ["yes", "no", "unknown"];
+
+function isTriStateSignalValue(v: unknown): boolean {
+  return typeof v === "string" && TRI_STATE_SIGNALS.includes(v);
+}
+
+/** Perfil D5 válido: ausente (legacy) o las tres señales enum-válidas. */
+function checkSpecialRegimeProfile(v: unknown): boolean {
+  if (v === undefined) return true;
+  if (!isRecord(v)) return false;
+  if (Object.keys(v).length !== 3) return false;
+  return (
+    isTriStateSignalValue(v.biometricIdentificationUse) &&
+    isTriStateSignalValue(v.involvesMinors) &&
+    isTriStateSignalValue(v.researchPublicInterestCandidate)
+  );
+}
+
 function checkDataItemRecord(v: unknown, sourceIds: Set<string>): boolean {
   if (!isRecord(v)) return false;
   if (typeof v.id !== "string" || v.id.trim() === "") return false;
   if (typeof v.label !== "string" || v.label.trim() === "") return false;
   if (v.category !== undefined && typeof v.category !== "string") return false;
+  // Señales D5 (Punto 0): opcionales; presente exige enum-válido.
+  // Combinaciones sospechosas pero enum-válidas se aceptan (el
+  // validator derivado las reporta en runtime; import no corrige).
+  for (const f of ["sensitive", "health", "biologicalProfile", "geolocation"]) {
+    if (v[f] !== undefined && !isTriStateSignalValue(v[f])) return false;
+  }
   if (!Array.isArray(v.sourceRefs)) return false;
   const seen = new Set<string>();
   for (const r of v.sourceRefs) {
@@ -622,12 +649,25 @@ function migrateTreatments(
           ? { ...p.purpose, id: pk, treatmentId: key }
           : null;
         if (!purp) continue;
+        // Perfil D5: válido se conserva; presente-inválido se
+        // descarta (equivale a unknown) sin podar la purpose: es
+        // declaración auxiliar, no identidad jurídica.
+        const profile = isRecord(p.specialRegimeProfile)
+          ? { ...p.specialRegimeProfile }
+          : undefined;
         const candidate = {
           ...p,
           purpose: purp,
           protocolAnswers: pruneAnswerMaps(p.protocolAnswers),
           reasoningRecords: pruneMap(p.reasoningRecords, checkReasoningRecord),
+          ...(profile !== undefined ? { specialRegimeProfile: profile } : {}),
         };
+        if (
+          candidate.specialRegimeProfile !== undefined &&
+          !checkSpecialRegimeProfile(candidate.specialRegimeProfile)
+        ) {
+          delete candidate.specialRegimeProfile;
+        }
         if (!checkPurposeState(candidate, key)) continue;
         purposes[pk] = candidate as PurposeScopedState;
       }

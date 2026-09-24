@@ -7,7 +7,9 @@ import type {
   FactRecord,
   ProtocolReasoningRecord,
   PurposeScopedState,
+  SpecialRegimeProfile,
   TreatmentScopedState,
+  TriStateSignal,
 } from "./types";
 import { newId, nowIso } from "./types";
 import type { FactMap } from "../../content/protocols/types";
@@ -340,6 +342,66 @@ export function renamePurpose(
             ...p,
             purpose: { ...p.purpose, description: description.trim() },
           },
+        },
+      },
+    },
+  });
+}
+
+const TRI_STATE_SIGNALS: readonly TriStateSignal[] = ["yes", "no", "unknown"];
+
+/** ¿Objeto profile completo y enum-válido? Ausencia ≠ válido: se valida aparte. */
+export function isValidSpecialRegimeProfile(v: unknown): v is SpecialRegimeProfile {
+  if (typeof v !== "object" || v === null) return false;
+  const r = v as Record<string, unknown>;
+  return (
+    Object.keys(r).length === 3 &&
+    TRI_STATE_SIGNALS.includes(r.biometricIdentificationUse as TriStateSignal) &&
+    TRI_STATE_SIGNALS.includes(r.involvesMinors as TriStateSignal) &&
+    TRI_STATE_SIGNALS.includes(r.researchPublicInterestCandidate as TriStateSignal)
+  );
+}
+
+/**
+ * Edición explícita same-purpose del perfil contextual D5 (Punto 0,
+ * ADR-053). Crea el objeto con defaults unknown si no existe; el
+ * patch parcial se fusiona sobre lo vigente. Valores inválidos,
+ * contexto inexistente o cross-purpose → null sin mutar. No genera
+ * facts, reasoning, effects ni warnings persistidos; no toca links
+ * ni DataItems.
+ */
+export function setSpecialRegimeProfile(
+  company: CompanyState,
+  treatmentId: string,
+  purposeId: string,
+  patch: Partial<SpecialRegimeProfile>,
+): CompanyState | null {
+  const t = getTreatment(company, treatmentId);
+  const p = getPurpose(company, treatmentId, purposeId);
+  if (!t || !p) return null;
+  for (const v of Object.values(patch)) {
+    if (v !== undefined && !TRI_STATE_SIGNALS.includes(v)) return null;
+  }
+  const current: SpecialRegimeProfile = p.specialRegimeProfile ?? {
+    biometricIdentificationUse: "unknown",
+    involvesMinors: "unknown",
+    researchPublicInterestCandidate: "unknown",
+  };
+  const next: SpecialRegimeProfile = {
+    biometricIdentificationUse: patch.biometricIdentificationUse ?? current.biometricIdentificationUse,
+    involvesMinors: patch.involvesMinors ?? current.involvesMinors,
+    researchPublicInterestCandidate:
+      patch.researchPublicInterestCandidate ?? current.researchPublicInterestCandidate,
+  };
+  return touchCompany({
+    ...company,
+    treatments: {
+      ...(company.treatments ?? {}),
+      [treatmentId]: {
+        ...t,
+        purposes: {
+          ...t.purposes,
+          [purposeId]: { ...p, specialRegimeProfile: next },
         },
       },
     },

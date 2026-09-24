@@ -253,3 +253,19 @@ ProtocolView and progress engine untouched. Treatment aggregates
 materialize only through explicit finalization. D4.09 (checklist,
 treatment-scope) verifies operational conditions plus the derived
 per-use safeguard state over the same collection.
+
+## 17. D5 special-regime candidates (Punto 0, no protocols yet)
+
+Purpose-scoped `derived.purpose.d5_*_candidate` facts (seven
+static keys) project hybrid capture state — intrinsic item
+signals, purpose regime profile, live links, existing D2.05 route
+truth — into the session fact view through the same derived
+mechanism: read-only, never persisted, never conflict sources.
+Each key emits only `yes` (review mechanically required) or
+`no` (mechanically excludable); absence means `unknown` for
+routing and never `false`.
+
+Candidates serve routing, UX hints and resume; they never
+substitute the future protocol decision and never write
+canonical state. D5 protocols (zero active) remain manually
+openable; structural coherence warnings stay runtime-only.

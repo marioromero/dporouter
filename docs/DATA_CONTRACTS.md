@@ -1082,3 +1082,72 @@ Rules:
   They never persist, never write facts and never conclude
   `no_covered_use` from an empty inventory.
 
+## 47. D5 Special-Regime Capture (Punto 0)
+
+Hybrid minimal capture enabling future machine-readable D5
+candidacy without storing real special personal data. Structure is
+never a legal conclusion; candidacy is never a canonical result.
+
+```text
+DataItemRecord: sensitive?, health?, biologicalProfile?,
+  geolocation? (each yes | no | unknown; absent = unknown)
+PurposeScopedState.specialRegimeProfile? {
+  biometricIdentificationUse, involvesMinors,
+  researchPublicInterestCandidate (each yes | no | unknown)
+}
+```
+
+Rules:
+
+* The four item signals are structural declarations about the
+  datum's nature for analysis purposes. New items default to
+  `unknown`; `unknown` (or absence) never equals `no`.
+* The purpose profile is a local purpose-owned object, not an
+  entity: no IDs, no collection, no lifecycle. Absent is valid
+  (legacy) and equals all `unknown`. It stores only abstract
+  population/context signals, never ages, birthdates, subjects or
+  representatives.
+* No automatic inference exists between signals (`health = yes`
+  never writes `sensitive = yes`, and likewise for every other
+  pair). Editing a signal writes no other signal and no canonical
+  fact, answer, reasoning record, effect or work status.
+* No `biometric`, `minor`, `research`, `financial`, `titleIII`,
+  `specialCategories[]`, `regimes[]` or applicability flags exist.
+  `DataItemRecord.category` stays free text.
+* Purpose-level candidates consider only items currently linked
+  via `DataPurposeLink`; unlinking or deleting an item
+  recomputes routing read-only without touching records, answers
+  or prior results.
+* Structural coherence validators are pure and non-mutating:
+  stable issue codes (`health_sensitive_mismatch`,
+  `biological_sensitive_mismatch`, `biometric_context_mismatch`
+  with treatment/purpose/item references). They warn, never fix,
+  never write facts and never alter candidacy. The biometric
+  check fires only with sufficient explicit information (all
+  linked items `sensitive = no`); unknowns stay silent.
+* Derived candidates (`derived.purpose.d5_*_candidate`, seven
+  static purpose-scoped keys) are read-only, never persisted,
+  never conflict sources and never conclude: `yes` only when the
+  structure mechanically requires review, `no` only when it
+  mechanically excludes it, otherwise the fact is absent and
+  absence means `unknown` for D5 routing. Empty links mean
+  `unknown`, never `no`.
+* The Title III candidate consumes only existing D2.05
+  purpose-scoped route truth (`lawful.consent_applies`,
+  `lawful.art13_source`): affirmed article 13(a) route with
+  consent discarded yields `yes`; an affirmatively determined
+  different route yields `no`; the rest stays `unknown`. No
+  duplicated financial flag exists and `purpose.lawful_basis` is
+  never materialized through this path.
+* Reasoning references use the stable
+  `ReasoningRecord.facts_considered[]` list with exact
+  `data_item:<id>` tokens (local ID, treatment-subordinated);
+  `rationale` and `evidence_refs` are never parsed.
+* Import/export: legacy absence stays valid (`unknown`);
+  invalid enums or types reject; enum-valid but suspicious
+  combinations are preserved (runtime validators report them);
+  derived candidates and warnings never persist.
+* No new scope, entity, collection-per-purpose, per-item
+  protocol session, dynamic fact key or persisted warning
+  framework is introduced.
+

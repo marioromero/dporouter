@@ -1,4 +1,5 @@
 import { getPurpose, getTreatment } from "./scope";
+import { deriveD5Candidates, readLawfulnessRoute } from "./specialRegime";
 import type { AutomatedUseRecord, CompanyState, ExecutionContext } from "./types";
 import type { FactMap } from "../../content/protocols/types";
 
@@ -19,6 +20,14 @@ import type { FactMap } from "../../content/protocols/types";
  * manualmente, no materializable. Los valores usan el vocabulario del
  * motor (`yes`/`no`); nunca `unknown` porque describen objetivamente
  * el estado actual.
+ *
+ * Excepción D5 (Punto 0, ADR-053): las candidaturas
+ * `derived.purpose.d5_*_candidate` emiten solo `yes`/`no`; la
+ * AUSENCIA del fact es el tercer estado (`unknown` para ruteo).
+ * `d5_titleIII_candidate` lee answers almacenadas D2.05 como única
+ * excepción de entrada (solo lectura, determinista); el resto deriva
+ * exclusivamente de structured state + links. Ninguna escribe,
+ * concluye ni genera conflictos.
  */
 
 function yesNo(value: boolean): string {
@@ -193,6 +202,20 @@ export function deriveSessionFacts(
     out["derived.purpose.described"] = yesNo(
       p.purpose.description.trim() !== "",
     );
+    // Candidaturas D5 (Punto 0): read-only, no persistidas; ausencia
+    // de cada key = unknown para ruteo. Nunca canonical, nunca
+    // observation/conflict source, nunca conclusión jurídica.
+    const t = getTreatment(company, ctx.treatmentId);
+    if (t) {
+      Object.assign(
+        out,
+        deriveD5Candidates(
+          t,
+          ctx.purposeId,
+          readLawfulnessRoute(company, ctx.treatmentId, ctx.purposeId),
+        ),
+      );
+    }
   }
   return out;
 }

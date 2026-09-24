@@ -8,7 +8,7 @@ import {
 import type { FactMap } from "../../content/protocols/types";
 import { useWorkspace } from "../workspace/context";
 import { humanSourceName } from "../workspace/facts";
-import type { ExecutionScope } from "../workspace/types";
+import type { ExecutionContext, ExecutionScope } from "../workspace/types";
 import {
   activeExecutionContext,
   buildScopedFactMap,
@@ -46,6 +46,10 @@ interface GuidanceSessionState {
   ) => void;
   resetProtocol: (protocolKey: string, scope?: ExecutionScope) => void;
   answersFor: (protocolKey: string, scope?: ExecutionScope) => FactMap;
+  addressedFactsFor: (
+    protocolKey: string,
+    ctx: ExecutionContext | null,
+  ) => FactMap;
   ownAnswersFor: (protocolKey: string, scope?: ExecutionScope) => FactMap;
   isProvided: (
     protocolKey: string,
@@ -178,6 +182,39 @@ export function GuidanceSessionProvider({
     [company, injectedFacts, ownAnswers],
   );
 
+  /**
+   * Vista de facts para un contexto addressed explícito (no la
+   * selección activa). Misma composición que `answersFor`: inyectados
+   * (iniciales + otros protocolos del mismo address) + respuestas
+   * propias + proyecciones read-only. La finalización evalúa esta
+   * vista para que lo evaluado y lo escrito compartan address.
+   */
+  const addressedFactsFor = useCallback(
+    (protocolKey: string, ctx: ExecutionContext | null): FactMap => {
+      const base: FactMap = { ...(initialFacts[protocolKey] ?? {}) };
+      if (company && ctx && ctx.companyId === company.id) {
+        for (const [k, v] of Object.entries(
+          buildScopedFactMap(
+            excludeScopedProtocol(company, ctx, protocolKey),
+            ctx,
+          ),
+        )) {
+          base[k] = v;
+        }
+        for (const [k, v] of Object.entries(
+          recordsToFacts(getScopedProtocolAnswers(company, ctx, protocolKey)),
+        )) {
+          base[k] = v;
+        }
+        for (const [k, v] of Object.entries(deriveSessionFacts(company, ctx))) {
+          base[k] = v;
+        }
+      }
+      return base;
+    },
+    [company, initialFacts],
+  );
+
   const isProvided = useCallback(
     (
       protocolKey: string,
@@ -224,8 +261,8 @@ export function GuidanceSessionProvider({
   }, [company, memory]);
 
   const value = useMemo(
-    () => ({ sessions, initialFacts, answer, resetProtocol, answersFor, ownAnswersFor: ownAnswers, isProvided, providedSource }),
-    [sessions, initialFacts, answer, resetProtocol, answersFor, ownAnswers, isProvided, providedSource],
+    () => ({ sessions, initialFacts, answer, resetProtocol, answersFor, addressedFactsFor, ownAnswersFor: ownAnswers, isProvided, providedSource }),
+    [sessions, initialFacts, answer, resetProtocol, answersFor, addressedFactsFor, ownAnswers, isProvided, providedSource],
   );
 
   return (
@@ -243,26 +280,48 @@ function useGuidanceSessionContext(): GuidanceSessionState {
   return ctx;
 }
 
-/** Estado de un protocolo: hechos, respuesta y reinicio. */
+/**
+ * Estado de un protocolo: hechos, respuesta, reinicio y contexto
+ * addressed de la guía.
+ *
+ * El ExecutionContext queda direccionado al abrir la guía (primera
+ * resolución válida para esta empresa y scope) y NO sigue cambios
+ * posteriores de la selección activa: la finalización escribe en la
+ * guía que se finaliza, nunca en la selección tardía. La lectura y
+ * escritura de respuestas conserva su comportamiento actual.
+ */
 export function useGuidanceProtocol(
   protocolKey: string,
   scope: ExecutionScope = "company",
 ): {
   facts: FactMap;
+  /** Vista evaluable del contexto addressed: lo evaluado y lo escrito comparten address. */
+  addressedFacts: FactMap;
   started: boolean;
   answer: (factKey: string, value: string) => void;
   reset: () => void;
   isProvided: (factKey: string) => boolean;
   providedSource: (factKey: string) => string | null;
+  ctx: ExecutionContext | null;
 } {
   const ctx = useGuidanceSessionContext();
+  const { company } = useWorkspace();
+  const addressed = useMemo(
+    () => activeExecutionContext(company, scope),
+    // Intencional: solo empresa, protocolo y scope re-direccionan.
+    // La selección activa posterior no mueve la guía ya abierta.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [company?.id, protocolKey, scope],
+  );
   const facts = ctx.answersFor(protocolKey, scope);
   return {
     facts,
+    addressedFacts: ctx.addressedFactsFor(protocolKey, addressed),
     started: Object.keys(ctx.ownAnswersFor(protocolKey, scope)).length > 0,
     answer: (factKey, value) => ctx.answer(protocolKey, factKey, value, scope),
     reset: () => ctx.resetProtocol(protocolKey, scope),
     isProvided: (factKey) => ctx.isProvided(protocolKey, factKey, scope),
     providedSource: (factKey) => ctx.providedSource(protocolKey, factKey, scope),
+    ctx: addressed,
   };
 }

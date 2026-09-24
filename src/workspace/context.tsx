@@ -62,8 +62,8 @@ import {
   type ReasoningDraft,
 } from "./reasoning";
 import {
-  applyProcedureFinalization,
-  validateProcedureFinalization,
+  applyScopedProcedureFinalization,
+  validateScopedProcedureFinalization,
 } from "./finalize";
 import type { FactMap } from "../../content/protocols/types";
 
@@ -117,6 +117,7 @@ interface WorkspaceContextValue {
     protocolKey: string,
     outcomeKey: string,
     facts: FactMap,
+    ctx: ExecutionContext | null,
   ) => { ok: true; applied: string[] } | { ok: false; errors: string[] };
   setLastLocation: (path: string) => void;
   exportCompany: (id: string) => string | null;
@@ -872,34 +873,48 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Finalización explícita genérica de un resultado definitivo con
-   * efectos canónicos (protocolos procedure/checklist). Valida primero
-   * y persiste los facts en una única escritura junto al estado. Nunca
-   * se ejecuta por render ni navegación: solo por acción del profesional.
-   * Independiente del camino de juicio D1.03 (sin ReasoningRecord).
+   * efectos canónicos (protocolos procedure/checklist). El
+   * ExecutionContext es addressed y obligatorio: lo provee la guía
+   * que se finaliza (capturado al abrirla), nunca la selección
+   * activa tardía. Valida primero y persiste los facts same-scope en
+   * una única escritura. Nunca se ejecuta por render ni navegación:
+   * solo por acción del profesional. Independiente del camino de
+   * juicio D1.03 (sin ReasoningRecord).
    */
   const finalizeProtocolOutcome = useCallback(
     (
       protocolKey: string,
       outcomeKey: string,
       facts: FactMap,
+      ctx: ExecutionContext | null,
     ): { ok: true; applied: string[] } | { ok: false; errors: string[] } => {
       if (!company) return { ok: false, errors: ["Requiere empresa activa."] };
+      if (!ctx || ctx.companyId !== company.id) {
+        return { ok: false, errors: ["Contexto de ejecución inválido."] };
+      }
       const protocol = getProtocol(protocolKey);
       if (!protocol) return { ok: false, errors: ["Protocolo desconocido."] };
-      const validated = validateProcedureFinalization({
-        protocol,
-        company,
-        facts,
-        outcomeKey,
-      });
+      const validated = validateScopedProcedureFinalization(
+        {
+          protocol,
+          company,
+          facts,
+          outcomeKey,
+        },
+        ctx,
+      );
       if (!validated.ok) return validated;
-      const { company: next, applied } = applyProcedureFinalization(
+      const appliedResult = applyScopedProcedureFinalization(
         company,
         protocol,
+        ctx,
         validated.effects,
       );
-      updateCompany(company.id, () => next);
-      return { ok: true, applied };
+      if (!appliedResult) {
+        return { ok: false, errors: ["Contexto de ejecución inválido."] };
+      }
+      updateCompany(company.id, () => appliedResult.company);
+      return { ok: true, applied: appliedResult.applied };
     },
     [company, updateCompany],
   );

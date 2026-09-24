@@ -195,6 +195,22 @@ writes nothing.
 executable language. Append, create, dynamic dates, history and
 lifecycle remain gaps: outcomes that require them carry no effects.
 
+Procedure/checklist finalization is scope-aware (ADR-051): the
+explicit action evaluates the addressed fact view and writes
+`canonical_fact_effects` exclusively to the addressed
+`ExecutionContext` of the guide being finalized (company,
+treatment or purpose), captured when the guide opens and never
+re-resolved from late active selection — what is evaluated and
+what is written always share the address. If the active
+selection moved since the guide opened, the UI warns and blocks
+the record until the guide is reopened. Ancestry is validated
+first; cross-parent contexts are rejected. Conflicts block only
+within the effective address — sibling treatments or purposes
+never block each other — while relevant ancestor facts apply
+through the frozen fact-view rules. Repeating the action is
+idempotent per full address. No ReasoningRecord and no
+deterministic-decision semantics are introduced by this path.
+
 ## 14. Fact states and explicit conflicts
 
 Facts are absent, unknown, resolved or conflicted — four

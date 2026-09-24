@@ -443,7 +443,7 @@ export function getScopedProtocolAnswers(
   return scopedAnswerMaps(company, ctx)?.[protocolKey] ?? {};
 }
 
-function setInMaps(
+export function setInMaps(
   company: CompanyState,
   ctx: ExecutionContext,
   protocolKey: string,

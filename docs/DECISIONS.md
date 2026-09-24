@@ -588,3 +588,42 @@ and per-period review instances (the canon defines no periods).
 Stage 1 boundary: no history, no periodic instances, no Stage 2
 semantics; `DETERMINISTIC_DECISION_FINALIZATION_GAP` untouched
 (D1.02, D2.05, D2.10 branch, D2.11 mechanical branch).
+
+---
+
+## ADR-051 — Scoped procedure/checklist finalization with addressed context
+
+Status: ACCEPTED
+
+`validateScopedProcedureFinalization` and
+`applyScopedProcedureFinalization` extend the existing
+procedure/checklist finalization to `treatment` and `purpose`
+scopes. Same procedure/checklist semantics, same
+`canonical_fact_effects` contract (plain static `{fact_key,
+value}` pairs, never interpreted as an executable language), no
+ReasoningRecord, no deterministic-decision semantics.
+
+The finalization evaluates the addressed fact view and writes
+exclusively to the addressed `ExecutionContext` of the guide
+being finalized (`validate` + `apply` receive it explicitly;
+the guide session captures it on open and never re-resolves it
+from late active selection). If the active selection moved, the
+UI warns and blocks the record until the guide is reopened —
+never a silent cross-context write. Ancestry is validated by
+structural traversal before any read or write; cross-parent
+contexts are rejected, never repaired. Conflicts block only intra-address (siblings never
+block; ancestors fill absent keys per the frozen fact-view
+rules). Idempotence is per full address. The company branch
+delegates to the historic path with identical behavior.
+
+Discarded: resolving the target from active selection at commit
+time (would write a stale guide into the newly selected object);
+company-fallback writes for scoped executions (they would
+contaminate sibling contexts); cross-scope effect targets (no
+target metadata, no operators, no DSL); dynamic value sourcing
+(`DYNAMIC_VALUE_EFFECT_GAP` untouched).
+
+Stage 1 boundary: no new scope, storage, entity, history or
+Stage 2 semantics. Existing protocols become product-ready only
+when their own content declares static same-scope effects in
+later batches; this capability alone changes no readiness.

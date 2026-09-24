@@ -30,11 +30,13 @@ import { getFactStatus } from "../workspace/facts";
 import {
   activeExecutionContext,
   getScopedFactState,
+  getScopedProtocolAnswers,
   isValidCivilDate,
   normalizeTextAnswer,
   scopedConflictKeys,
   treatmentDisplayName,
 } from "../workspace/scope";
+import type { ExecutionContext } from "../workspace/types";
 import { findConclusionNode } from "../../content/protocols/registry";
 import { getRecordedJudgment } from "../workspace/reasoning";
 import { describeFactKey } from "../workspace/factLabels";
@@ -57,11 +59,30 @@ export interface ProtocolActivityRef {
 
 export interface ProtocolSession {
   facts: FactMap;
+  /** Vista del contexto addressed (igual a facts cuando no hubo cambio de selección); ausente en sesiones legacy. */
+  addressedFacts?: FactMap;
   started: boolean;
   answer: (factKey: string, value: string) => void;
   reset: () => void;
   isProvided: (factKey: string) => boolean;
   providedSource: (factKey: string) => string | null;
+  /** Contexto addressed de la guía (capturado al abrirla); ausente en sesiones legacy de tests. */
+  ctx?: ExecutionContext | null;
+}
+
+function sameExecutionContext(
+  a: ExecutionContext | null | undefined,
+  b: ExecutionContext | null,
+): boolean {
+  if (!a || !b) return a == null && b == null;
+  if (a.scope !== b.scope || a.companyId !== b.companyId) return false;
+  if (a.scope === "treatment" && b.scope === "treatment") {
+    return a.treatmentId === b.treatmentId;
+  }
+  if (a.scope === "purpose" && b.scope === "purpose") {
+    return a.treatmentId === b.treatmentId && a.purposeId === b.purposeId;
+  }
+  return true;
 }
 
 function guideBase(activityKey: string): string {
@@ -871,21 +892,41 @@ export function ProtocolOutcomeView({
   );
   const [finalizeErrors, setFinalizeErrors] = useState<string[]>([]);
   const canonicalEffects = outcome.canonical_fact_effects ?? [];
+  // Contexto addressed de la guía (capturado al abrirla). El registro,
+  // su lectura y la vista evaluada consultan ese mismo contexto, nunca
+  // la selección tardía: lo evaluado y lo escrito comparten address.
+  const addressed: ExecutionContext | null | undefined = session.ctx;
+  const addressedScope = addressed?.scope ?? "company";
+  const evaluatedFacts = session.addressedFacts ?? session.facts;
+  // Si la selección activa se movió desde que se abrió la guía, lo
+  // mostrado corresponde a otro objeto: se avisa y se bloquea el
+  // registro hasta reabrir la guía (nunca escritura silenciosa cruzada).
+  const activeCtx = company
+    ? activeExecutionContext(company, protocol.execution_scope ?? "company")
+    : null;
+  const contextMismatch =
+    addressed != null && !sameExecutionContext(addressed, activeCtx);
   // Solo procedure/checklist con efectos declarados ofrecen registro
   // explícito. El modo decision con juicio (D1.03) usa su propio camino.
   const offersFinalize =
     (protocol.mode === "procedure" || protocol.mode === "checklist") &&
     canonicalEffects.length > 0;
-  // Solo lectura: registrado si la observación propia coincide en valor.
-  // Nunca escribe al renderizar.
+  // Solo lectura: registrado si la observación propia coincide en valor
+  // en la dirección de la guía. Nunca escribe al renderizar.
+  const scopedAnswers =
+    company != null && addressed != null
+      ? getScopedProtocolAnswers(company, addressed, protocol.protocol_key)
+      : undefined;
   const finalizeRegistered =
     offersFinalize &&
-    company != null &&
-    canonicalEffects.every(
-      (e) =>
-        company.protocolAnswers[protocol.protocol_key]?.[e.fact_key]?.value ===
-        e.value,
-    );
+    scopedAnswers !== undefined &&
+    canonicalEffects.every((e) => scopedAnswers[e.fact_key]?.value === e.value);
+  const registerTargetLabel =
+    addressedScope === "purpose"
+      ? "de esta finalidad"
+      : addressedScope === "treatment"
+        ? "de este tratamiento"
+        : "de la empresa";
   return (
     <>
       <ProtocolChrome
@@ -978,32 +1019,50 @@ export function ProtocolOutcomeView({
             <h3>Registro del estado</h3>
             <div data-testid="guia-finalize">
               <p>
-                Este resultado definitivo puede registrarse como antecedente
-                de la empresa. El registro es una acción explícita: no ocurre
-                por abrir esta pantalla ni por navegar.
+                Este resultado definitivo puede registrarse como antecedente{" "}
+                {registerTargetLabel}. El registro es una acción explícita:
+                no ocurre por abrir esta pantalla ni por navegar.
               </p>
               <p data-testid="guia-finalize-status">
                 {finalizeRegistered
-                  ? "Estado registrado para esta empresa."
+                  ? `Estado registrado ${registerTargetLabel === "de la empresa" ? "para esta empresa" : registerTargetLabel}.`
                   : "Estado aún no registrado."}
               </p>
+              {contextMismatch ? (
+                <p data-testid="guia-finalize-mismatch">
+                  La selección activa cambió desde que se abrió esta guía:
+                  lo mostrado corresponde a otro objeto. Vuelve a abrir la
+                  guía para registrar el estado correcto.
+                </p>
+              ) : null}
               <div className="actions">
                 <button
                   type="button"
                   className="btn secondary small"
                   data-testid="guia-finalize-apply"
                   onClick={() => {
+                    if (contextMismatch) {
+                      setFinalizeErrors([
+                        "La selección activa cambió desde que se abrió esta guía. Vuelve a abrirla para registrar el estado.",
+                      ]);
+                      return;
+                    }
                     const r = finalizeProtocolOutcome(
                       protocol.protocol_key,
                       outcome.outcome_key,
-                      session.facts,
+                      evaluatedFacts,
+                      addressed ?? null,
                     );
                     setFinalizeErrors(r.ok ? [] : r.errors);
                   }}
                 >
                   {finalizeRegistered
                     ? "Confirmar registro del estado"
-                    : "Registrar estado de la empresa"}
+                    : addressedScope === "purpose"
+                      ? "Registrar estado de esta finalidad"
+                      : addressedScope === "treatment"
+                        ? "Registrar estado de este tratamiento"
+                        : "Registrar estado de la empresa"}
                 </button>
               </div>
               {finalizeErrors.length > 0 ? (

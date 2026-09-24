@@ -189,6 +189,13 @@ Implemented adicionalmente (D3 canonical import):
 * D3.03–D3.06 sin protocolos (ningún D3 execution-ready adicional
   ni product-ready declarado).
 
+Scoped procedure/checklist finalization available (ADR-051):
+explicit finalization writes static `canonical_fact_effects` to
+the addressed company/treatment/purpose context with ancestry
+validation and intra-address conflicts only. No protocol becomes
+product-ready by this capability alone; D2/D3 content effects
+remain pending per-activity batches.
+
 Canonical activity count:
 
 `38`

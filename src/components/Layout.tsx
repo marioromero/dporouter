@@ -2,12 +2,14 @@ import { useEffect } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { SOURCES } from "../../content/sources";
 import { useWorkspace } from "../workspace/context";
+import { GlossaryFloat } from "./GlossaryFloat";
 
 const NAV = [
   { to: "/empresa", label: "Empresa", code: "EM", end: false },
   { to: "/trabajo", label: "Trabajo", code: "TR", end: false },
   { to: "/diagnostico", label: "Diagnóstico", code: "DG", end: true },
   { to: "/buscar", label: "Buscar", code: "BU", end: true },
+  { to: "/glosario", label: "Glosario", code: "GL", end: true },
   { to: "/referencias", label: "Referencias", code: "RF", end: true },
 ];
 
@@ -36,11 +38,12 @@ function crumbsFor(pathname: string): string {
   }
   if (pathname.startsWith("/diagnostico")) return "Diagnóstico";
   if (pathname.startsWith("/buscar")) return "Buscar";
+  if (pathname.startsWith("/glosario")) return "Glosario";
   if (pathname.startsWith("/referencias")) return "Referencias";
   return "Contenido";
 }
 
-const TRACKABLE = ["/trabajo", "/actividad", "/diagnostico", "/buscar", "/referencias"];
+const TRACKABLE = ["/trabajo", "/actividad", "/diagnostico", "/buscar", "/glosario", "/referencias"];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -129,6 +132,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <main id="contenido" className="content">
           {children}
         </main>
+        <GlossaryFloat />
       </div>
     </div>
   );

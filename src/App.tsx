@@ -10,6 +10,7 @@ import { DominioDetallePage } from "./pages/DominioDetalle";
 import { ActividadPage } from "./pages/Actividad";
 import { GuiaPage } from "./pages/Guia";
 import { BuscarPage } from "./pages/Buscar";
+import { GlosarioPage } from "./pages/Glosario";
 import { ReferenciasPage } from "./pages/Referencias";
 import { NotFoundPage } from "./pages/NotFound";
 
@@ -28,6 +29,7 @@ export function App() {
             <Route path="/actividad/:activityKey/guia" element={<GuiaPage />} />
             <Route path="/actividad/:activityKey/guia/:nodeKey" element={<GuiaPage />} />
             <Route path="/buscar" element={<BuscarPage />} />
+            <Route path="/glosario" element={<GlosarioPage />} />
             <Route path="/referencias" element={<ReferenciasPage />} />
             {/* Redirects de la navegación anterior: los deep links se conservan. */}
             <Route path="/mapa" element={<Navigate to="/trabajo" replace />} />

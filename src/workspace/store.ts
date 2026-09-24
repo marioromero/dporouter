@@ -11,6 +11,7 @@ import type {
   WorkspaceData,
 } from "./types";
 import { ACTIVITY_WORK_STATUSES, emptyWorkspace, nowIso } from "./types";
+import { DEFAULT_ADVISORS } from "../data/advisors";
 import {
   indexRelationships,
   isInternationalDimension,
@@ -167,6 +168,9 @@ function migrateCompany(raw: unknown): CompanyState | null {
   return {
     id: raw.id,
     name: raw.name,
+    ...(typeof raw.ownerId === "string" && raw.ownerId.trim() !== ""
+      ? { ownerId: raw.ownerId }
+      : {}),
     createdAt: isIsoDate(raw.createdAt) ? raw.createdAt : at,
     updatedAt: isIsoDate(raw.updatedAt) ? raw.updatedAt : at,
     activityStates: pruneMap(raw.activityStates, checkActivityState),
@@ -840,6 +844,12 @@ export function validateCompanyState(
   if (typeof data.name !== "string" || data.name.trim() === "") {
     return { ok: false, error: "Falta el nombre de la empresa (name)." };
   }
+  if (
+    data.ownerId !== undefined &&
+    (typeof data.ownerId !== "string" || data.ownerId.trim() === "")
+  ) {
+    return { ok: false, error: "ownerId inválido." };
+  }
   if (!isIsoDate(data.createdAt) || !isIsoDate(data.updatedAt)) {
     return { ok: false, error: "Fechas createdAt/updatedAt inválidas." };
   }
@@ -904,6 +914,7 @@ export function validateCompanyState(
   const value: CompanyState = {
     id: data.id,
     name: data.name,
+    ...(typeof data.ownerId === "string" ? { ownerId: data.ownerId } : {}),
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
     activityStates: (data.activityStates ?? {}) as CompanyState["activityStates"],
@@ -923,10 +934,44 @@ export function loadWorkspace(): WorkspaceData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return emptyWorkspace();
-    return migrateWorkspaceData(JSON.parse(raw));
+    return ensureAdvisorProfiles(migrateWorkspaceData(JSON.parse(raw)));
   } catch {
     return emptyWorkspace();
   }
+}
+
+/**
+ * Garantía de acceso Stage 1: los tres asesores fijos siempre existen
+ * (se agregan los ausentes, se normaliza el username de los presentes)
+ * y una sesión heredada que no sea de asesor se cierra para obligar
+ * al login. Las empresas y perfiles heredados se conservan intactos:
+ * nada se borra ni se reasigna en silencio.
+ */
+export function ensureAdvisorProfiles(data: WorkspaceData): WorkspaceData {
+  const profiles = data.profiles.map((p) => ({ ...p }));
+  for (const advisor of DEFAULT_ADVISORS) {
+    const existing = profiles.find((p) => p.id === advisor.id);
+    if (existing) {
+      existing.username = advisor.username;
+      if (!existing.name) existing.name = advisor.name;
+    } else {
+      profiles.push({
+        id: advisor.id,
+        name: advisor.name,
+        username: advisor.username,
+        createdAt: nowIso(),
+        companyIds: [],
+      });
+    }
+  }
+  const activeIsAdvisor =
+    data.activeProfileId !== undefined &&
+    profiles.some((p) => p.id === data.activeProfileId && p.username !== undefined);
+  return {
+    ...data,
+    profiles,
+    activeProfileId: activeIsAdvisor ? data.activeProfileId : undefined,
+  };
 }
 
 /**
@@ -970,6 +1015,9 @@ export function migrateWorkspaceData(data: unknown): WorkspaceData {
     profiles.push({
       id: p.id,
       name: typeof p.name === "string" ? p.name : "",
+      ...(typeof p.username === "string" && p.username.trim() !== ""
+        ? { username: p.username }
+        : {}),
       createdAt: typeof p.createdAt === "string" ? p.createdAt : "",
       companyIds,
       ...(activeCompanyId !== undefined ? { activeCompanyId } : {}),

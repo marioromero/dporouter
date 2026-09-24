@@ -53,14 +53,16 @@ export function EmpresaPage() {
     data,
     profile,
     company,
-    createProfile,
-    selectProfile,
+    login,
+    logout,
     createCompany,
     selectCompany,
     exportCompany,
     importCompany,
   } = useWorkspace();
-  const [profileName, setProfileName] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -68,66 +70,110 @@ export function EmpresaPage() {
   if (!profile) {
     return (
       <>
-        <h1>Empresa</h1>
+        <h1>Acceso del asesor</h1>
         <p className="lede">
-          El espacio local organiza el trabajo por empresa. Primero crea un
-          perfil local (solo separación operativa en este navegador, no es
-          autenticación segura).
+          Inicia sesión con tu usuario de asesor para trabajar. Sin sesión
+          no hay hilo de trabajo: primero el asesor, luego la empresa.
         </p>
         <div className="field">
-          <label htmlFor="nuevo-perfil">Nombre del perfil local</label>
+          <label htmlFor="acceso-usuario">Usuario</label>
           <input
-            id="nuevo-perfil"
+            id="acceso-usuario"
             className="input"
-            value={profileName}
-            onChange={(e) => setProfileName(e.target.value)}
-            placeholder="p. ej. Consultor interno"
-            autoComplete="off"
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setLoginError(null);
+            }}
+            placeholder="p. ej. pablo"
+            autoComplete="username"
           />
         </div>
+        <div className="field">
+          <label htmlFor="acceso-clave">Contraseña</label>
+          <input
+            id="acceso-clave"
+            className="input"
+            type="password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setLoginError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const result = login(username, password);
+                if (!result.ok) setLoginError(result.error);
+                else setPassword("");
+              }
+            }}
+            placeholder="Tu contraseña"
+            autoComplete="current-password"
+          />
+        </div>
+        {loginError ? (
+          <div className="notice" role="alert">
+            <strong>No se pudo iniciar sesión</strong>
+            <p>{loginError}</p>
+          </div>
+        ) : null}
         <div className="actions">
           <button
             type="button"
             className="btn"
-            disabled={profileName.trim() === ""}
+            disabled={username.trim() === "" || password === ""}
             onClick={() => {
-              createProfile(profileName);
-              setProfileName("");
+              const result = login(username, password);
+              if (!result.ok) setLoginError(result.error);
+              else {
+                setPassword("");
+                setLoginError(null);
+              }
             }}
           >
-            Crear perfil
+            Iniciar sesión
           </button>
         </div>
-        {data.profiles.length > 0 ? (
-          <>
-            <h2>O entrar con un perfil existente</h2>
-            <ul>
-              {data.profiles.map((p) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    className="btn ghost small"
-                    onClick={() => selectProfile(p.id)}
-                  >
-                    Entrar como {p.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : null}
+        <p className="result-count">
+          Acceso local demostrativo del navegador, sin autenticación real.
+        </p>
       </>
     );
   }
 
   if (!company) {
+    const ownCompanies = profile.companyIds
+      .map((id) => data.companies[id])
+      .filter(Boolean);
     return (
       <>
         <h1>Empresa</h1>
         <p className="lede">
-          Perfil <strong>{profile.name}</strong>. Asocia tu primera empresa
-          para comenzar a registrar avance.
+          Asesor <strong>{profile.name}</strong>. Selecciona una de tus
+          empresas para continuar el hilo de trabajo, o asocia una nueva.
         </p>
+        {ownCompanies.length > 0 ? (
+          <>
+            <div className="field">
+              <label htmlFor="seleccion-empresa">Tus empresas</label>
+              <select
+                id="seleccion-empresa"
+                className="input"
+                value=""
+                onChange={(e) => {
+                  if (e.target.value !== "") selectCompany(e.target.value);
+                }}
+              >
+                <option value="">Seleccionar empresa…</option>
+                {ownCompanies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        ) : null}
         <div className="field">
           <label htmlFor="nueva-empresa">Nombre de la empresa</label>
           <input
@@ -150,6 +196,9 @@ export function EmpresaPage() {
             }}
           >
             Crear empresa
+          </button>
+          <button type="button" className="btn ghost small" onClick={logout}>
+            Cerrar sesión
           </button>
         </div>
       </>
@@ -279,9 +328,14 @@ export function EmpresaPage() {
           </div>
         ) : null}
         <p className="result-count">
-          Perfil {profile.name} · Espacio local del navegador, sin
-          autenticación real.
+          Asesor {profile.name} · Empresa {company.name} · Espacio local del
+          navegador, sin autenticación real.
         </p>
+        <div className="actions">
+          <button type="button" className="btn ghost small" onClick={logout}>
+            Cerrar sesión de {profile.name}
+          </button>
+        </div>
       </div>
 
       <section className="activity-section" aria-label="Continuar" data-testid="empresa-continuar">

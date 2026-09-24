@@ -396,8 +396,8 @@ describe("addressed guide context (A1 → selección A2 → finaliza A1)", () =>
       STORAGE_KEY,
       JSON.stringify({
         version: 1,
-        profiles: [{ id: "p1", name: "P", createdAt: at, companyIds: [c.id], activeCompanyId: c.id }],
-        activeProfileId: "p1",
+        profiles: [{ id: "asesor-pablo", name: "Pablo", username: "pablo", createdAt: at, companyIds: [c.id], activeCompanyId: c.id }],
+        activeProfileId: "asesor-pablo",
         companies: { [c.id]: c },
       }),
     );

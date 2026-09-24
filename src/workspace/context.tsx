@@ -13,7 +13,8 @@ import type {
   LocalProfile,
   WorkspaceData,
 } from "./types";
-import { newCompany, newProfile, nowIso } from "./types";
+import { newCompany, nowIso } from "./types";
+import { verifyAdvisor } from "../data/advisors";
 import { loadWorkspace, saveWorkspace, validateCompanyState } from "./store";
 import { getProtocol } from "../../content/protocols/registry";
 import { getCanonicalActivity } from "../../content/registry";
@@ -79,17 +80,19 @@ import {
 import type { FactMap } from "../../content/protocols/types";
 
 /**
- * Workspace local Stage 1: perfiles y empresas creados por el usuario,
- * con progreso independiente por empresa en localStorage. No es auth
- * segura ni Stage 2: es separación operativa local y así se presenta.
+ * Workspace local Stage 1: sesión de asesor + empresas propias en
+ * localStorage. El acceso es local demostrativo (nómina fija), no
+ * autenticación segura ni Stage 2: así se presenta en la UI.
  */
 
 interface WorkspaceContextValue {
   data: WorkspaceData;
   profile: LocalProfile | null;
   company: CompanyState | null;
-  createProfile: (name: string) => void;
-  selectProfile: (id: string) => void;
+  /** Inicia sesión de asesor (pablo/carlos/mario). Activa su perfil. */
+  login: (username: string, password: string) => { ok: true } | { ok: false; error: string };
+  /** Cierra la sesión; bloquea el hilo de trabajo hasta el próximo login. */
+  logout: () => void;
   createCompany: (name: string) => void;
   selectCompany: (id: string) => void;
   setActivityStatus: (activityKey: string, status: ActivityWorkStatus) => void;
@@ -279,23 +282,35 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     (profile?.activeCompanyId ? data.companies[profile.activeCompanyId] : undefined) ??
     null;
 
-  const createProfile = useCallback((name: string) => {
-    const trimmed = name.trim();
-    if (trimmed === "") return;
-    const p = newProfile(trimmed);
-    setData((prev) => ({
-      ...prev,
-      profiles: [...prev.profiles, p],
-      activeProfileId: p.id,
-    }));
+  const login = useCallback((username: string, password: string) => {
+    const advisor = verifyAdvisor(username, password);
+    if (!advisor) {
+      return { ok: false as const, error: "Usuario o clave incorrectos." };
+    }
+    setData((prev) => {
+      const exists = prev.profiles.some((p) => p.id === advisor.id);
+      return {
+        ...prev,
+        profiles: exists
+          ? prev.profiles
+          : [
+              ...prev.profiles,
+              {
+                id: advisor.id,
+                name: advisor.name,
+                username: advisor.username,
+                createdAt: nowIso(),
+                companyIds: [],
+              },
+            ],
+        activeProfileId: advisor.id,
+      };
+    });
+    return { ok: true as const };
   }, []);
 
-  const selectProfile = useCallback((id: string) => {
-    setData((prev) =>
-      prev.profiles.some((p) => p.id === id)
-        ? { ...prev, activeProfileId: id }
-        : prev,
-    );
+  const logout = useCallback(() => {
+    setData((prev) => ({ ...prev, activeProfileId: undefined }));
   }, []);
 
   const createCompany = useCallback((name: string) => {
@@ -304,7 +319,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     setData((prev) => {
       const active = prev.profiles.find((p) => p.id === prev.activeProfileId);
       if (!active) return prev;
-      const c = newCompany(trimmed);
+      const c = newCompany(trimmed, active.id);
       return {
         ...prev,
         companies: { ...prev.companies, [c.id]: c },
@@ -1113,7 +1128,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         const active = prev.profiles.find((p) => p.id === prev.activeProfileId);
         if (!active) return prev;
         const id = incoming.id;
-        const stored: CompanyState = { ...incoming, id, updatedAt: nowIso() };
+        const stored: CompanyState = { ...incoming, id, ownerId: active.id, updatedAt: nowIso() };
         return {
           ...prev,
           companies: { ...prev.companies, [id]: stored },
@@ -1140,8 +1155,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       data,
       profile,
       company,
-      createProfile,
-      selectProfile,
+      login,
+      logout,
       createCompany,
       selectCompany,
       setActivityStatus,
@@ -1187,7 +1202,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       deleteAutomatedUse,
     }),
     [
-      data, profile, company, createProfile, selectProfile, createCompany,
+      data, profile, company, login, logout, createCompany,
       selectCompany, setActivityStatus, saveProtocolAnswer, saveScopedProtocolAnswer,
       clearScopedProtocolAnswers, clearProtocolAnswers,
       clearProtocolFact, setDiagnosticFact, clearDiagnosticFact, resolveFactConflict,

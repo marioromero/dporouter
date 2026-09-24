@@ -693,8 +693,11 @@ describe("aislamiento asesor/empresa con answers nuevos", () => {
       (id) => loaded.companies[id].protocolAnswers["treatment.change_review.v1"]?.["change.date"]?.value,
     );
     expect(values.sort()).toEqual(["2026-09-20", "2026-09-21"]);
-    // Perfiles separados con sus empresas.
-    expect(loaded.profiles.map((p) => p.id).sort()).toEqual(["p1", "p2"]);
+    // Perfiles separados con sus empresas (más los asesores fijos
+    // garantizados por ensureAdvisorProfiles en la carga real).
+    expect(loaded.profiles.map((p) => p.id)).toEqual(
+      expect.arrayContaining(["p1", "p2", "asesor-pablo", "asesor-carlos", "asesor-mario"]),
+    );
     const p1 = loaded.profiles.find((p) => p.id === "p1")!;
     const p2 = loaded.profiles.find((p) => p.id === "p2")!;
     expect(p1.companyIds).not.toEqual(p2.companyIds);

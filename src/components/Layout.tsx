@@ -48,7 +48,7 @@ const TRACKABLE = ["/trabajo", "/actividad", "/diagnostico", "/buscar", "/glosar
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const mode = modeFor(location.pathname);
-  const { company, setLastLocation } = useWorkspace();
+  const { company, profile, setLastLocation } = useWorkspace();
   // La franja de vigencia existe solo mientras haya fuentes canónicas en
   // estado transitorio; el texto es presentación global única.
   const showValidity = SOURCES.some((s) => s.regulatory_status === "transitional");
@@ -93,7 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="sidebar-foot">
           Baseline funcional v1.0 · Uso interno
           <br />
-          Espacio local: sin autenticación real.
+          Espacio local: acceso demostrativo, sin autenticación real.
         </div>
       </aside>
       <button
@@ -115,6 +115,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <span className="crumbs" aria-label="Ubicación actual">
             {crumbsFor(location.pathname)}
           </span>
+          {profile ? (
+            <span className="company-tag" title="Asesor activo">
+              {profile.name}
+            </span>
+          ) : null}
           {company ? (
             <span className="company-tag" title="Empresa activa">
               {company.name}

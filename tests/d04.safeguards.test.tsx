@@ -534,14 +534,15 @@ describe("AutomatedUsesWorkspace (UI colección)", () => {
         version: 1,
         profiles: [
           {
-            id: "p",
-            name: "P",
+            id: "asesor-pablo",
+            name: "Pablo",
+            username: "pablo",
             createdAt: "2026-09-24T00:00:00.000Z",
             companyIds: [company.id],
             activeCompanyId: company.id,
           },
         ],
-        activeProfileId: "p",
+        activeProfileId: "asesor-pablo",
         companies: { [company.id]: company },
       }),
     );

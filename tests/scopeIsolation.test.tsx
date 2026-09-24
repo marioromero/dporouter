@@ -421,14 +421,15 @@ describe("sesión scope-aware", () => {
         version: 1,
         profiles: [
           {
-            id: "p1",
-            name: "P",
+            id: "asesor-pablo",
+            name: "Pablo",
+            username: "pablo",
             createdAt: at,
             companyIds: [c.id],
             activeCompanyId: c.id,
           },
         ],
-        activeProfileId: "p1",
+        activeProfileId: "asesor-pablo",
         companies: { [c.id]: c },
       }),
     );

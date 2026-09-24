@@ -1,6 +1,7 @@
-import { Navigate, Route, Routes, useParams } from "react-router-dom";
+import type { ReactNode } from "react";
+import { Link, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Layout } from "./components/Layout";
-import { WorkspaceProvider } from "./workspace/context";
+import { WorkspaceProvider, useWorkspace } from "./workspace/context";
 import { GuidanceSessionProvider } from "./guidance/session";
 import { HomePage } from "./pages/Home";
 import { EmpresaPage } from "./pages/Empresa";
@@ -22,12 +23,12 @@ export function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/empresa" element={<EmpresaPage />} />
-            <Route path="/trabajo" element={<TrabajoPage />} />
-            <Route path="/trabajo/:domainKey" element={<DominioDetallePage />} />
-            <Route path="/diagnostico" element={<DiagnosticoPage />} />
-            <Route path="/actividad/:activityKey" element={<ActividadPage />} />
-            <Route path="/actividad/:activityKey/guia" element={<GuiaPage />} />
-            <Route path="/actividad/:activityKey/guia/:nodeKey" element={<GuiaPage />} />
+            <Route path="/trabajo" element={<RequireCompany><TrabajoPage /></RequireCompany>} />
+            <Route path="/trabajo/:domainKey" element={<RequireCompany><DominioDetallePage /></RequireCompany>} />
+            <Route path="/diagnostico" element={<RequireCompany><DiagnosticoPage /></RequireCompany>} />
+            <Route path="/actividad/:activityKey" element={<RequireCompany><ActividadPage /></RequireCompany>} />
+            <Route path="/actividad/:activityKey/guia" element={<RequireCompany><GuiaPage /></RequireCompany>} />
+            <Route path="/actividad/:activityKey/guia/:nodeKey" element={<RequireCompany><GuiaPage /></RequireCompany>} />
             <Route path="/buscar" element={<BuscarPage />} />
             <Route path="/glosario" element={<GlosarioPage />} />
             <Route path="/referencias" element={<ReferenciasPage />} />
@@ -51,4 +52,47 @@ function DominioRedirect() {
   // Preserva /dominios/:domainKey redirigiendo al detalle en Trabajo.
   const { domainKey } = useParams<{ domainKey: string }>();
   return <Navigate to={`/trabajo/${domainKey ?? ""}`} replace />;
+}
+
+/**
+ * Hilo de trabajo Stage 1: sin asesor logueado no hay acciones; sin
+ * empresa seleccionada tampoco. Las vistas de referencia
+ * (Buscar/Glosario/Referencias/Inicio) quedan abiertas por ser
+ * solo lectura.
+ */
+function RequireCompany({ children }: { children: ReactNode }) {
+  const { profile, company } = useWorkspace();
+  if (!profile) {
+    return (
+      <>
+        <h1>Se requiere sesión</h1>
+        <p className="lede">
+          Inicia sesión como asesor para llevar el hilo del trabajo. Sin
+          asesor logueado no se ejecuta ninguna acción.
+        </p>
+        <div className="actions">
+          <Link className="btn" to="/empresa">
+            Ir al acceso
+          </Link>
+        </div>
+      </>
+    );
+  }
+  if (!company) {
+    return (
+      <>
+        <h1>Selecciona una empresa</h1>
+        <p className="lede">
+          Asesor {profile.name}: elige una de tus empresas para continuar.
+          Sin empresa seleccionada no se ejecuta ninguna acción.
+        </p>
+        <div className="actions">
+          <Link className="btn" to="/empresa">
+            Ir a mis empresas
+          </Link>
+        </div>
+      </>
+    );
+  }
+  return <>{children}</>;
 }

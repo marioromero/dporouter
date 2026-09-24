@@ -522,14 +522,15 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
         version: 1,
         profiles: [
           {
-            id: "p1",
-            name: "P",
+            id: "asesor-pablo",
+            name: "Pablo",
+            username: "pablo",
             createdAt: at,
             companyIds: [company.id],
             activeCompanyId: company.id,
           },
         ],
-        activeProfileId: "p1",
+        activeProfileId: "asesor-pablo",
         companies: { [company.id]: company },
       }),
     );
@@ -674,14 +675,15 @@ describe("D1.03 revisión: hallazgos de reviewer", () => {
         version: 1,
         profiles: [
           {
-            id: "p1",
-            name: "P",
+            id: "asesor-pablo",
+            name: "Pablo",
+            username: "pablo",
             createdAt: at,
             companyIds: [company.id],
             activeCompanyId: company.id,
           },
         ],
-        activeProfileId: "p1",
+        activeProfileId: "asesor-pablo",
         companies: { [company.id]: company },
       }),
     );

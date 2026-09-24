@@ -1,4 +1,5 @@
 import type { ReasoningRecord } from "../types";
+import { DEFAULT_ADVISORS } from "../data/advisors";
 
 /**
  * Modelo del workspace local Stage 1.
@@ -394,6 +395,12 @@ export type ExecutionContext =
 export interface CompanyState {
   id: string;
   name: string;
+  /**
+   * Asesor dueño de la empresa (id de perfil asesor). Ausente = empresa
+   * heredada de versiones previas sin dueño registrado; sigue válida.
+   * Toda empresa creada con sesión pertenece a su asesor.
+   */
+  ownerId?: string;
   createdAt: string;
   updatedAt: string;
   activityStates: Record<string, ActivityWorkState>;
@@ -415,6 +422,11 @@ export interface CompanyState {
 export interface LocalProfile {
   id: string;
   name: string;
+  /**
+   * Nombre de usuario asesor cuando el perfil es una cuenta de acceso
+   * (pablo/carlos/mario). Ausente = perfil heredado previo al login.
+   */
+  username?: string;
   createdAt: string;
   companyIds: string[];
   activeCompanyId?: string;
@@ -427,8 +439,20 @@ export interface WorkspaceData {
   companies: Record<string, CompanyState>;
 }
 
+/** Perfiles asesores fijos: siempre existen, con ids estables. */
+export function defaultAdvisorProfiles(): LocalProfile[] {
+  const at = nowIso();
+  return DEFAULT_ADVISORS.map((a) => ({
+    id: a.id,
+    name: a.name,
+    username: a.username,
+    createdAt: at,
+    companyIds: [],
+  }));
+}
+
 export function emptyWorkspace(): WorkspaceData {
-  return { version: 1, profiles: [], companies: {} };
+  return { version: 1, profiles: defaultAdvisorProfiles(), companies: {} };
 }
 
 export function nowIso(): string {
@@ -443,11 +467,12 @@ export function newId(prefix: string): string {
   return `${prefix}-${rand}`;
 }
 
-export function newCompany(name: string): CompanyState {
+export function newCompany(name: string, ownerId?: string): CompanyState {
   const at = nowIso();
   return {
     id: newId("emp"),
     name: name.trim(),
+    ...(ownerId !== undefined ? { ownerId } : {}),
     createdAt: at,
     updatedAt: at,
     activityStates: {},

@@ -34,6 +34,10 @@ import { TREATMENT_CHANGE_REVIEW_PROTOCOL } from "./treatment.change_review";
 import { INVENTORY_PERIODIC_REVALIDATION_PROTOCOL } from "./inventory.periodic_revalidation";
 import { TRANSPARENCY_POLICY_ASSEMBLE_PROTOCOL } from "./transparency.policy_assemble";
 import { TRANSPARENCY_PUBLICATION_VALIDATE_PROTOCOL } from "./transparency.publication_validate";
+import { CONSENT_MECHANISM_DESIGN_PROTOCOL } from "./consent.mechanism_design";
+import { CONSENT_FREEDOM_ASSESS_PROTOCOL } from "./consent.freedom_assess";
+import { CONSENT_PROOF_DESIGN_PROTOCOL } from "./consent.proof_design";
+import { CONSENT_WITHDRAWAL_ENABLE_PROTOCOL } from "./consent.withdrawal_enable";
 import {
   getCanonicalActivity,
   getUnresolvedReferences,
@@ -82,6 +86,10 @@ const PROTOCOLS: ExecutionProtocol[] = [
   INVENTORY_PERIODIC_REVALIDATION_PROTOCOL,
   TRANSPARENCY_POLICY_ASSEMBLE_PROTOCOL,
   TRANSPARENCY_PUBLICATION_VALIDATE_PROTOCOL,
+  CONSENT_MECHANISM_DESIGN_PROTOCOL,
+  CONSENT_FREEDOM_ASSESS_PROTOCOL,
+  CONSENT_PROOF_DESIGN_PROTOCOL,
+  CONSENT_WITHDRAWAL_ENABLE_PROTOCOL,
 ];
 
 const BY_ACTIVITY = new Map<string, ExecutionProtocol>(

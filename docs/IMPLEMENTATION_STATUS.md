@@ -110,7 +110,7 @@ D2 real state:
 * capture gap pendiente (matrices como vista); D2.11/D2.12
   implementados sin historial ni instancias.
 
-D3 canonical content imported (6 ActivityDefinitions); D3.01/D3.02 guided (execution-ready), D3.03–D3.06 retrofit pending.
+D3 canonical content imported (6 ActivityDefinitions); D3.01–D3.06 guided, execution-ready y product-ready: D3 guided retrofit CLOSED.
 
 Post-UX-Reset fix (explicit fact conflicts):
 
@@ -186,8 +186,21 @@ Implemented adicionalmente (D3 canonical import):
   assembled`, `publication_status = validated`); D3.02 exige D3.01
   para concluir (completion_dependency operativa vía fact externo),
   sin bloquear navegación ni revisión preliminar;
-* D3.03–D3.06 sin protocolos (ningún D3 execution-ready adicional
-  ni product-ready declarado).
+* D3.03 (`consent.mechanism_design`, procedure, purpose) con
+  dependency gating operativo hacia D3.04/D3.05/D3.06 de la misma
+  purpose (solo `mechanism_designed` materializa
+  `consent.mechanism_status = designed`);
+* D3.04 (`consent.freedom_assess`, decision, purpose) con juicio
+  profesional (`finalizeProfessionalJudgment` purpose-scoped,
+  presunción visible sin deducción automática);
+* D3.05 (`consent.proof_design`, checklist, purpose) y D3.06
+  (`consent.withdrawal_enable`, procedure, purpose) con effects
+  estáticos same-purpose por finalización ADR-051;
+* puente D2.05 → D3 read-only vía `lawful.consent_applies =
+  consent_yes` (sin materializar `purpose.lawful_basis`, sin
+  modificar D2.05);
+* D3.03–D3.06 execution-ready y product-ready (verificados en
+  runtime): D3 guided retrofit CLOSED (6/6 protocols).
 
 Scoped procedure/checklist finalization available (ADR-051):
 explicit finalization writes static `canonical_fact_effects` to
@@ -206,15 +219,15 @@ Stage 1 canonical activities:
 
 Guided protocols:
 
-`34`
+`38`
 
 Protocol coverage:
 
-`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.02`
+`D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3)`
 
 D3 canonical coverage:
 
-`D3.01–D3.06 (6 ActivityDefinitions, 2 ExecutionProtocols: D3.01 procedure + D3.02 checklist, ambos company-scope; D3.03–D3.06 sin protocolo)`
+`D3.01–D3.06 (6 ActivityDefinitions, 6 ExecutionProtocols: D3.01 procedure + D3.02 checklist company-scope; D3.03 procedure + D3.04 decision + D3.05 checklist + D3.06 procedure purpose-scope; 6/6 execution-ready, 6/6 product-ready)`
 
 Pending canonical cross-domain targets:
 
@@ -225,7 +238,7 @@ Pending canonical cross-domain targets:
 
 Still not implemented:
 
-* guided protocols for D3.03–D12 activities;
+* guided protocols for D04–D12 activities;
 * D04-D12;
 * real characterization UI;
 * backend persistent client context (local treatment/purpose workspace exists);

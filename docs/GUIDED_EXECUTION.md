@@ -1,6 +1,6 @@
 # Guided Execution
 
-Status: STAGE 1 CANONICAL LAYER — D1.01–D1.20, D2.01–D2.12 (juicios scopeados D2.06/D2.10/D2.11; D2.12 procedure company-scope), D3.01 (procedure company-scope) y D3.02 (checklist company-scope; conclusión definitiva exige D3.01 vía completion dependency)
+Status: STAGE 1 CANONICAL LAYER — D1.01–D1.20, D2.01–D2.12 (juicios scopeados D2.06/D2.10/D2.11; D2.12 procedure company-scope), D3.01–D3.06 (D3.01 procedure y D3.02 checklist company-scope; D3.03 procedure, D3.04 juicio decision, D3.05 checklist y D3.06 procedure purpose-scope con puente read-only D2.05 y gating D3.03→D3.04/D3.05/D3.06)
 
 `The guidance engine assists professional execution; it does not silently create new legal obligations.`
 

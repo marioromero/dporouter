@@ -303,19 +303,19 @@ describe("D3.02 transparency.publication_validate (checklist, company)", () => {
 });
 
 describe("regresión D3 guides", () => {
-  it("16. D1/D2 intactos, 38 actividades, 4 pendings, D3.03–06 sin protocolo", () => {
+  it("16. D1/D2 intactos, 38 actividades, 4 pendings, rama D3 con guía", () => {
     expect(D01_ACTIVITIES).toHaveLength(20);
     expect(D02_ACTIVITIES).toHaveLength(12);
     expect(D03_ACTIVITIES).toHaveLength(6);
     expect(ALL_ACTIVITIES).toHaveLength(38);
-    expect(listProtocols()).toHaveLength(34);
+    expect(listProtocols()).toHaveLength(38);
     for (const k of [
       "consent.mechanism_design",
       "consent.freedom_assess",
       "consent.proof_design",
       "consent.withdrawal_enable",
     ]) {
-      expect(getProtocolForActivity(k), k).toBeUndefined();
+      expect(getProtocolForActivity(k), k).toBeTruthy();
     }
   });
 });

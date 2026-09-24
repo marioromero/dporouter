@@ -432,21 +432,21 @@ describe("contenido canónico D3", () => {
     expect(existsSync(join(root, "src/data/d03.ts"))).toBe(false);
   });
 
-  it("28. D3.03–D3.06 sin protocolos; D3.01/D3.02 con guía", () => {
+  it("28. D3.01–D3.06 con guía (modos y scopes canónicos)", () => {
+    expect(getProtocolForActivity("transparency.policy_assemble")).toBeTruthy();
+    expect(getProtocolForActivity("transparency.publication_validate")).toBeTruthy();
+    expect(getProtocolForActivity("consent.mechanism_design")?.mode).toBe("procedure");
+    expect(getProtocolForActivity("consent.freedom_assess")?.mode).toBe("decision");
+    expect(getProtocolForActivity("consent.proof_design")?.mode).toBe("checklist");
+    expect(getProtocolForActivity("consent.withdrawal_enable")?.mode).toBe("procedure");
     for (const k of [
       "consent.mechanism_design",
       "consent.freedom_assess",
       "consent.proof_design",
       "consent.withdrawal_enable",
     ]) {
-      expect(getProtocolForActivity(k), k).toBeUndefined();
+      expect(getProtocolForActivity(k)?.execution_scope ?? "company", k).toBe("purpose");
     }
-    expect(getProtocolForActivity("transparency.policy_assemble")?.mode).toBe(
-      "procedure",
-    );
-    expect(getProtocolForActivity("transparency.publication_validate")?.mode).toBe(
-      "checklist",
-    );
   });
 
   it("29. triggers canónicos verbatim (fidelity patch)", () => {

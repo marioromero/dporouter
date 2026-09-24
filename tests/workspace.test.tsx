@@ -443,10 +443,10 @@ describe("Activity View V2", () => {
       (a) => !getProtocolForActivity(a.activity_key),
     );
     if (!pending) {
-      // D1+D2 con cobertura total (20 + 12): no queda pendiente que
-      // mostrar. La rama honesta sigue existiendo para futuras
-      // actividades (D3).
-      expect(ALL_ACTIVITIES).toHaveLength(32);
+      // D1+D2+D3 con cobertura total (20 + 12 + 6): no queda pendiente
+      // que mostrar. La rama honesta sigue existiendo para futuras
+      // actividades (D4-D12).
+      expect(ALL_ACTIVITIES).toHaveLength(38);
       for (const a of ALL_ACTIVITIES) {
         expect(getProtocolForActivity(a.activity_key), a.activity_key).toBeTruthy();
       }

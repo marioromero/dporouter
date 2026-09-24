@@ -299,14 +299,15 @@ describe("contenido canónico D2", () => {
     ).toHaveLength(8);
   });
 
-  it("26. registro global contiene exactamente 38 actividades", () => {
-    expect(ALL_ACTIVITIES).toHaveLength(38);
-    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(38);
+  it("26. registro global contiene exactamente 47 actividades", () => {
+    expect(ALL_ACTIVITIES).toHaveLength(47);
+    expect(new Set(ALL_ACTIVITIES.map((a) => a.activity_key)).size).toBe(47);
   });
 
-  it("27. D3 tiene 6 actividades; D4-D12 contienen cero", () => {
+  it("27. D3 tiene 6 actividades; D4 tiene 9; D5-D12 contienen cero", () => {
     expect(getDomain("d3")?.activity_keys).toHaveLength(6);
-    for (const key of ["d4","d5","d6","d7","d8","d9","d10","d11","d12"]) {
+    expect(getDomain("d4")?.activity_keys).toHaveLength(9);
+    for (const key of ["d5","d6","d7","d8","d9","d10","d11","d12"]) {
       expect(getDomain(key)?.activity_keys, key).toEqual([]);
     }
   });

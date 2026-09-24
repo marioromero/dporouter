@@ -192,6 +192,34 @@ export function renderD03(
   });
 }
 
+/** Proyección D04. */
+export function renderD04(
+  activities: ActivityDefinition[],
+  sources: CanonicalSource[],
+  pendingRefs: string[],
+  provenanceNotes: Record<string, string>,
+): string {
+  return renderDomainDoc({
+    sourceFile: "content/domains/d04.ts",
+    title: "# D04 — Derechos de titulares y decisiones automatizadas",
+    domainKey: "d4",
+    humanCode: "D4",
+    name: "Derechos de titulares y decisiones automatizadas",
+    objective:
+      "Diseñar y validar la capacidad del responsable para facilitar el ejercicio de los derechos de los titulares, atender correctamente cada tipo de derecho y evaluar los usos de decisiones automatizadas y sus salvaguardas, sin administrar solicitudes individuales en Stage 1.",
+    description:
+      "Este dominio diseña el mecanismo general de ejercicio de derechos y habilita la atención de acceso, rectificación, supresión, oposición, bloqueo temporal y portabilidad como capacidad organizacional, y evalúa por treatment los usos de decisiones automatizadas y sus salvaguardas. Stage 1 no administra solicitudes individuales de titulares.",
+    review: "2026-09-21",
+    normativeNote: NORMATIVE_NOTE,
+    activities,
+    sources,
+    pendingRefs,
+    provenanceNotes,
+    freezeNote:
+      "D4 está congelado salvo revisión controlada. No inventar, completar ni reinterpretar su contenido jurídico. La aplicación consume la representación estructurada; este documento es la especificación humana canónica. Stage 1 no administra solicitudes individuales: sin RightsRequest, sin DataSubject, sin timers, sin historiales.",
+  });
+}
+
 /** Proyección D02. */
 export function renderD02(
   activities: ActivityDefinition[],

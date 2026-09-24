@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-23
+Last controlled update: 2026-09-24
 
 ## Functional baseline
 
@@ -20,9 +20,9 @@ Completed outside the codebase:
 - Block 5 — activities D1-D12;
 - Block 6 — coverage and integrity review.
 
-D01–D03 are imported (`content/domains/d01.ts`, `d02.ts`, `d03.ts`).
+D01–D04 are imported (`content/domains/d01.ts`, `d02.ts`, `d03.ts`, `d04.ts`).
 
-D04–D12 have NOT yet been imported into this repository.
+D05–D12 have NOT yet been imported into this repository.
 
 Do not invent them.
 
@@ -211,11 +211,11 @@ remain pending per-activity batches.
 
 Canonical activity count:
 
-`38`
+`47`
 
 Stage 1 canonical activities:
 
-`38`
+`47`
 
 Guided protocols:
 
@@ -224,6 +224,10 @@ Guided protocols:
 Protocol coverage:
 
 `D1.01–D1.20 (todas las actividades D1), D2.01–D2.12 (todas las actividades D2), D3.01–D3.06 (todas las actividades D3)`
+
+D4 canonical coverage:
+
+`D4.01–D4.09 (9 ActivityDefinitions, 0 ExecutionProtocols; D4 canonical content imported, guided retrofit pending; 0/9 execution-ready, 0/9 product-ready)`
 
 D3 canonical coverage:
 
@@ -239,7 +243,7 @@ Pending canonical cross-domain targets:
 Still not implemented:
 
 * guided protocols for D04–D12 activities;
-* D04-D12;
+* D05-D12;
 * real characterization UI;
 * backend persistent client context (local treatment/purpose workspace exists);
 * state-effect engine;

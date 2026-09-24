@@ -2,6 +2,7 @@ import type { DomainDefinition } from "../types";
 import { D1_ACTIVITY_KEYS } from "../../content/domains/d01";
 import { D2_ACTIVITY_KEYS } from "../../content/domains/d02";
 import { D3_ACTIVITY_KEYS } from "../../content/domains/d03";
+import { D4_ACTIVITY_KEYS } from "../../content/domains/d04";
 import { normalizeText } from "../../content/text";
 
 /** Normalización textual única de la capa canónica (reexportada). */
@@ -11,7 +12,7 @@ export { normalizeText };
  * Registro de aplicación D1-D12 (navegación, búsqueda, rutas).
  * Consume definiciones canónicas de /content; no duplica contenido.
  * Códigos, claves y nombres exactos según la iteración vigente.
- * D4-D12 permanecen sin actividades hasta su importación controlada.
+ * D5-D12 permanecen sin actividades hasta su importación controlada.
  */
 export const DOMAINS: DomainDefinition[] = [
   {
@@ -51,9 +52,11 @@ export const DOMAINS: DomainDefinition[] = [
     domain_key: "d4",
     human_code: "D4",
     name: "Derechos de titulares y decisiones automatizadas",
-    objective: "",
-    description: "",
-    activity_keys: [],
+    objective:
+      "Diseñar y validar la capacidad del responsable para facilitar el ejercicio de los derechos de los titulares, atender correctamente cada tipo de derecho y evaluar los usos de decisiones automatizadas y sus salvaguardas, sin administrar solicitudes individuales en Stage 1.",
+    description:
+      "Este dominio diseña el mecanismo general de ejercicio de derechos y habilita la atención de acceso, rectificación, supresión, oposición, bloqueo temporal y portabilidad como capacidad organizacional, y evalúa por treatment los usos de decisiones automatizadas y sus salvaguardas. Stage 1 no administra solicitudes individuales de titulares.",
+    activity_keys: [...D4_ACTIVITY_KEYS],
     related_domain_keys: [],
   },
   {

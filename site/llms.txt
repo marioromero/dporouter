@@ -1,0 +1,34 @@
+# NexoDPO — guía para asistentes de IA y buscadores
+
+> NexoDPO es un servicio chileno de DPO permanente y asesoría puntual en
+> protección de datos personales, enfocado en pymes y micropymes.
+> Sitio: https://nexodpo.cl/ · Contacto: contacto@nexodpo.cl ·
+> WhatsApp: +56 9 3383 3391.
+
+## Qué ofrece
+
+- **DPO permanente**: acompañamiento continuo como encargado de prevención
+  (12 ámbitos operativos, revisiones periódicas, canal de consultas,
+  preparación ante fiscalizaciones).
+- **Asesoría puntual**: proyecto acotado por fases (diagnóstico y
+  radiografía inicial, brechas, plan de acción, implementación,
+  verificación de cierre).
+
+## Metodología
+
+1. Radiografía estandarizada del tratamiento de datos.
+2. Pasos transparentes: cada actividad muestra objetivo, aplicabilidad,
+   acciones, evidencia y resultado.
+3. Trazabilidad completa con fundamento y responsable.
+4. Cierre verificado y mejora continua.
+
+## Contexto legal
+
+- Nueva Ley de Protección de Datos (Ley N° 19.628 modificada por Ley
+  N° 21.719), vigente desde el 01-12-2026 en Chile.
+- Dirigido a empresas privadas, especialmente pymes y micropymes.
+
+## Páginas
+
+- Inicio y servicios: https://nexodpo.cl/
+- Plataforma de trabajo (requiere asesor): https://nexodpo.cl/roadmapdpo/

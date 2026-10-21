@@ -126,13 +126,16 @@ Do not show every metadata field in every row.
 The primary information architecture includes:
 
 - Inicio
+- Empresa (acceso asesor y empresas)
+- Trabajo (ámbitos operativos D1-D12; reúne mapa y dominios)
 - Diagnóstico / Caracterización
-- Mapa de cumplimiento
-- Dominios
 - Buscar
-- Fuentes y estado normativo
+- Glosario
+- Referencias (origen y estado normativo)
 
-Navigation must remain predictable across pages.
+Navigation must remain predictable across pages. Work areas require an active
+advisor and a selected company; reference areas remain readable without a
+session.
 
 ## 12. Map Mode
 

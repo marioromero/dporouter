@@ -19,28 +19,37 @@ The user should feel that they are navigating an operational compliance system.
 
 ## 2. Primary Stage 1 Navigation
 
-Stage 1 must eventually expose these primary areas in Spanish:
+Stage 1 exposes these primary areas in Spanish:
 
 - Inicio
+- Empresa (acceso asesor y empresas)
+- Trabajo (ámbitos operativos D1-D12; reúne mapa y dominios)
 - Diagnóstico / Caracterización
-- Mapa de cumplimiento
-- Dominios
 - Buscar
-- Fuentes y estado normativo
+- Glosario
+- Referencias (origen y estado normativo)
 
-The exact visual navigation component will be chosen during the UI implementation iteration.
+The visual navigation component is a persistent sidebar; on tablet it becomes
+a drawer.
 
 Do not rename these information areas without explicit instruction.
 
+### Access gate
+
+Trabajo, Diagnóstico, Actividad and Guía require an active advisor and a
+selected company. Inicio, Buscar, Glosario and Referencias are reference views
+and remain readable without a session. The gate is local Stage 1 work-thread
+ordering, not authentication and not Stage 2 (ADR-055).
+
 ## 3. Home
 
-The Stage 1 home should provide fast access to:
+The Stage 1 home provides fast access to:
 
-- characterization;
-- full map;
-- domains;
+- the active company and its next review;
+- Trabajo (twelve operational domains);
+- Diagnóstico / characterization;
 - search;
-- relevant regulatory notices.
+- glossary and reference/origin information.
 
 Do not display fake client metrics.
 

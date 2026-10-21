@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-09-24 (D6 Punto 0 third-party relationship capture infrastructure, ADR-054; D6 protocols still 0)
+Last controlled update: 2026-10-21 (handoff and documentation sync; advisor access, glossary and section tones recorded; e2e declared stale)
 
 ## Functional baseline
 
@@ -30,22 +30,26 @@ Do not invent them.
 
 Current iteration:
 
-`UX Reset — guided company workflow`
+`Handoff and documentation sync`
 
 Status:
 
-`COMPLETED`
+`COMPLETED (documentation only; no runtime change)`
 
 UX RESET está implementado:
 
 * navegación principal Empresa / Trabajo / Diagnóstico / Buscar /
-  Referencias (Trabajo reemplaza Mapa + Dominios; redirects conservan
-  deep links antiguos);
-* workspace local Stage 1 (perfiles y empresas creados por el usuario,
-  progreso independiente por empresa, localStorage, export/import JSON
-  validado; tratamientos con colecciones locales D2 más
-  `automatedUses[]` D4.08/D4.09 con invariantes e import estricto;
-  no constituye auth segura ni Stage 2);
+  Glosario / Referencias (Trabajo reemplaza Mapa + Dominios; redirects
+  conservan deep links antiguos);
+* acceso asesor local con nómina fija (`pablo`, `carlos`, `mario`),
+  `CompanyState.ownerId`, empresas por `companyIds` y `RequireCompany`
+  bloqueando Trabajo/Diagnóstico/Actividad/Guías sin sesión o empresa;
+  acceso demostrativo, no autenticación real ni Stage 2 (ADR-055);
+* workspace local Stage 1 (empresas creadas por el usuario, progreso
+  independiente por empresa, localStorage, export/import JSON validado;
+  tratamientos con colecciones locales D2 más `automatedUses[]`
+  D4.08/D4.09 con invariantes e import estricto; no constituye auth
+  segura ni Stage 2);
 * Activity View V2 en lenguaje humano (sin metadata técnica visible;
   auditoría colapsada; aplicabilidad humana; provenance única;
   vigencia global única);
@@ -54,7 +58,13 @@ UX RESET está implementado:
 * estados de trabajo not_started/in_review/reviewed/not_applicable/blocked
   (`Revisado` nunca significa `Cumple`);
 * Diagnóstico alimenta facts reutilizables (initialFacts por empresa);
-* siguiente revisión sugerida con información real.
+* siguiente revisión sugerida con información real;
+* Glosario con búsqueda y flotante de consulta, sin claves técnicas;
+* tonos visuales por sección en la ficha de actividad (solo presentación).
+
+Deuda declarada: la suite `e2e/` quedó obsoleta tras el acceso asesor (helpers
+con perfiles libres y navegación directa sin sesión/empresa). El gate confiable
+es la suite unitaria más build y `content:check`. Ver `docs/KNOWN_ISSUES.md`.
 
 D1/D2 permanecen canónicos (20 + 12 actividades, mismas keys, fuentes y
 dependencias; sin cambios jurídicos).
@@ -300,6 +310,14 @@ Still not implemented:
 * Stage 2 persistence;
 * AI.
 
-Next controlled iteration:
+Documentation and onboarding assets:
 
-`Pending architectural review of guided execution pilot. Do not proceed without explicit instruction.`
+* `HANDOFF.md` (entrada corta de contexto), `README.md` actualizado;
+* `docs/USER_GUIDE.md` (uso nivel asesor), `docs/SITE_MAP.md` (rutas y gates);
+* `docs/KNOWN_ISSUES.md` (deuda verificable, incluido e2e obsoleto);
+* contratos: `DATA_CONTRACTS.md` §49, ADR-055, arquitectura §2/§3, UX
+  contract §7 y principios de navegación sincronizados con el acceso asesor.
+
+Next controlled iteration (not started):
+
+`(a) e2e realignment after advisor access; (b) D6 guided retrofit (D6.01-D6.07). Do not proceed without explicit instruction.`

@@ -63,8 +63,17 @@ percentages are ever shown; factual review counts are allowed
 ## 7. Local Stage 1 workspace
 
 The local workspace (browser storage, per company) is Stage 1 work
-support. It is not secure authentication and it is not Stage 2. Profiles
-and companies are user-created; nothing fictional is ever preloaded.
+support. It is not secure authentication and it is not Stage 2.
+
+Three fixed advisor accounts are seeded locally so the work thread starts
+with an advisor and continues inside one company. Their credentials are
+public demo values and are never presented as security. Companies are
+created or imported by the user; no fictional company, activity state,
+fact or progress is ever preloaded.
+
+Work areas require an active advisor and a selected company. Reference
+views (Inicio, Buscar, Glosario, Referencias) remain readable without a
+session. The access gate orders local work; it is not a security boundary.
 
 ## 8. Diagnóstico feeds facts
 

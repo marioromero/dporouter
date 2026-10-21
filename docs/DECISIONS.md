@@ -828,3 +828,46 @@ juridical links, international tri-state and subordinate
 determinations only — never disclosures, transfers, subjects,
 incidents, timers or workflow. D6 readiness is unchanged by this
 infrastructure (canonical 7, protocols 0, total 61).
+
+---
+
+## ADR-055 - Stage 1 advisor access gate and company ownership (local demo)
+
+Status: ACCEPTED
+
+Stage 1 needs a work thread that starts at an advisor and continues
+inside one company. Before this decision the workspace exposed free
+local profiles and companies without an owner, which made the
+advisor → company relation ambiguous.
+
+Decision:
+
+* The local workspace seeds three fixed advisor accounts
+  (`pablo`, `carlos`, `mario`) with public demo credentials. Login
+  and logout are a local work-thread gate, not authentication, not a
+  security boundary and not Stage 2.
+* `LocalProfile.username` identifies an access account.
+  `CompanyState.ownerId` records provenance. Access is enforced by
+  `LocalProfile.companyIds[]`, never by `ownerId` alone.
+* `RequireCompany` blocks Trabajo, Diagnóstico, Actividad and Guía
+  until an advisor is active and a company is selected. Inicio,
+  Buscar, Glosario and Referencias remain readable.
+* Legacy workspaces stay valid: absent `username` and `ownerId` are
+  accepted; loading adds missing fixed advisors and closes a
+  non-advisor active session without deleting or reassigning any
+  company.
+* Import stores the company under the importing advisor; existing
+  company replacement requires confirmation.
+* This layer writes no canonical facts and creates no owners,
+  deadlines, workflow or history. Explicit protocol finalization
+  remains the only path to canonical aggregates.
+
+Consequences:
+
+* The repository is public, so the demo credentials are public by
+  definition. They must never be presented as security or reused in a
+  real environment.
+* A future real authentication and client model replaces this layer
+  without changing the canonical activity model or Stage 1 scopes.
+* UX contract, architecture, status and data contracts must describe
+  the access gate as implemented, not as future design.

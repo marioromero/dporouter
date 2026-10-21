@@ -1254,4 +1254,66 @@ Rules:
   transaction history, owners, deadlines or workflow instances. No
   fourth scope, no `ThirdPartyContext`, no `ClientActivityInstance`.
 
+## 49. Stage 1 Local Workspace and Advisor Access
+
+The local workspace is browser-persisted Stage 1 work support. It is not
+authentication, not a server-backed client registry and not Stage 2.
+
+Root shape (`WorkspaceData`, version `1`):
+
+```text
+version: 1
+profiles: LocalProfile[]
+activeProfileId?: string
+companies: Record<companyId, CompanyState>
+```
+
+`LocalProfile`:
+
+```text
+id
+name
+username?        advisor login name when the profile is an access account
+createdAt
+companyIds[]
+activeCompanyId?
+```
+
+`CompanyState.ownerId?` records the advisor that created or imported the
+company. Absence is valid for companies created before advisor access.
+
+Rules:
+
+* Storage is local (`localStorage`, key `dporouter.stage1.v1`); nothing is
+  sent to a server and nothing is encrypted.
+* Advisor accounts are a fixed local seed (`pablo`, `carlos`, `mario`).
+  Credentials are public demo values, never security; the login is a local
+  work-thread gate, not authentication.
+* Login sets `activeProfileId`; logout clears it. No other profile becomes
+  active implicitly.
+* Company membership is `LocalProfile.companyIds[]`, not `ownerId`.
+  `ownerId` is provenance and import/replacement metadata; access is
+  enforced by membership.
+* Creating a company assigns `ownerId = active advisor` and appends its ID
+  to that advisor's `companyIds[]`. Selecting a company only accepts an ID
+  present in the active advisor's `companyIds[]`.
+* Loading the workspace (`ensureAdvisorProfiles`) adds missing fixed advisor
+  profiles, normalizes their usernames and closes a non-advisor active
+  session. It never deletes companies, never reassigns ownership and never
+  edits activity data.
+* Legacy absence of `username`, `ownerId`, `activeCompanyId` or `treatments`
+  remains valid; migration is entry-by-entry and never invents ownership.
+* `RequireCompany` gates `Trabajo`, `Diagnóstico`, `Actividad` and `Guía`.
+  `Inicio`, `Buscar`, `Glosario` and `Referencias` remain readable without a
+  session. The gate is presentation-level; it is not a security boundary.
+* Export produces one `CompanyState` as JSON. Import validates the whole
+  company strictly (shape, references, answer values), asks confirmation
+  before replacing an existing company, and stores it under the importing
+  advisor (`ownerId = active advisor`, appended to `companyIds[]`).
+* Managing companies, treatments, purposes, local value objects and
+  activity work states writes no canonical facts. Only explicit protocol
+  finalization writes canonical aggregates (ADR-044, ADR-047, ADR-051).
+* No activity owner, deadline, workflow, history or longitudinal audit is
+  created by this access layer. Those remain Stage 2 concerns.
+
 

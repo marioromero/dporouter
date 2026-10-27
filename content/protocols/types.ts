@@ -81,6 +81,25 @@ export interface DecisionRule {
   explanation: string;
 }
 
+/**
+ * Ayuda de revisión desplegable de un elemento de `evidence_to_review[]`.
+ * El vínculo con el elemento es la coincidencia exacta de `evidence_item`
+ * con una entrada de `evidence_to_review[]` del mismo nodo (validada en
+ * el registry). Los encabezados visibles («Guía de revisión», «Si no se
+ * encuentra evidencia», «Resultado esperado») son presentación de la UI
+ * genérica y no se almacenan como contenido.
+ */
+export interface EvidenceReviewHelp {
+  /** Elemento canónico de `evidence_to_review[]` del mismo nodo. */
+  evidence_item: string;
+  /** Contenido del apartado «Guía de revisión». */
+  review_guide: string;
+  /** Contenido del apartado «Si no se encuentra evidencia»; ausente = sin apartado. */
+  no_evidence_guidance?: string;
+  /** Contenido del apartado «Resultado esperado»; ausente = sin apartado. */
+  expected_result?: string;
+}
+
 /** Nodo de guía: pregunta, decisión o resultado intermedio. */
 export interface GuidanceNode {
   node_key: string;
@@ -105,6 +124,13 @@ export interface GuidanceNode {
    */
   options_source?: "same_company_treatments";
   evidence_to_review?: string[];
+  /**
+   * Ayudas desplegables opcionales, una por elemento de
+   * `evidence_to_review[]` del mismo nodo. El título visible de cada
+   * desplegable es el propio elemento canónico; el contenido proviene
+   * de este campo, nunca hardcodeado en la UI.
+   */
+  evidence_review_help?: EvidenceReviewHelp[];
   help_text?: string[];
   /**
    * Prerrequisitos semánticos: semantic fact keys que deben estar

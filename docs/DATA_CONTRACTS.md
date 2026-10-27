@@ -748,6 +748,7 @@ answer_type
 options[]
 options_source
 evidence_to_review[]
+evidence_review_help[]
 help_text[]
 required_facts[]
 default_next_node_key
@@ -813,9 +814,22 @@ Rules:
   alongside the node's static `options` (e.g. an explicit absence
   alternative); the selected value is recorded as a normal scoped
   answer under the node's `fact_key`. A resolved treatment reference
-  is valid only as an existing same-company treatment distinct from
-  the executing treatment; import rejects dangling, cross-company or
+  is valid only as an existing same-company treatment distinct from the
+  executing treatment; import rejects dangling, cross-company or
   self references explicitly.
+* `evidence_review_help[]` (absent by default) carries the optional
+  collapsible review help of `evidence_to_review[]` elements. Each
+  entry is an `EvidenceReviewHelp` value object: `evidence_item`
+  (exact string match with one `evidence_to_review[]` element of the
+  same node), `review_guide` (content shown under "Guía de revisión"),
+  optional `no_evidence_guidance` (content shown under "Si no se
+  encuentra evidencia") and optional `expected_result` (content shown
+  under "Resultado esperado"). Visible section headers are generic UI
+  presentation and are never stored as content. Structural validation
+  rejects an entry whose `evidence_item` does not match any
+  `evidence_to_review[]` element of the node and rejects duplicate
+  entries for the same element; elements without help keep their
+  plain list rendering.
 
 ## 35. AnswerOption
 

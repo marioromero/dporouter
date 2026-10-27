@@ -204,6 +204,22 @@ export function validateProtocolStructure(protocol: ExecutionProtocol): string[]
         );
       }
     }
+    // Ayudas de revisión: cada entrada referencia exactamente un
+    // elemento de evidence_to_review del mismo nodo, sin duplicados.
+    const seenHelpItems = new Set<string>();
+    for (const h of n.evidence_review_help ?? []) {
+      if (!(n.evidence_to_review ?? []).includes(h.evidence_item)) {
+        errors.push(
+          `${protocol.protocol_key}: nodo ${n.node_key} referencia elemento de revisión inexistente ${h.evidence_item}`,
+        );
+      }
+      if (seenHelpItems.has(h.evidence_item)) {
+        errors.push(
+          `${protocol.protocol_key}: nodo ${n.node_key} con ayuda duplicada para ${h.evidence_item}`,
+        );
+      }
+      seenHelpItems.add(h.evidence_item);
+    }
     if (n.node_type === "question") {
       if (!n.fact_key) {
         errors.push(`${protocol.protocol_key}: nodo ${n.node_key} sin fact_key`);

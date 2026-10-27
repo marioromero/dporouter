@@ -841,6 +841,93 @@ h3 {
   color: #143d5d;
 }
 
+/* ---------- Ayudas desplegables de revisión (Qué revisar, vista guiada) ----------
+   Acordeón de la lista de evidencia por revisar. El título del
+   desplegable es el elemento canónico. La animación usa el contenido
+   nativo de <details> (::details-content + interpolate-size); los
+   navegadores sin soporte degradan al intercambio instantáneo, sin
+   saltos de altura ni estados intermedios. */
+
+.evidence-help {
+  interpolate-size: allow-keywords;
+}
+
+.evidence-help > summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  padding: 2px 0;
+}
+
+.evidence-help > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Flecha indicadora dibujada con CSS: decorativa (aria-hidden), no se
+   anuncia a lectores de pantalla y rota con la apertura. */
+.evidence-help-arrow {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 6px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 200ms ease;
+}
+
+.evidence-help[open] .evidence-help-arrow {
+  transform: rotate(45deg);
+}
+
+/* Espaciado interior: encabezado pegado a su texto y bloques
+   separados entre sí (el margen por defecto de h4 era ~20px). */
+.evidence-help h4 {
+  font-size: 14.5px;
+  margin: 12px 0 2px;
+}
+
+.evidence-help h4:first-of-type {
+  margin-top: 6px;
+}
+
+.evidence-help p {
+  margin: 0 0 8px;
+}
+
+/* Separación exterior: el último bloque no queda pegado al siguiente
+   elemento de la lista; overflow: clip contiene el margen dentro de la
+   altura animada. */
+.evidence-help p:last-of-type {
+  margin-bottom: 14px;
+}
+
+/* Apertura y cierre suaves: altura 0 ↔ auto con recorte (sin
+   superposición) y fundido discreto. content-visibility con
+   allow-discrete mantiene el contenido accesible al expandir y lo
+   retira del árbol solo tras colapsar del todo. */
+.evidence-help::details-content {
+  block-size: 0;
+  opacity: 0;
+  overflow: clip;
+  transition:
+    block-size 220ms ease,
+    opacity 220ms ease,
+    content-visibility 220ms allow-discrete;
+}
+
+.evidence-help[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .evidence-help::details-content,
+  .evidence-help-arrow {
+    transition: none;
+  }
+}
+
 .trace-table {
   width: 100%;
   border-collapse: collapse;

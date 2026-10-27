@@ -596,6 +596,67 @@ function DateAnswerControl({
   );
 }
 
+/**
+ * Lista «Qué revisar» de un nodo con ayudas desplegables opcionales.
+ *
+ * El elemento canónico con ayuda se muestra como acordeón cuyo título
+ * es el propio elemento; el elemento sin ayuda permanece como
+ * elemento simple de lista. Dentro del nodo solo una ayuda puede
+ * permanecer abierta: el estado controla `open` y el clic no delega
+ * el toggle nativo del summary.
+ */
+function EvidenceReviewList({ node }: { node: GuidanceNode }) {
+  const [openItem, setOpenItem] = useState<string | null>(null);
+  const helps = node.evidence_review_help ?? [];
+  return (
+    <>
+      <h3>Qué revisar</h3>
+      <ul>
+        {(node.evidence_to_review ?? []).map((e) => {
+          const help = helps.find((h) => h.evidence_item === e);
+          if (!help) {
+            return <li key={e}>{e}</li>;
+          }
+          const open = openItem === e;
+          return (
+            <li key={e}>
+              <details
+                open={open}
+                className="evidence-help"
+                data-testid="guia-evidence-help"
+              >
+                <summary
+                  onClick={(ev) => {
+                    ev.preventDefault();
+                    setOpenItem(open ? null : e);
+                  }}
+                >
+                  {e}
+                  <span className="evidence-help-arrow" aria-hidden="true" />
+                </summary>
+                <h4>Guía de revisión</h4>
+                <p>{help.review_guide}</p>
+                {help.no_evidence_guidance ? (
+                  <>
+                    <h4>Si no se encuentra evidencia</h4>
+                    <p>{help.no_evidence_guidance}</p>
+                  </>
+                ) : null}
+                {help.expected_result ? (
+                  <>
+                    <h4>Resultado esperado</h4>
+                    <p>{help.expected_result}</p>
+                  </>
+                ) : null}
+              </details>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
 /** Vista de un nodo pregunta con sus opciones canónicas. */
 export function ProtocolNodeView({
   protocol,
@@ -720,14 +781,7 @@ export function ProtocolNodeView({
           </p>
         ) : null}
         {node.evidence_to_review && node.evidence_to_review.length > 0 ? (
-          <>
-            <h3>Qué revisar</h3>
-            <ul>
-              {node.evidence_to_review.map((e) => (
-                <li key={e}>{e}</li>
-              ))}
-            </ul>
-          </>
+          <EvidenceReviewList node={node} />
         ) : null}
         {node.help_text && node.help_text.length > 0
           ? node.help_text.map((h, i) => <p key={i}>{h}</p>)

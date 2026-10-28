@@ -83,6 +83,26 @@ export const MPI_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "Evaluación de conveniencia MPI",
         "Factores considerados",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "Evaluación de conveniencia MPI",
+          review_guide:
+            "Revisar el análisis de conveniencia del caso concreto y comprobar si documenta por qué se considera voluntaria la adopción del MPI. Verificar qué tipo de responsable es la organización, qué tratamientos realiza, en qué sector opera y qué normas o condiciones particulares podrían afectarla. La existencia de una evaluación no respalda la conclusión por sí sola. Distinguir una conclusión respaldada por fuentes, una conclusión preliminar y una evaluación pendiente.",
+          no_evidence_guidance:
+            "Precisar si no hay evaluación disponible, si está incompleta o si no indica sus fuentes. Identificar la información pendiente y consultar, cuando sea necesario, a las áreas jurídica, regulatoria o de cumplimiento. La ausencia de un documento no demuestra que la adopción sea voluntaria: con información insuficiente, la voluntariedad queda sin confirmar.",
+          expected_result:
+            "Una conclusión sobre el carácter voluntario de la adopción, con las fuentes revisadas, su vigencia, su aplicabilidad y las incertidumbres pendientes, distinguiendo lo respaldado de lo preliminar y lo pendiente. Esta actividad respalda una decisión metodológica y no exige un documento independiente del DPO.",
+        },
+        {
+          evidence_item: "Factores considerados",
+          review_guide:
+            "Revisar los antecedentes que comprueben si existe alguna obligación específica de adoptar un MPI: normativa del sector, reglas especiales para la entidad, instrucciones o resoluciones de autoridad y condiciones regulatorias o contractuales vinculantes, cuando corresponda. Registrar la fuente consultada, su vigencia, su ámbito y la razón por la que se aplica o no al caso, en una revisión proporcional a la naturaleza de la organización y sus actividades. Las obligaciones generales de protección de datos, prevención, seguridad o responsabilidad no implican por sí solas la obligación de adoptar un MPI (artículo 49 de la Ley N.º 19.628, según la modificación de la Ley N.º 21.719, y Decreto N.º 662 de 2026). Tampoco dar la adopción por voluntaria solo por la regla general de la ley: normas sectoriales o condiciones particulares pueden modificar el análisis.",
+          no_evidence_guidance:
+            "Indicar qué fuentes faltan y qué información permitiría confirmar el marco aplicable, consultando cuando sea necesario a las áreas jurídica, regulatoria o de cumplimiento. Si el marco aplicable no puede confirmarse, mantener la conclusión como no confirmada, sin dar por existente una obligación específica ni por descartada una posible obligación.",
+          expected_result:
+            "Un registro del carácter voluntario con las fuentes consultadas, su vigencia, su aplicabilidad al caso y las incertidumbres pendientes, como respaldo de una decisión metodológica sobre la revisión.",
+        },
+      ],
       help_text: [
         "Confirma que ninguna norma vigente impone la adopción para este caso antes de evaluar conveniencia.",
       ],
@@ -104,6 +124,26 @@ export const MPI_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "Evaluación de conveniencia MPI",
         "Factores considerados",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "Evaluación de conveniencia MPI",
+          review_guide:
+            "La evaluación debe relacionar las características de la operación y los tratamientos con los riesgos y las prácticas de protección existentes. Las conclusiones deben sustentarse en antecedentes concretos que fundamenten la conveniencia de adoptar o no un MPI, identificando las limitaciones que puedan afectar la recomendación.",
+          no_evidence_guidance:
+            "Indicar qué dimensiones del perfil no pudieron verificarse y qué antecedentes servirían para completarlas. La falta de documentación localizada no demuestra por sí sola que la práctica no exista; consultar las áreas que podrían confirmarla.",
+          expected_result:
+            "Un perfil de exposición y madurez consolidado con los antecedentes disponibles y las brechas identificadas, que fundamente la recomendación profesional de adoptar o no un MPI.",
+        },
+        {
+          evidence_item: "Factores considerados",
+          review_guide:
+            "Los factores analizados deben contar con respaldo identificable y permitir comprender su influencia en la conveniencia de adoptar un MPI. La evaluación debe distinguir los riesgos observados de los supuestos, sin considerar el tamaño de la organización ni la existencia de políticas como prueba suficiente del nivel de riesgo o madurez.",
+          no_evidence_guidance:
+            "Indicar qué factores no pudieron confirmarse y qué información o áreas de la organización permitirían hacerlo. No suplir la evidencia faltante con supuestos generales.",
+          expected_result:
+            "Un registro de los factores considerados con su respaldo y sus incertidumbres, base para evaluar la conveniencia profesional de adoptar un MPI.",
+        },
       ],
       help_text: [
         "Revisa tamaño y complejidad de la operación, exposición, categorías de datos tratadas, riesgos identificados y madurez actual.",
@@ -127,6 +167,26 @@ export const MPI_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "Evaluación de conveniencia MPI",
         "Factores considerados",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "Evaluación de conveniencia MPI",
+          review_guide:
+            "La evaluación debe determinar si la organización dispone de condiciones realistas para implementar y mantener el programa, considerando recursos, responsabilidades y mecanismos de gobierno interno. La recomendación debe tener en cuenta la continuidad de estas capacidades y no limitarse a la conveniencia teórica de adoptar el MPI.",
+          no_evidence_guidance:
+            "Se deben identificar las capacidades que no pudieron verificarse y los antecedentes necesarios para evaluarlas. La falta de documentación localizada no demuestra por sí sola que los recursos, responsables o prácticas no existan.",
+          expected_result:
+            "Una evaluación fundamentada de la capacidad organizacional para implementar y mantener el MPI, con las limitaciones relevantes para la recomendación profesional.",
+        },
+        {
+          evidence_item: "Factores considerados",
+          review_guide:
+            "Los factores deben contar con respaldo identificable sobre los recursos disponibles, la asignación de responsabilidades, el apoyo del gobierno interno y la capacidad de mantener las actividades en el tiempo. Deben distinguirse las capacidades existentes de las previstas o aún no confirmadas, sin asumir que la disponibilidad inicial garantiza la continuidad del programa.",
+          no_evidence_guidance:
+            "Se deben señalar los factores que no pudieron confirmarse y las áreas o antecedentes que permitirían evaluarlos. No deben darse por disponibles recursos, responsables o apoyos internos sin respaldo suficiente.",
+          expected_result:
+            "Un registro de las capacidades disponibles, las brechas y las incertidumbres que puedan afectar la implementación y continuidad del MPI.",
+        },
+      ],
       help_text: [
         "Considera recursos, responsables, gobierno interno y capacidad de mantención en el tiempo.",
       ],
@@ -148,6 +208,26 @@ export const MPI_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "Evaluación de conveniencia MPI",
         "Recomendación documentada",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "Evaluación de conveniencia MPI",
+          review_guide:
+            "La evaluación debe diferenciar los motivos profesionales que sustentan la conveniencia de adoptar un MPI de las obligaciones jurídicas aplicables a la organización. Las conclusiones deben identificar la base de cada afirmación y evitar presentar una recomendación metodológica como una exigencia legal. También deben explicitarse las condiciones o antecedentes que podrían modificar esa conclusión.",
+          no_evidence_guidance:
+            "Se deben señalar los antecedentes que no permiten verificar esta distinción y la información jurídica o interna necesaria para aclararla. La ausencia de una explicación documentada no demuestra por sí sola que la organización haya confundido ambos conceptos; corresponde identificar qué aspecto requiere confirmación.",
+          expected_result:
+            "Una evaluación que distinga claramente la conveniencia profesional de adoptar un MPI de las obligaciones jurídicas que correspondan al caso, con fundamentos suficientes para comprender la diferencia.",
+        },
+        {
+          evidence_item: "Recomendación documentada",
+          review_guide:
+            "La recomendación debe expresar si la adopción del MPI se aconseja por razones profesionales y diferenciar esa conclusión de cualquier obligación legal que resulte aplicable. Toda afirmación de obligatoriedad debe contar con fundamento jurídico pertinente, sin convertir los criterios metodológicos de la evaluación en requisitos legales. La redacción debe permitir reconocer qué parte corresponde a una recomendación y cuál a una obligación, si existe.",
+          no_evidence_guidance:
+            "Se deben identificar las afirmaciones cuya naturaleza no pueda determinarse y los fundamentos necesarios para aclarar si corresponden a una recomendación profesional o a una obligación jurídica aplicable. Las dudas deben quedar identificadas sin atribuir incumplimientos no verificados.",
+          expected_result:
+            "Una recomendación documentada que explicite sus fundamentos profesionales y distinga las obligaciones jurídicas que, en su caso, resulten aplicables, de modo que la conclusión no induzca a interpretar la recomendación como una exigencia legal.",
+        },
       ],
       help_text: [
         "Deja constancia de que la conclusión es recomendación profesional, no exigencia legal.",
@@ -228,6 +308,17 @@ export const MPI_NEED_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["Recomendación documentada"],
+      evidence_review_help: [
+        {
+          evidence_item: "Recomendación documentada",
+          review_guide:
+            "La conclusión debe reflejar el juicio profesional derivado de los antecedentes revisados, considerando el carácter voluntario del MPI, el perfil de exposición y madurez, la capacidad organizacional y la distinción entre conveniencia y obligación jurídica. La alternativa seleccionada debe ser coherente con esos antecedentes y contar con un razonamiento explícito, sin tratar la selección como un cálculo automático del sistema.",
+          no_evidence_guidance:
+            "Se deben identificar los antecedentes previos insuficientes o las contradicciones que impiden fundamentar la conclusión. No debe adoptarse una recomendación definitiva mientras falten elementos relevantes para el juicio profesional; la ausencia de documentación no demuestra por sí sola que una práctica no exista.",
+          expected_result:
+            "Una conclusión profesional adoptada y acompañada de un razonamiento que explique cómo los antecedentes sustentan la recomendación de adoptar o no un MPI, incluyendo las limitaciones relevantes.",
+        },
+      ],
       help_text: [
         "Selecciona la alternativa y documenta tu razonamiento a continuación. La conclusión solo queda registrada al adoptar con razonamiento válido.",
       ],

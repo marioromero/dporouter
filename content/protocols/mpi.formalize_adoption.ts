@@ -107,6 +107,26 @@ export const MPI_FORMALIZE_ADOPTION_PROTOCOL: ExecutionProtocol = {
         "actas o registros de decisión interna",
         "comunicaciones de la máxima autoridad",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "actas o registros de decisión interna",
+          review_guide:
+            "El registro debe permitir verificar que la máxima autoridad adoptó efectivamente la decisión de implementar un MPI. Debe distinguirse una decisión expresa de propuestas, evaluaciones de conveniencia o preparativos que todavía no acrediten la adopción.",
+          no_evidence_guidance:
+            "Se deben identificar los antecedentes internos pendientes de localizar y las áreas que podrían confirmar si la decisión fue adoptada. La falta de un acta localizada no demuestra por sí sola que no exista una decisión efectiva.",
+          expected_result:
+            "Una conclusión sustentada sobre la existencia o ausencia de evidencia suficiente de una decisión efectiva de adopción del MPI.",
+        },
+        {
+          evidence_item: "comunicaciones de la máxima autoridad",
+          review_guide:
+            "Las comunicaciones deben permitir establecer si la máxima autoridad expresó una decisión efectiva de adoptar el MPI y cuál fue su alcance. Deben diferenciarse las instrucciones definitivas de las consultas, intenciones preliminares o manifestaciones de apoyo que no confirmen por sí solas la adopción.",
+          no_evidence_guidance:
+            "Se deben señalar las comunicaciones pendientes de verificar y las personas o áreas que podrían confirmar el sentido de la decisión. No debe inferirse la adopción únicamente a partir de conversaciones informales o señales indirectas.",
+          expected_result:
+            "Antecedentes que permitan confirmar si la máxima autoridad adoptó efectivamente la decisión o si corresponde continuar evaluando su conveniencia antes de formalizarla.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "adoption-evidence",
       transitions: [
@@ -143,6 +163,44 @@ export const MPI_FORMALIZE_ADOPTION_PROTOCOL: ExecutionProtocol = {
         "autoridad que adopta",
         "referencia documental",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "acta, resolución, acuerdo o evidencia interna equivalente",
+          review_guide:
+            "La evidencia debe permitir vincular un registro interno identificable con la decisión efectiva de adoptar el MPI. Debe distinguirse el documento que acredita la decisión de los antecedentes preparatorios o de las evaluaciones de conveniencia que no demuestran por sí solos que fue adoptada.",
+          no_evidence_guidance:
+            "Se deben señalar los registros pendientes de localizar y las áreas que podrían confirmar su existencia. La falta de un documento localizado no demuestra por sí sola que la decisión no haya ocurrido.",
+          expected_result:
+            "Un registro interno identificable que permita sustentar la decisión de adoptar el MPI o dejar constancia de que aún no se dispone de evidencia suficiente.",
+        },
+        {
+          evidence_item: "fecha efectiva",
+          review_guide:
+            "La fecha debe permitir determinar cuándo se adoptó efectivamente la decisión, diferenciándola de la fecha de elaboración del documento, de una comunicación posterior o de una propuesta preliminar.",
+          no_evidence_guidance:
+            "Se debe indicar si la fecha no figura, resulta ambigua o no puede vincularse con la decisión efectiva. No debe inferirse una fecha únicamente a partir de la creación o archivo del documento.",
+          expected_result:
+            "Una fecha efectiva explícita y respaldada, o una limitación documentada cuando los antecedentes no permitan establecerla.",
+        },
+        {
+          evidence_item: "autoridad que adopta",
+          review_guide:
+            "Los antecedentes deben identificar a la máxima autoridad que adoptó la decisión o permitir establecer de forma verificable su intervención y competencia. La participación de un equipo técnico o de una persona delegada no acredita por sí sola que la decisión corresponda a la autoridad requerida.",
+          no_evidence_guidance:
+            "Se debe precisar qué identificación o antecedente de autoridad falta y qué registro permitiría confirmarlo. No debe atribuirse la decisión a una autoridad basándose únicamente en su cargo o participación en el proceso.",
+          expected_result:
+            "La identificación verificable de la autoridad que adoptó la decisión y de su intervención en el acto.",
+        },
+        {
+          evidence_item: "referencia documental",
+          review_guide:
+            "La referencia debe permitir localizar y recuperar el registro que acredita la decisión, por ejemplo, mediante un identificador, código, ubicación de archivo o sistema documental. Debe ser suficientemente precisa para distinguir el antecedente de otros documentos similares.",
+          no_evidence_guidance:
+            "Se debe indicar qué dato de identificación o localización falta y si el documento puede recuperarse por otra vía verificable. No debe inventarse una referencia para completar el registro.",
+          expected_result:
+            "Una referencia archivable que permita recuperar la evidencia de la decisión, o una limitación identificada que impida asegurar su trazabilidad.",
+        },
+      ],
       help_text: [
         "Verifica cada elemento: documento existente, fecha efectiva explícita, autoridad identificada y referencia archivable.",
       ],
@@ -161,6 +219,17 @@ export const MPI_FORMALIZE_ADOPTION_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("mpi.lifecycle_update_recorded"),
       evidence_to_review: ["registro interno del lifecycle MPI"],
+      evidence_review_help: [
+        {
+          evidence_item: "registro interno del lifecycle MPI",
+          review_guide:
+            "El registro debe reflejar que la decisión efectiva de adoptar el MPI quedó formalizada en el ciclo de vida de la organización. Debe existir coherencia entre la evidencia de la decisión, el estado registrado y la secuencia de actividades del procedimiento. El cambio de estado debe poder rastrearse sin confundir la decisión con una intención preliminar.",
+          no_evidence_guidance:
+            "Se deben identificar los datos del ciclo de vida que no pudieron confirmarse y los antecedentes necesarios para verificar el estado registrado. La ausencia de un registro localizado no demuestra por sí sola que la decisión no haya sido adoptada ni autoriza a inferir que el sistema actualizó el estado automáticamente.",
+          expected_result:
+            "Un registro interno verificable que refleje la adopción formalizada del MPI y permita vincular el estado organizacional con la evidencia de la decisión. Las discrepancias o actualizaciones pendientes deben quedar identificadas para su resolución.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "dpo-requirement",
       related_activity_keys: ["mpi.lifecycle_review"],
@@ -180,6 +249,26 @@ export const MPI_FORMALIZE_ADOPTION_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "registro del requerimiento de DPO",
         "fuente del requerimiento (MPI)",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "registro del requerimiento de DPO",
+          review_guide:
+            "El registro debe permitir verificar que el requerimiento de contar con un DPO quedó activado como consecuencia de la adopción formalizada del MPI. Debe existir coherencia entre el estado del MPI y el requerimiento reflejado en el sistema, sin confundir su activación con el nombramiento efectivo de una persona.",
+          no_evidence_guidance:
+            "Se deben identificar los antecedentes que faltan para confirmar la activación y el estado que actualmente figura en el sistema. La ausencia de un registro localizado no demuestra por sí sola que no exista un requerimiento configurado ni permite presumir que la activación ocurrió correctamente.",
+          expected_result:
+            "Un registro verificable del requerimiento de DPO, coherente con la adopción formalizada del MPI, o una descripción clara de las discrepancias y de la información pendiente de confirmar.",
+        },
+        {
+          evidence_item: "fuente del requerimiento (MPI)",
+          review_guide:
+            "La fuente registrada debe permitir vincular expresamente el requerimiento de DPO con la adopción del MPI. La trazabilidad debe distinguir este origen de otros factores, decisiones o fundamentos jurídicos que pudieran generar un requerimiento independiente, sin atribuir automáticamente todos los casos a la adopción del programa.",
+          no_evidence_guidance:
+            "Se deben señalar los antecedentes que impiden confirmar el origen del requerimiento y la relación que falta establecer con el MPI. No debe inferirse esa relación únicamente porque el estado del programa figure como activo o porque exista una evaluación previa sobre la necesidad de contar con un DPO.",
+          expected_result:
+            "Una fuente identificable que vincule el requerimiento de DPO con la adopción formalizada del MPI y permita comprender el motivo de su activación, con las limitaciones documentadas cuando esa relación no pueda verificarse.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "final-confirmation",

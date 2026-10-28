@@ -93,6 +93,26 @@ export const MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL: ExecutionProtocol = {
         "régimen interno de sanciones",
         "revisión de normativa laboral interna",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "régimen interno de sanciones",
+          review_guide:
+            "La revisión debe identificar las sanciones internas actualmente previstas, las conductas a las que se aplican y las personas o funciones comprendidas en su alcance. También debe determinar si las reglas forman parte de un instrumento vigente o de una práctica documentada, distinguiendo las disposiciones formalizadas de las propuestas que aún no han sido aprobadas. Este levantamiento sirve como base para evaluar cómo integrar los incumplimientos relacionados con la protección de datos y el MPI.",
+          no_evidence_guidance:
+            "Se deben señalar los instrumentos consultados y los aspectos del régimen que no pudieron confirmarse, como las sanciones previstas, su alcance o su vigencia. La ausencia de un documento con ese título no demuestra por sí sola que no existan reglas disciplinarias, ya que podrían estar incorporadas en otros instrumentos internos o contractuales que deban revisarse.",
+          expected_result:
+            "Una identificación documentada de los mecanismos de sanción existentes, sus fuentes, alcance y estado de vigencia, junto con los vacíos o dudas que requieren análisis posterior. La conclusión debe distinguir entre reglas verificadas, prácticas cuya formalización no se ha confirmado y mecanismos que no pudieron localizarse, sin presumir que las sanciones existentes cubren automáticamente los incumplimientos del MPI.",
+        },
+        {
+          evidence_item: "revisión de normativa laboral interna",
+          review_guide:
+            "La revisión debe identificar la normativa laboral interna aplicable y determinar qué disposiciones regulan las obligaciones de las personas trabajadoras, las medidas disciplinarias y el procedimiento para aplicarlas. Cuando corresponda, deben considerarse el reglamento interno de orden, higiene y seguridad, los contratos y otros instrumentos pertinentes. El análisis debe permitir reconocer las condiciones que el futuro régimen MPI deberá respetar, sin asumir que todos los instrumentos resultan aplicables a cualquier organización.",
+          no_evidence_guidance:
+            "Se deben indicar los instrumentos laborales o contractuales que no pudieron localizarse y los aspectos de su aplicabilidad, vigencia o contenido que permanecen sin confirmar. La falta de un documento en el expediente revisado no demuestra por sí sola que no exista regulación aplicable; las conclusiones deben limitarse a los antecedentes efectivamente disponibles.",
+          expected_result:
+            "Una revisión identificable de la normativa laboral interna pertinente, con las disposiciones disciplinarias relevantes y las condiciones que podrían afectar la integración del régimen MPI. Las incompatibilidades potenciales, los instrumentos pendientes de consulta y las cuestiones que requieran validación jurídica deben quedar señalados para las etapas posteriores.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "integrate-breaches",
       provenance: "legal_requirement",
@@ -109,6 +129,17 @@ export const MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("mpi.disciplinary.breaches_integrated"),
       evidence_to_review: ["régimen interno de sanciones"],
+      evidence_review_help: [
+        {
+          evidence_item: "régimen interno de sanciones",
+          review_guide:
+            "El régimen debe contemplar incumplimientos de las normas de protección de datos y de las reglas del propio MPI. La revisión debe permitir identificar ambos ámbitos en las conductas sujetas a medidas internas y determinar si el alcance previsto cubre las obligaciones y procedimientos relevantes del programa.",
+          no_evidence_guidance:
+            "Se deben señalar los ámbitos de incumplimiento que no pudieron confirmarse en el régimen revisado. La mención general a la protección de datos no demuestra que estén incluidos los incumplimientos del MPI, ni viceversa; corresponde identificar qué cobertura falta o requiere aclaración.",
+          expected_result:
+            "Un régimen interno que permita reconocer la cobertura de los incumplimientos de protección de datos y del MPI, indicando los vacíos o ambigüedades que requieran ajuste. La evidencia debe permitir distinguir entre ambos ámbitos sin presumir que uno incluye automáticamente al otro.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "define-procedure",
       provenance: "legal_requirement",
@@ -124,6 +155,17 @@ export const MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("mpi.disciplinary.procedure_defined"),
       evidence_to_review: ["procedimiento disciplinario"],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento disciplinario",
+          review_guide:
+            "El procedimiento debe definir cómo se tramitan los posibles incumplimientos, quién interviene en cada etapa y cómo se documentan las decisiones. La revisión debe permitir comprender cómo se aplican las medidas previstas y cómo se mantiene la trazabilidad del proceso.",
+          no_evidence_guidance:
+            "Se deben identificar las etapas, responsabilidades o registros que no pudieron confirmarse. La existencia de sanciones previstas no demuestra que haya un procedimiento definido para aplicarlas; los aspectos no acreditados deben quedar señalados para su revisión.",
+          expected_result:
+            "Un procedimiento identificable que describa las etapas de tramitación, las responsabilidades relevantes y la documentación de las decisiones. Las brechas que puedan afectar la aplicación coherente de las medidas o la trazabilidad deben quedar expresamente identificadas.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "verify-coherence",
       provenance: "legal_requirement",
@@ -143,6 +185,26 @@ export const MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL: ExecutionProtocol = {
         "trazabilidad con regulación interna aplicable",
         "régimen interno de sanciones",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "trazabilidad con regulación interna aplicable",
+          review_guide:
+            "La revisión debe relacionar el régimen MPI con los instrumentos laborales, contractuales o internos que correspondan a la organización. Debe permitir identificar las disposiciones pertinentes y comprobar si existen contradicciones o requisitos de incorporación pendientes.",
+          no_evidence_guidance:
+            "Se deben señalar los instrumentos consultados y los aspectos de coherencia que no pudieron verificarse. La falta de una referencia explícita no demuestra por sí sola una incompatibilidad; puede ser necesario revisar el contenido de los instrumentos aplicables.",
+          expected_result:
+            "Una relación verificable entre el régimen MPI y la regulación aplicable, con las disposiciones pertinentes y las incompatibilidades o dudas identificadas. Los aspectos no confirmados deben quedar pendientes de revisión, sin presumir cumplimiento ni incumplimiento.",
+        },
+        {
+          evidence_item: "régimen interno de sanciones",
+          review_guide:
+            "El régimen debe describir las sanciones previstas y las conductas a las que se aplican, de forma compatible con las normas laborales y contractuales pertinentes. La revisión debe considerar el alcance de las medidas y su coherencia con los instrumentos internos vigentes.",
+          no_evidence_guidance:
+            "Se deben identificar las sanciones, conductas o condiciones de aplicación que no pudieron verificarse. La existencia de un régimen formal no acredita por sí sola su coherencia jurídica; los puntos dudosos deben contrastarse con la regulación aplicable.",
+          expected_result:
+            "Un régimen de sanciones identificable cuya coherencia laboral y contractual haya sido revisada, con incompatibilidades o cuestiones pendientes expresamente señaladas. La evidencia debe permitir fundamentar la revisión sin asumir que toda medida prevista resulta jurídicamente procedente.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "formalize-approved",
       provenance: "legal_requirement",
@@ -160,6 +222,26 @@ export const MPI_DISCIPLINARY_FRAMEWORK_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "evidencia de aprobación",
         "régimen interno de sanciones",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia de aprobación",
+          review_guide:
+            "La evidencia debe permitir identificar quién aprobó el régimen, qué versión fue aprobada y cuándo se adoptó la decisión. También debe existir correspondencia entre la aprobación y el texto que se pretende aplicar, para evitar confundir un borrador o una propuesta con la versión formalizada.",
+          no_evidence_guidance:
+            "Se deben indicar la decisión, la autoridad o la versión cuya aprobación no pudo confirmarse. La ausencia de un acta independiente no demuestra por sí sola que no exista aprobación, si esta pudiera constar en otro registro válido; tampoco debe darse por formalizada una versión sin respaldo suficiente.",
+          expected_result:
+            "Una evidencia trazable que permita reconocer la aprobación y vincularla con la versión concreta del régimen. Si no puede confirmarse quién aprobó, qué texto se aprobó o cuándo se adoptó la decisión, esos aspectos deben quedar identificados como pendientes.",
+        },
+        {
+          evidence_item: "régimen interno de sanciones",
+          review_guide:
+            "El régimen debe corresponder a la versión identificada como aprobada y contener las sanciones internas previstas ante los incumplimientos comprendidos en el MPI. La revisión debe permitir distinguir el texto vigente de los borradores o versiones anteriores y reconocer su alcance y condiciones de aplicación.",
+          no_evidence_guidance:
+            "Se debe señalar si falta el texto del régimen, si no puede identificarse su versión o si no se pudo vincular con la aprobación registrada. La existencia de un documento de sanciones no demuestra por sí sola que sea la versión aprobada o que corresponda al instrumento que se pretende aplicar.",
+          expected_result:
+            "Una versión identificable del régimen de sanciones vinculada con su aprobación, cuyo contenido y estado de formalización puedan verificarse. Las discrepancias entre el texto disponible y la versión aprobada, así como las dudas sobre su vigencia, deben quedar señaladas para su resolución.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "final-confirmation",

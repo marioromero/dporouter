@@ -114,6 +114,26 @@ export const DPO_GOVERNANCE_VALIDATION_PROTOCOL: ExecutionProtocol = {
         "expediente de designación",
         "comunicación interna de la designación",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "expediente de designación",
+          review_guide:
+            "Verificar que exista un expediente o conjunto de antecedentes que permita acreditar la designación del DPO. Revisar la identidad de la persona designada, la autoridad que formalizó la decisión y la fecha efectiva, contrastando los antecedentes con la modalidad de prestación cuando corresponda.",
+          no_evidence_guidance:
+            "Si no se localiza un expediente verificable o los antecedentes no permiten confirmar la designación, registrar qué información falta y solicitar el respaldo disponible. No considerar una evaluación de necesidad, una propuesta pendiente o una intención informal como prueba suficiente de que el DPO ya fue designado.",
+          expected_result:
+            "La designación queda respaldada por antecedentes verificables que permiten identificar al DPO y confirmar que la decisión fue formalizada. Si no puede acreditarse una designación vigente, se identifica que corresponde resolver primero esa situación antes de evaluar la gobernanza del DPO.",
+        },
+        {
+          evidence_item: "comunicación interna de la designación",
+          review_guide:
+            "Examinar las comunicaciones internas que informan la designación y comprobar que permiten reconocer a la persona designada, la función que ejercerá y, cuando conste, la fecha efectiva. Contrastar su contenido con el expediente de designación para detectar diferencias relevantes.",
+          no_evidence_guidance:
+            "Si no se localiza una comunicación interna, registrar su ausencia y comprobar si existen otros antecedentes que permitan establecer si la designación fue comunicada. Distinguir la falta de una comunicación localizada de la falta de designación: la comunicación es un medio de verificación y no debe tratarse automáticamente como un acto formal independiente exigido en todos los casos.",
+          expected_result:
+            "La comunicación disponible permite confirmar que la designación fue informada internamente y es coherente con el expediente. Si no se encuentra, queda registrada la brecha de comunicación sin concluir, solo por ello, que la designación no existe.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-reporting-line",
       transitions: [
@@ -151,6 +171,26 @@ export const DPO_GOVERNANCE_VALIDATION_PROTOCOL: ExecutionProtocol = {
       help_text: [
         "Revisa a quién reporta formalmente el DPO y si esa línea llega sin intermediación a la autoridad que lo designó.",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "organigrama o línea de reporte",
+          review_guide:
+            "Examinar el organigrama, la estructura de reporte u otros antecedentes organizacionales que permitan identificar a quién rinde cuenta formalmente el DPO. Contrastar esa línea con la autoridad que realizó la designación y comprobar si la rendición es directa, sin intermediarios jerárquicos que condicionen su acceso a dicha autoridad.",
+          no_evidence_guidance:
+            "Si no existe un organigrama actualizado ni otro antecedente que permita establecer la línea de reporte, registrar la falta de respaldo y solicitar una descripción verificable de la estructura. Si los documentos muestran una línea indirecta o contradictoria, documentar la diferencia sin presumir que la autonomía está acreditada.",
+          expected_result:
+            "La línea de rendición de cuentas queda identificada y permite verificar si el DPO reporta directamente a la autoridad que lo designó. Las ambigüedades o posibles intermediaciones quedan registradas para su aclaración.",
+        },
+        {
+          evidence_item: "ficha de validación de gobernanza",
+          review_guide:
+            "Revisar la ficha de validación como registro del análisis realizado sobre la línea de rendición de cuentas. Comprobar que identifique la autoridad que designó al DPO, la línea de reporte examinada, los antecedentes consultados y la conclusión obtenida, de manera coherente con el organigrama u otras evidencias disponibles.",
+          no_evidence_guidance:
+            "Si no existe ficha o está incompleta, registrar qué elementos del análisis no quedaron documentados y completar la evaluación con los antecedentes disponibles. Distinguir la ausencia de la ficha de la ausencia de una línea de reporte directa: la ficha es un medio metodológico para dejar trazabilidad y no debe tratarse automáticamente como un documento independiente exigido por norma.",
+          expected_result:
+            "La evaluación de la rendición directa queda documentada y es coherente con la estructura organizacional verificada. Si hay brechas, la ficha las identifica sin presentar una conclusión favorable cuando la evidencia no permite sostenerla.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-autonomy",
       provenance: "agency_standard",
@@ -172,6 +212,26 @@ export const DPO_GOVERNANCE_VALIDATION_PROTOCOL: ExecutionProtocol = {
       ],
       help_text: [
         "Verifica que la administración no instruya ni limite el criterio del DPO en materias de protección de datos.",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "organigrama o línea de reporte",
+          review_guide:
+            "Revisar el organigrama, la descripción del cargo o la línea de reporte para determinar si el DPO depende de la autoridad que lo designó y dispone de una vía directa para comunicar criterios, riesgos y observaciones en protección de datos. Contrastar la estructura formal con el funcionamiento descrito.",
+          no_evidence_guidance:
+            "Registrar la ausencia del organigrama o de una descripción verificable de la línea de reporte. La falta del documento no demuestra por sí sola que exista subordinación funcional; corresponde aclarar cómo se ejerce la función y a quién se informa.",
+          expected_result:
+            "Una conclusión trazable sobre la línea de reporte del DPO, identificando la autoridad receptora, las posibles dependencias intermedias y cualquier restricción observada que pueda afectar su autonomía funcional.",
+        },
+        {
+          evidence_item: "ficha de validación de gobernanza",
+          review_guide:
+            "Contrastar la ficha con la designación y la estructura de reporte disponibles. Verificar si se identifican interferencias de la administración en el criterio del DPO, restricciones para comunicar riesgos o limitaciones para formular observaciones independientes en materias de protección de datos.",
+          no_evidence_guidance:
+            "Dejar constancia de que no existe una ficha disponible y completar la evaluación con antecedentes verificables, como documentos organizacionales o entrevistas registradas. No presumir autonomía ni falta de autonomía únicamente por la ausencia de la ficha.",
+          expected_result:
+            "Una conclusión documentada sobre la autonomía funcional del DPO, con los antecedentes que la respaldan, las restricciones detectadas y las medidas de aclaración o corrección que correspondan.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "check-conflicts",
@@ -195,6 +255,26 @@ export const DPO_GOVERNANCE_VALIDATION_PROTOCOL: ExecutionProtocol = {
       help_text: [
         "Analiza qué otras funciones ejerce el DPO y si alguna determina fines o medios de tratamientos que luego debe supervisar.",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "declaración o evaluación de conflictos",
+          review_guide:
+            "Revisar si existe una declaración o evaluación de las demás funciones del DPO, sus responsabilidades y sus relaciones jerárquicas. Analizar si alguna de ellas permite decidir los fines o medios de tratamientos de datos personales que el propio DPO debe supervisar, considerando también los conflictos potenciales y las medidas de gestión documentadas.",
+          no_evidence_guidance:
+            "Registrar la ausencia de una declaración o evaluación disponible. Recabar antecedentes verificables sobre los cargos, facultades decisorias y responsabilidades efectivas del DPO; la falta de un formulario específico no demuestra por sí sola la existencia de un conflicto.",
+          expected_result:
+            "Una conclusión trazable sobre los conflictos reales o potenciales identificados, las funciones que podrían originarlos y las medidas de prevención o gestión existentes o pendientes, sin presumir que toda función adicional es incompatible.",
+        },
+        {
+          evidence_item: "ficha de validación de gobernanza",
+          review_guide:
+            "Contrastar la ficha con la designación, las funciones efectivamente desempeñadas y la estructura de responsabilidades. Verificar si se evaluó el riesgo de que el DPO determine fines o medios de tratamientos que posteriormente debe supervisar, y si las medidas propuestas permiten gestionar ese riesgo de manera verificable.",
+          no_evidence_guidance:
+            "Dejar constancia de que no existe una ficha disponible y reconstruir la evaluación a partir de antecedentes organizacionales verificables. Distinguir entre ausencia de registro, conflicto potencial y conflicto efectivo, sin concluir automáticamente que existe incompatibilidad.",
+          expected_result:
+            "Una conclusión documentada sobre la compatibilidad de las otras funciones con el rol de DPO, con los riesgos identificados, sus fundamentos y las medidas de gestión o cambios de funciones que correspondan.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-resources",
       provenance: "agency_standard",
@@ -216,6 +296,26 @@ export const DPO_GOVERNANCE_VALIDATION_PROTOCOL: ExecutionProtocol = {
       ],
       help_text: [
         "Verifica dedicación efectiva, medios materiales y acceso operativo acorde al volumen y complejidad.",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia de recursos",
+          review_guide:
+            "Examinar los recursos asignados al DPO, incluidos el presupuesto disponible cuando corresponda, las herramientas, el apoyo especializado, el acceso a información y los medios para ejecutar sus funciones. Contrastar los recursos declarados con el volumen, la variedad y la complejidad de los tratamientos que debe supervisar.",
+          no_evidence_guidance:
+            "Registrar qué recursos no pueden verificarse y solicitar antecedentes sobre los medios realmente disponibles. La ausencia de un documento formal de asignación no demuestra por sí sola que no existan recursos; debe distinguirse entre recursos inexistentes, insuficientes y no acreditados.",
+          expected_result:
+            "Una conclusión fundamentada sobre la suficiencia práctica de los recursos, con brechas identificadas y medidas de provisión o mejora cuando correspondan, considerando el tamaño, la capacidad y los riesgos de la organización.",
+        },
+        {
+          evidence_item: "ficha de validación de gobernanza",
+          review_guide:
+            "Contrastar la ficha con la dedicación efectiva del DPO, sus responsabilidades concurrentes, los medios disponibles y el acceso operativo a las áreas e información relevantes. Valorar si el tiempo y los recursos permiten ejercer las funciones de forma efectiva frente al volumen y la complejidad de los tratamientos.",
+          no_evidence_guidance:
+            "Dejar constancia de la ausencia de la ficha y realizar la evaluación con antecedentes verificables, como asignaciones de tiempo, descripción de funciones, herramientas disponibles o entrevistas registradas. No inferir suficiencia ni insuficiencia únicamente por la falta de ese formato.",
+          expected_result:
+            "Una evaluación trazable de la disponibilidad y capacidad operativa del DPO, que identifique limitaciones concretas de tiempo, acceso o medios y las medidas de ajuste que correspondan.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "check-suitability",
@@ -239,6 +339,26 @@ export const DPO_GOVERNANCE_VALIDATION_PROTOCOL: ExecutionProtocol = {
       help_text: [
         "Revisa formación, experiencia pertinente y actualización en la materia.",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia de idoneidad",
+          review_guide:
+            "Examinar antecedentes de formación, experiencia profesional y actualización en protección de datos personales. Valorar su pertinencia respecto de las funciones efectivas del DPO, los tratamientos supervisados, sus riesgos y la complejidad de la organización. Considerar tanto los conocimientos técnicos como la capacidad práctica para ejercer la función.",
+          no_evidence_guidance:
+            "Registrar qué dimensiones de la idoneidad no pueden verificarse y solicitar antecedentes pertinentes. La ausencia de certificados o de un formato específico no demuestra por sí sola falta de conocimientos o experiencia; distinguir entre falta de evidencia y una brecha efectivamente identificada.",
+          expected_result:
+            "Una conclusión fundamentada sobre la idoneidad inicial del DPO, con los antecedentes considerados, las brechas verificables y las acciones de formación, actualización o apoyo especializado que correspondan.",
+        },
+        {
+          evidence_item: "ficha de validación de gobernanza",
+          review_guide:
+            "Contrastar la ficha con los antecedentes profesionales disponibles y con las funciones asignadas al DPO. Verificar si se evaluaron conocimientos especializados, experiencia pertinente y actualización profesional, atendiendo a los tratamientos y riesgos que deberá supervisar.",
+          no_evidence_guidance:
+            "Dejar constancia de que no existe una ficha disponible y realizar la evaluación con antecedentes verificables, como currículum, formación, experiencia acreditable o registros de actualización. No asumir que la idoneidad está acreditada ni descartarla únicamente por la falta de esa ficha.",
+          expected_result:
+            "Una evaluación trazable de la idoneidad del DPO para las funciones asignadas, que identifique la base de la conclusión y las medidas de desarrollo profesional o refuerzo técnico que correspondan.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-access",
       provenance: "agency_standard",
@@ -257,6 +377,17 @@ export const DPO_GOVERNANCE_VALIDATION_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: ["ficha de validación de gobernanza"],
       help_text: [
         "Verifica capacidad real de acceso a sistemas, procesos y personas vinculadas a los tratamientos.",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "ficha de validación de gobernanza",
+          review_guide:
+            "Contrastar la ficha con los permisos y las prácticas operativas del DPO. Verificar si puede acceder, de forma efectiva y oportuna, a los sistemas, registros, procesos y personas necesarios para conocer los tratamientos supervisados, aclarar dudas y formular observaciones. Considerar las restricciones de acceso y los mecanismos establecidos para resolverlas.",
+          no_evidence_guidance:
+            "Registrar la ausencia de la ficha y verificar el acceso mediante antecedentes disponibles, como permisos, procedimientos, demostraciones operativas o entrevistas documentadas. Distinguir entre falta de registro y una limitación real de acceso; no presumir que el acceso existe únicamente porque el cargo está formalmente designado.",
+          expected_result:
+            "Una conclusión trazable sobre la capacidad efectiva del DPO para acceder a la información y las operaciones relevantes, con las restricciones identificadas y las medidas de habilitación o corrección que correspondan.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "final-assessment",

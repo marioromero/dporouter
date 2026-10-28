@@ -136,6 +136,17 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("mpi.regulation.subjects_identified"),
       evidence_to_review: ["evidencia de incorporación"],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia de incorporación",
+          review_guide:
+            "La evidencia debe permitir identificar qué trabajadores y prestadores están comprendidos por las obligaciones internas del MPI y cómo se determinó su alcance. La revisión debe relacionar los grupos alcanzados con los contratos o instrumentos internos pertinentes, considerando las funciones y vínculos aplicables.",
+          no_evidence_guidance:
+            "Se deben señalar los grupos de trabajadores o prestadores cuyo alcance no pudo confirmarse y los antecedentes necesarios para identificarlos. La existencia de cláusulas o documentos actualizados no demuestra por sí sola que se haya determinado a quiénes deben aplicarse.",
+          expected_result:
+            "Una identificación trazable de los grupos alcanzados por el programa y su relación con los instrumentos que requieren integración. Los vínculos o grupos cuya inclusión no pudo confirmarse deben quedar señalados para revisión.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "identify-instruments",
       provenance: "legal_requirement",
@@ -155,6 +166,26 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
         "cláusulas o anexos actualizados",
         "reglamento interno actualizado cuando corresponda",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "cláusulas o anexos actualizados",
+          review_guide:
+            "La evidencia debe permitir identificar los contratos o anexos que requieren incorporar obligaciones del MPI y los grupos a los que corresponden. La revisión debe distinguir los instrumentos vigentes de los borradores y determinar cuáles necesitan actualización para reflejar las obligaciones aplicables al vínculo correspondiente.",
+          no_evidence_guidance:
+            "Se deben señalar los tipos de contrato o anexos que no pudieron identificarse y los antecedentes necesarios para determinar su necesidad de integración. La ausencia de una cláusula actualizada no permite concluir por sí sola que el instrumento no requiera cambios; primero debe confirmarse su alcance y aplicabilidad.",
+          expected_result:
+            "Una identificación trazable de los contratos o anexos que requieren integración, vinculada con los grupos alcanzados y el estado de cada instrumento. Los casos pendientes de revisión o actualización deben quedar señalados para orientar las siguientes etapas.",
+        },
+        {
+          evidence_item: "reglamento interno actualizado cuando corresponda",
+          review_guide:
+            "La revisión debe determinar si la organización cuenta con un reglamento interno pertinente y si corresponde incorporar en él obligaciones del MPI. Cuando aplique, la evidencia debe permitir identificar la versión vigente y las disposiciones que requieren revisión, distinguiendo el instrumento existente de una propuesta de actualización.",
+          no_evidence_guidance:
+            "Se debe señalar si no fue posible localizar el reglamento, confirmar su vigencia o determinar si corresponde actualizarlo. La falta de un reglamento localizado no demuestra por sí sola que sea exigible en ese contexto; la aplicabilidad debe confirmarse según la regulación y las características de la organización.",
+          expected_result:
+            "Una determinación documentada sobre la aplicabilidad del reglamento interno y, cuando corresponda, una identificación de la versión que requiere integración. Las dudas sobre vigencia, alcance o necesidad de actualización deben quedar señaladas sin presumir que este instrumento resulta obligatorio en todos los casos.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "incorporate-obligations",
       provenance: "legal_requirement",
@@ -173,6 +204,26 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "cláusulas o anexos actualizados",
         "evidencia de incorporación",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "cláusulas o anexos actualizados",
+          review_guide:
+            "La evidencia debe permitir verificar que las obligaciones pertinentes del MPI se incorporaron expresamente en los contratos de trabajo o de prestación de servicios aplicables. Debe identificarse la versión vigente del instrumento y la correspondencia entre sus cláusulas y las obligaciones del programa, sin confundir propuestas de cambio con incorporaciones efectivas.",
+          no_evidence_guidance:
+            "Se deben señalar los instrumentos cuya actualización no pudo confirmarse y los antecedentes necesarios para verificarla. La existencia de borradores, modelos de cláusulas o acuerdos pendientes no demuestra que las obligaciones hayan sido incorporadas efectivamente en los contratos aplicables.",
+          expected_result:
+            "Evidencia trazable de las cláusulas incorporadas en los instrumentos pertinentes, con identificación de su versión y estado. Los instrumentos pendientes, las incorporaciones parciales y las situaciones cuya aplicabilidad no esté confirmada deben quedar diferenciados.",
+        },
+        {
+          evidence_item: "evidencia de incorporación",
+          review_guide:
+            "La evidencia debe permitir vincular las obligaciones del MPI con los instrumentos internos o contractuales en los que fueron incorporadas. La revisión debe distinguir la incorporación efectiva de la mera identificación del instrumento, y considerar por separado el reglamento interno cuando corresponda.",
+          no_evidence_guidance:
+            "Se deben identificar las obligaciones o instrumentos cuya incorporación no pudo acreditarse y los antecedentes necesarios para confirmarla. La falta de evidencia localizada no demuestra por sí sola que la incorporación no exista, pero impide darla por verificada.",
+          expected_result:
+            "Una trazabilidad verificable entre las obligaciones pertinentes del MPI, los instrumentos aplicables y la evidencia de su incorporación efectiva. Las brechas y situaciones pendientes de confirmación deben quedar registradas sin presumir que todos los instrumentos resultan aplicables a cualquier organización.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "bylaws-applicability",
@@ -223,6 +274,26 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
         "revisión de reglamento interno",
         "revisión documental",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "revisión de reglamento interno",
+          review_guide:
+            "La evaluación debe determinar expresamente si la organización está sujeta al artículo 153 del Código del Trabajo, considerando si ocupa normalmente diez o más trabajadores permanentes y el régimen jurídico aplicable. La conclusión debe fundamentarse en antecedentes verificables y dejar registrada la aplicabilidad de esta rama antes de revisar su cumplimiento.",
+          no_evidence_guidance:
+            "Se deben identificar los antecedentes pendientes para determinar la sujeción, como la dotación habitual, la distribución de trabajadores o el régimen jurídico aplicable. La falta de un reglamento localizado no demuestra que la organización esté exenta ni permite resolver por sí sola la aplicabilidad.",
+          expected_result:
+            "Una conclusión documentada sobre si corresponde aplicar la rama del Reglamento Interno, con fundamentos identificables y las incertidumbres pendientes claramente señaladas. La determinación debe preceder a la evaluación de incorporación y publicidad exigibles cuando corresponda.",
+        },
+        {
+          evidence_item: "revisión documental",
+          review_guide:
+            "Los antecedentes deben permitir corroborar la conclusión de aplicabilidad, considerando registros de dotación habitual, información laboral y el régimen jurídico de la organización. La revisión debe distinguir los hechos acreditados de los supuestos y dejar trazabilidad suficiente para justificar si procede continuar con la rama reglamentaria.",
+          no_evidence_guidance:
+            "Se deben indicar los antecedentes que faltan para resolver la sujeción y qué información permitiría confirmarla. No debe clasificarse la rama como no aplicable únicamente por ausencia de documentos, ni continuar como si la exigibilidad estuviera confirmada cuando la conclusión siga pendiente.",
+          expected_result:
+            "Un registro verificable de los antecedentes examinados, la conclusión de aplicabilidad y su fundamento. Si la información es insuficiente, la determinación debe permanecer pendiente, sin presumir que las obligaciones de incorporación y publicidad aplican o están descartadas.",
+        },
+      ],
       help_text: [
         "Resuelve explícitamente la sujeción antes de verificar la rama: de ello depende qué resulta exigible.",
       ],
@@ -245,6 +316,17 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
         "La organización no está sujeta al Reglamento Interno: la rama queda legítimamente fuera.",
       ),
       evidence_to_review: ["reglamento interno actualizado cuando corresponda"],
+      evidence_review_help: [
+        {
+          evidence_item: "reglamento interno actualizado cuando corresponda",
+          review_guide:
+            "La revisión debe partir de la conclusión documentada sobre la sujeción de la organización al Reglamento Interno. Si resulta aplicable, debe verificarse que las obligaciones pertinentes del MPI se hayan incorporado en la versión correspondiente y se hayan coordinado las medidas de publicidad exigibles; si no aplica, debe constar el fundamento de esa conclusión.",
+          no_evidence_guidance:
+            "Si la rama resulta aplicable, se deben señalar la actualización o las medidas de publicidad pendientes. Si se determinó que no aplica, debe existir respaldo de la conclusión; la falta de un reglamento localizado no demuestra por sí sola que la organización esté exenta. Si la sujeción sigue sin resolverse, no debe presumirse ninguna de las dos conclusiones.",
+          expected_result:
+            "La incorporación verificable de las obligaciones del MPI en el Reglamento Interno y la evidencia de las medidas de publicidad pertinentes, cuando corresponda; o una conclusión fundada de no aplicabilidad. La rama debe quedar pendiente si no existe información suficiente para resolver la sujeción.",
+        },
+      ],
       help_text: [
         "Exigible solo cuando la organización está sujeta al Reglamento Interno. En caso contrario marca No aplica en este caso.",
       ],
@@ -267,6 +349,17 @@ export const MPI_REGULATION_INTEGRATE_PROTOCOL: ExecutionProtocol = {
         "La organización no está sujeta al Reglamento Interno: la rama queda legítimamente fuera.",
       ),
       evidence_to_review: ["evidencia de publicidad cuando corresponda"],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia de publicidad cuando corresponda",
+          review_guide:
+            "La evaluación debe partir de la conclusión documentada sobre la sujeción de la organización al Reglamento Interno. Si corresponde aplicar ese instrumento, deben verificarse las medidas de publicidad previstas en el artículo 156 del Código del Trabajo y la evidencia de su ejecución. Si no corresponde, debe quedar registrado el fundamento de la no aplicabilidad.",
+          no_evidence_guidance:
+            "Cuando la rama resulte aplicable, deben señalarse las medidas de publicidad pendientes o cuya ejecución no pudo acreditarse. Si se determinó que no aplica, debe existir respaldo de esa conclusión; la ausencia de evidencia de publicidad no demuestra por sí sola que la organización esté exenta. Si la sujeción sigue pendiente, no debe presumirse aplicabilidad ni exención.",
+          expected_result:
+            "Evidencia verificable de las medidas de publicidad exigibles cuando la organización está sujeta al Reglamento Interno, o una determinación fundada de «No aplica en este caso». La conclusión debe ser coherente con la actividad previa de aplicabilidad y distinguirse de la difusión general del MPI.",
+        },
+      ],
       help_text: [
         "Exigible solo cuando la organización está sujeta al Reglamento Interno. En caso contrario marca No aplica en este caso.",
       ],

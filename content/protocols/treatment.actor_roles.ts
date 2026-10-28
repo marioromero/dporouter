@@ -142,6 +142,44 @@ export const TREATMENT_ACTOR_ROLES_PROTOCOL: ExecutionProtocol = {
         "contratos o antecedentes revisados",
         "evidencia de clasificación",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "matriz de actores por tratamiento",
+          review_guide:
+            "Examinar las organizaciones o personas identificadas en cada operación y contrastarlas con los procesos, flujos y relaciones documentadas. Comprobar que las intervenciones relevantes estén consideradas y que la distribución de funciones refleje la realidad operacional, especialmente cuando una misma entidad participa en distintos tratamientos bajo responsabilidades diferentes.",
+          no_evidence_guidance:
+            "Consultar el inventario, los mapas de procesos y los antecedentes de las áreas involucradas para reconstruir las relaciones conocidas. Si existen participantes no identificados o intervenciones insuficientemente descritas, registrar las brechas y completar el levantamiento antes de considerar fundada la conclusión, sin asignar funciones por simple pertenencia a la organización.",
+          expected_result:
+            "Una relación de participantes individualizados por operación, coherente con los procesos examinados y suficientemente respaldada para evaluar sus responsabilidades. Las omisiones, intervenciones ambiguas o diferencias entre tratamientos deben quedar identificadas, sin presumir que una entidad conserva siempre la misma condición jurídica.",
+        },
+        {
+          evidence_item: "rol asignado a cada actor",
+          review_guide:
+            "Contrastar las funciones atribuidas con las decisiones efectivas sobre finalidades y medios, así como con las instrucciones bajo las cuales se ejecutan las operaciones. Distinguir a quien determina el tratamiento de quien actúa por cuenta de otro, examinando eventuales discrepancias entre las responsabilidades declaradas y el funcionamiento real.",
+          no_evidence_guidance:
+            "Revisar descripciones operacionales, acuerdos, instrucciones y antecedentes de coordinación para aclarar cómo se toman las decisiones y quién ejecuta las actividades. Si las funciones no pueden determinarse con suficiente respaldo, identificar las asignaciones pendientes de revisión y evitar adoptar una clasificación favorable basada únicamente en denominaciones internas o contractuales.",
+          expected_result:
+            "Funciones jurídicamente evaluadas y vinculadas con cada operación, con fundamentos que permitan sostener o corregir las condiciones atribuidas. Las discrepancias o incertidumbres relevantes deben quedar documentadas para sustentar el juicio profesional, sin deducir automáticamente el resultado de la evaluación estructural del sistema.",
+        },
+        {
+          evidence_item: "contratos o antecedentes revisados",
+          review_guide:
+            "Revisar el objeto de los acuerdos, las instrucciones de tratamiento, las facultades de decisión y las responsabilidades asumidas por las partes. Contrastar sus disposiciones con la ejecución efectiva de las operaciones, distinguiendo los encargos realizados por cuenta del responsable de las cesiones entre responsables. Cuando exista un encargo, considerar los elementos contractuales aplicables del artículo 15 bis.",
+          no_evidence_guidance:
+            "Consultar instrumentos vigentes, anexos, órdenes de servicio, comunicaciones y otros respaldos disponibles para identificar las condiciones reales de participación. Si faltan contratos exigibles o sus disposiciones resultan insuficientes o contradictorias, registrar la deficiencia y gestionar su revisión o formalización, sin inventar acuerdos ni presumir que la ausencia documental determina por sí sola el rol jurídico.",
+          expected_result:
+            "Antecedentes contractuales y operacionales contrastados, con identificación de las responsabilidades efectivas, las condiciones relevantes y las discrepancias que requieren aclaración. La documentación debe permitir fundamentar la clasificación adoptada o reconocer sus deficiencias, sin considerar suficiente una denominación contractual incompatible con los hechos.",
+        },
+        {
+          evidence_item: "evidencia de clasificación",
+          review_guide:
+            "Comprobar los fundamentos utilizados para atribuir cada condición jurídica, relacionando las decisiones sobre fines y medios, las instrucciones existentes y las actuaciones efectivamente desarrolladas. Examinar si el razonamiento distingue los hechos comprobados de las interpretaciones profesionales y si justifica las diferencias de rol que pueda presentar un mismo actor entre operaciones.",
+          no_evidence_guidance:
+            "Recopilar los antecedentes disponibles y precisar qué hechos permiten sostener cada asignación. Cuando falte fundamentación o existan conclusiones contradictorias, documentar las cuestiones pendientes y efectuar las comprobaciones necesarias antes de adoptar una decisión favorable. No reconstruir ficticiamente evaluaciones anteriores ni presentar como acreditadas interpretaciones sin respaldo suficiente.",
+          expected_result:
+            "Una fundamentación jurídica documentada y vinculada con los antecedentes examinados, que permita justificar la clasificación o identificar las correcciones necesarias. La conclusión debe reflejar el juicio profesional efectivamente adoptado, incluyendo discrepancias e incertidumbres pertinentes, sin confundir la suficiencia estructural comprobada por el sistema con la corrección jurídica de los roles.",
+        },
+      ],
       help_text: [
         "Selecciona la alternativa y documenta tu razonamiento a continuación. La conclusión solo queda registrada al adoptar con razonamiento válido.",
       ],

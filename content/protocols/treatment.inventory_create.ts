@@ -96,6 +96,26 @@ export const TREATMENT_INVENTORY_CREATE_PROTOCOL: ExecutionProtocol = {
         "relación de procesos y sistemas revisados",
         "evidencia de levantamiento",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "relación de procesos y sistemas revisados",
+          review_guide:
+            "Examinar la relación de procesos y sistemas revisados para identificar aquellos en los que se recopilan, consultan, almacenan, comunican o utilizan datos personales. Contrastar su contenido con las operaciones de las áreas involucradas, comprobando que los procesos relevantes estén considerados y que las vinculaciones entre actividades y sistemas sean coherentes con el funcionamiento conocido de la organización.",
+          no_evidence_guidance:
+            "Consultar a los responsables de procesos y sistemas, junto con la documentación operacional disponible, para reconstruir una relación inicial de las actividades examinadas. Si el levantamiento está incompleto, identificar las áreas pendientes y los procesos aún no confirmados, sin presentar como exhaustiva una relación que no cuenta con respaldo suficiente.",
+          expected_result:
+            "Una relación documentada y trazable de los procesos y sistemas examinados, que permita identificar las operaciones que involucran datos personales y reconocer eventuales omisiones, inconsistencias o ámbitos pendientes de revisión. Su existencia no acredita por sí sola que todos los tratamientos de la organización hayan sido identificados.",
+        },
+        {
+          evidence_item: "evidencia de levantamiento",
+          review_guide:
+            "Revisar los antecedentes utilizados para identificar los procesos de tratamiento, incluyendo entrevistas, talleres, revisiones documentales, recorridos de procesos u otros mecanismos efectivamente empleados. Verificar las áreas consultadas, los hallazgos obtenidos y su correspondencia con los procesos registrados, distinguiendo información confirmada de antecedentes todavía sujetos a validación.",
+          no_evidence_guidance:
+            "Comprobar si el levantamiento fue realizado y buscar registros, documentos de trabajo, comunicaciones u otros antecedentes que permitan reconstruirlo. Si no se efectuó, identificar las actividades pendientes y gestionar su realización; si existen actuaciones sin respaldo suficiente, documentar esa limitación sin generar constancias retrospectivas de trabajos no realizados.",
+          expected_result:
+            "Antecedentes verificables que permitan reconstruir el levantamiento efectuado y vincular sus hallazgos con los procesos identificados, incluyendo las fuentes consultadas y las limitaciones detectadas. La revisión debe distinguir entre levantamientos respaldados, información pendiente de confirmación y actividades que todavía no se han realizado.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "review-relations",
       provenance: "agency_standard",
@@ -114,6 +134,26 @@ export const TREATMENT_INVENTORY_CREATE_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "inventario maestro de tratamientos",
         "evidencia de levantamiento",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "inventario maestro de tratamientos",
+          review_guide:
+            "Examinar los registros del inventario para comprobar que cada tratamiento identificado permita relacionar las categorías de titulares y datos personales, los actores involucrados y las fuentes conocidas. Contrastar estas relaciones con la descripción operacional y los antecedentes disponibles, considerando también las referencias documentales a sistemas y flujos. Identificar vínculos ausentes, inconsistentes o pendientes de confirmación, sin exigir que los atributos desarrollados en otras actividades del D2 estén completamente evaluados.",
+          no_evidence_guidance:
+            "Revisar los registros parciales, mapas de procesos, documentación de sistemas y antecedentes disponibles para reconstruir las relaciones conocidas de cada tratamiento. Si el inventario no existe o carece de vinculaciones suficientes, identificar los elementos pendientes y gestionar su incorporación progresiva, distinguiendo información no levantada de relaciones que todavía no pueden confirmarse.",
+          expected_result:
+            "Un inventario con relaciones trazables entre los tratamientos y sus titulares, categorías de datos, actores y fuentes conocidas, complementado con referencias documentales a sistemas y flujos cuando corresponda. Las vinculaciones deben permitir reconocer elementos confirmados, inconsistencias y antecedentes pendientes, sin presumir que la caracterización integral del tratamiento ya está concluida.",
+        },
+        {
+          evidence_item: "evidencia de levantamiento",
+          review_guide:
+            "Contrastar los antecedentes del levantamiento con las relaciones registradas en el inventario, verificando que permitan identificar el origen de la información sobre titulares, categorías de datos, actores, sistemas, fuentes y flujos. Examinar entrevistas, documentos de procesos, registros operacionales, diagramas u otros respaldos efectivamente disponibles, distinguiendo relaciones acreditadas de aquellas basadas en información preliminar.",
+          no_evidence_guidance:
+            "Consultar los antecedentes utilizados en el levantamiento inicial y las áreas responsables para localizar respaldos de las relaciones identificadas. Cuando la documentación sea insuficiente, registrar qué vínculos requieren corroboración y qué fuentes deben revisarse. Si determinados elementos todavía no fueron levantados, gestionar su identificación sin generar antecedentes retrospectivos que simulen verificaciones no realizadas.",
+          expected_result:
+            "Antecedentes verificables que permitan relacionar los elementos del inventario con las fuentes y comprobaciones que sustentan su identificación. La revisión debe reflejar las vinculaciones documentadas, las limitaciones de la información disponible y las verificaciones pendientes, sin exigir registros estructurados de sistemas o flujos que la aplicación todavía no contempla.",
+        },
       ],
       help_text: [
         "Sistemas y flujos se revisan como evidencia documental: aún no tienen captura estructurada.",
@@ -136,6 +176,26 @@ export const TREATMENT_INVENTORY_CREATE_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "evidencia de levantamiento",
         "identificadores estables de tratamientos",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia de levantamiento",
+          review_guide:
+            "Contrastar los hallazgos de entrevistas, documentos de procesos, registros operacionales y otros antecedentes efectivamente consultados con las entradas correspondientes del inventario. Comprobar que las referencias permitan localizar los respaldos originales, identificar su procedencia y reconocer discrepancias, información desactualizada o conclusiones pendientes de corroboración.",
+          no_evidence_guidance:
+            "Consultar los registros de trabajo, comunicaciones y documentos conservados por las áreas participantes para recuperar los antecedentes disponibles. Si determinadas conclusiones carecen de respaldo localizable, identificar los datos que requieren confirmación y gestionar nuevas comprobaciones, sin reconstruir ficticiamente entrevistas, revisiones o actuaciones anteriores.",
+          expected_result:
+            "Referencias documentales localizables y asociadas a los registros correspondientes, con antecedentes suficientes para sustentar la información incorporada. Las discrepancias, fuentes no confirmadas y conclusiones sin respaldo deben quedar identificadas, sin considerar acreditados los elementos cuya procedencia no pueda comprobarse.",
+        },
+        {
+          evidence_item: "identificadores estables de tratamientos",
+          review_guide:
+            "Examinar los códigos o referencias asignados a cada tratamiento, comprobando su unicidad y consistencia entre los distintos registros y antecedentes asociados. Detectar duplicidades, cambios injustificados, referencias ambiguas o denominaciones diferentes para una misma operación, considerando la continuidad de las referencias cuando se actualicen las descripciones o atributos.",
+          no_evidence_guidance:
+            "Revisar las denominaciones, registros históricos y referencias disponibles para determinar si permiten distinguir consistentemente las operaciones identificadas. Cuando no exista un mecanismo adecuado, definir una convención interna y establecer las correspondencias necesarias, conservando las referencias anteriores cuando resulte pertinente para evitar pérdidas de información o asociaciones incorrectas.",
+          expected_result:
+            "Un conjunto coherente de identificadores internos, sin duplicidades o ambigüedades no resueltas, que permita reconocer cada tratamiento y mantener sus asociaciones durante posteriores actualizaciones. Las inconsistencias pendientes deben quedar documentadas, sin atribuir obligatoriedad legal a una convención técnica específica.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "final-confirmation",

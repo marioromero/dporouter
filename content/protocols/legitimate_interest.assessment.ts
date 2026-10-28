@@ -126,6 +126,26 @@ export const LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         "antecedentes del interés",
         "Reasoning Record de interés legítimo",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "antecedentes del interés",
+          review_guide:
+            "Examinar los objetivos operacionales, decisiones internas, acuerdos y demás antecedentes que expliquen el beneficio o necesidad perseguida. Identificar a quién corresponde el interés invocado, qué resultado concreto pretende alcanzarse y cómo se vincula con la finalidad evaluada. Distinguir intereses efectivamente sustentados de afirmaciones genéricas de conveniencia, eficiencia o beneficio económico que no permitan comprender suficientemente su alcance.",
+          no_evidence_guidance:
+            "Consultar a las áreas responsables y revisar documentación de procesos, decisiones organizacionales y antecedentes del tercero beneficiario cuando corresponda. Si no es posible precisar el interés o su relación con la finalidad, registrar las cuestiones pendientes y solicitar las aclaraciones necesarias, sin construir justificaciones retrospectivas desvinculadas de las circunstancias reales del tratamiento.",
+          expected_result:
+            "Un interés identificable, atribuido al responsable o a un tercero determinado y respaldado por antecedentes pertinentes, con descripción suficiente de su propósito y relación con la operación examinada. Las formulaciones ambiguas, afirmaciones sin sustento o circunstancias pendientes deben quedar documentadas, sin considerar acreditada la necesidad del tratamiento ni su compatibilidad con los derechos del titular.",
+        },
+        {
+          evidence_item: "Reasoning Record de interés legítimo",
+          review_guide:
+            "Revisar la fundamentación registrada para comprobar que individualice el interés invocado, los hechos que lo sustentan y su vinculación con la finalidad correspondiente. Verificar que las afirmaciones relevantes puedan relacionarse con antecedentes identificables y que se distingan las circunstancias comprobadas de las apreciaciones profesionales. Reconocer los aspectos todavía sujetos a evaluación, sin exigir que la ponderación completa esté concluida en esta etapa.",
+          no_evidence_guidance:
+            "Recopilar los hechos y documentos disponibles para preparar o completar la fundamentación del interés. Cuando no exista un razonamiento registrado, identificar los elementos que requieren análisis y dejar constancia de las limitaciones conocidas. Evitar formular conclusiones favorables sin respaldo o presentar como realizada una evaluación jurídica que todavía se encuentra pendiente.",
+          expected_result:
+            "Una fundamentación inicial trazable que identifique el interés examinado, los antecedentes considerados y las cuestiones que deberán evaluarse posteriormente. El registro debe permitir continuar el análisis de necesidad y posibles afectaciones, sin anticipar que el interés legítimo constituye una base de licitud suficientemente acreditada.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "factor-necessity",
       provenance: "agency_standard",
@@ -142,6 +162,17 @@ export const LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: considerationOptions("li_assessment.necessity_reviewed"),
       evidence_to_review: ["análisis de necesidad"],
+      evidence_review_help: [
+        {
+          evidence_item: "análisis de necesidad",
+          review_guide:
+            "Examinar las operaciones realizadas, las categorías de datos utilizadas y su contribución concreta al interés identificado. Comprobar si existe una relación suficientemente fundada entre el tratamiento y el resultado perseguido, distinguiendo las actividades necesarias de aquellas que responden principalmente a conveniencia, eficiencia o aprovechamiento adicional de información. Identificar operaciones o categorías cuya necesidad no esté explicada, dejando la evaluación detallada de alternativas menos intrusivas para la etapa correspondiente.",
+          no_evidence_guidance:
+            "Consultar las descripciones de procesos, decisiones operacionales y antecedentes que expliquen cómo se pretende alcanzar el interés declarado. Si no existe un análisis documentado, identificar las operaciones y categorías que requieren justificación y recopilar los elementos necesarios para evaluarlas. Cuando la necesidad no pueda fundamentarse, registrar esa insuficiencia sin presumir que la utilidad del tratamiento basta para sostener la fuente jurídica.",
+          expected_result:
+            "Una evaluación documentada de la relación entre las operaciones examinadas y el interés perseguido, con fundamentos que permitan reconocer qué tratamientos resultan necesarios y cuáles requieren aclaración o justificación adicional. Las conclusiones deben quedar respaldadas por antecedentes verificables, sin anticipar una valoración favorable sobre los derechos del titular ni la suficiencia global del interés legítimo.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "factor-rights",
       provenance: "agency_standard",
@@ -158,6 +189,17 @@ export const LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: considerationOptions("li_assessment.rights_identified"),
       evidence_to_review: ["evaluación de efectos sobre titulares"],
+      evidence_review_help: [
+        {
+          evidence_item: "evaluación de efectos sobre titulares",
+          review_guide:
+            "Analizar las categorías de datos utilizadas, las personas afectadas y las circunstancias concretas de su utilización para reconocer posibles consecuencias sobre la privacidad, la autonomía y el ejercicio de derechos. Considerar el alcance del tratamiento, la comunicación a terceros, el seguimiento de conductas o la elaboración de perfiles cuando correspondan. Identificar la naturaleza de las afectaciones, su posible gravedad y los grupos especialmente expuestos, diferenciando riesgos razonablemente previsibles de situaciones meramente hipotéticas sin fundamento.",
+          no_evidence_guidance:
+            "Recopilar antecedentes de los procesos, flujos de información, características de los titulares y usos previstos para identificar las posibles consecuencias del tratamiento. Si no existe una evaluación documentada, registrar los aspectos pendientes y consultar a las áreas pertinentes para completar el análisis. Evitar interpretar la ausencia de reclamaciones o incidentes conocidos como demostración de que no existen posibles afectaciones.",
+          expected_result:
+            "Una identificación fundamentada de los derechos y libertades potencialmente comprometidos, con descripción de las circunstancias que podrían afectarlos y de los antecedentes utilizados para valorar su relevancia. Las incertidumbres y consecuencias pendientes de aclaración deben quedar documentadas para la evaluación posterior, sin anticipar la suficiencia de las salvaguardas ni una conclusión favorable sobre el interés legítimo.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "factor-alternatives",
       provenance: "agency_standard",
@@ -174,6 +216,17 @@ export const LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: considerationOptions("li_assessment.alternatives_reviewed"),
       evidence_to_review: ["alternativas consideradas"],
+      evidence_review_help: [
+        {
+          evidence_item: "alternativas consideradas",
+          review_guide:
+            "Comparar el método de tratamiento propuesto con otras formas razonablemente disponibles de alcanzar el mismo objetivo, considerando la reducción de datos recopilados, el uso de información anonimizada cuando resulte viable, la limitación de accesos o mecanismos operacionales diferentes. Evaluar si estas opciones permiten satisfacer suficientemente el interés identificado y qué diferencias presentan en cuanto a exposición de los titulares, viabilidad y eficacia. Distinguir las alternativas realmente disponibles de posibilidades meramente teóricas.",
+          no_evidence_guidance:
+            "Consultar antecedentes técnicos, procedimientos y decisiones operacionales para identificar opciones que pudieron considerarse o que todavía puedan evaluarse. Si no existe un análisis documentado, registrar las alternativas identificadas, sus limitaciones y los aspectos pendientes de comprobación. Cuando no se encuentre una opción razonablemente viable, fundamentar esa circunstancia sin presumir que la ausencia de propuestas demuestra automáticamente la necesidad del tratamiento elegido.",
+          expected_result:
+            "Una comparación fundamentada de las opciones pertinentes, con sus posibilidades de aplicación, limitaciones y consecuencias previsibles para los titulares. La evaluación debe permitir reconocer si existe una alternativa razonable que alcance el objetivo con menor intervención en los datos personales o justificar por qué no se identificó una opción adecuada, sin anticipar la conclusión definitiva sobre la licitud del tratamiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "factor-safeguards",
       provenance: "agency_standard",
@@ -190,6 +243,17 @@ export const LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: considerationOptions("li_assessment.safeguards_identified"),
       evidence_to_review: ["salvaguardas"],
+      evidence_review_help: [
+        {
+          evidence_item: "salvaguardas",
+          review_guide:
+            "Revisar las medidas técnicas, organizativas y operacionales propuestas o existentes, relacionándolas con las posibles afectaciones identificadas en la evaluación anterior. Considerar, según el tratamiento, restricciones de acceso, reducción de datos utilizados, seudonimización, limitaciones de conservación, controles de comunicación o mecanismos para facilitar el ejercicio de derechos. Comprobar qué consecuencias pretende reducir cada medida, su estado de implementación y los antecedentes disponibles sobre su funcionamiento, diferenciando controles efectivos de compromisos todavía no ejecutados.",
+          no_evidence_guidance:
+            "Consultar procedimientos internos, configuraciones de sistemas, controles de seguridad y antecedentes de las áreas responsables para localizar medidas que puedan resultar pertinentes. Si no existen controles suficientes o solo se han propuesto, identificar las afectaciones sin cobertura y las acciones pendientes de evaluación o implementación. Evitar presentar medidas planificadas como operativas o presumir que la ausencia de incidentes demuestra una protección adecuada.",
+          expected_result:
+            "Medidas identificadas y vinculadas con las consecuencias que buscan reducir, con información sobre su aplicación efectiva, limitaciones y acciones pendientes. La revisión debe permitir reconocer los impactos que permanecen sin tratamiento suficiente y aportar antecedentes para la valoración posterior, sin considerar automáticamente acreditada la procedencia del interés legítimo.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "sufficiency-gate",
       provenance: "agency_standard",
@@ -266,6 +330,17 @@ export const LEGITIMATE_INTEREST_ASSESSMENT_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["Reasoning Record de interés legítimo"],
+      evidence_review_help: [
+        {
+          evidence_item: "Reasoning Record de interés legítimo",
+          review_guide:
+            "Valorar conjuntamente los hechos y fundamentos documentados sobre el interés invocado, la necesidad de las operaciones, las posibles afectaciones a los titulares, las alternativas disponibles y las medidas de protección consideradas. Comprobar que el razonamiento explique cómo influyen estos factores en la decisión, identifique incertidumbres relevantes y diferencie las condiciones acreditadas de aquellas que requieren medidas adicionales. Verificar que la conclusión elegida sea coherente con los antecedentes, sin equiparar la revisión completa de los factores con una valoración jurídica favorable.",
+          no_evidence_guidance:
+            "Recuperar los análisis y antecedentes de las etapas anteriores para completar la fundamentación profesional, identificando los hechos, criterios jurídicos y alternativas que todavía requieren revisión. Si existen factores sin respaldo suficiente o contradicciones relevantes, registrar las limitaciones y resolverlas antes de adoptar una conclusión. No presentar como realizado un análisis inexistente ni seleccionar una decisión favorable únicamente porque el sistema permite avanzar.",
+          expected_result:
+            "Una conclusión profesional fundamentada y trazable que determine si el interés legítimo sostiene la finalidad, requiere medidas adicionales o no constituye una base aplicable, con identificación de los antecedentes y criterios que justifican la decisión. El registro debe distinguir las condiciones acreditadas, las acciones pendientes y las razones de la valoración adoptada, sin considerar suficiente la sola completitud estructural de la evaluación.",
+        },
+      ],
       help_text: [
         "Selecciona la alternativa y documenta tu razonamiento a continuación. La conclusión solo queda registrada al adoptar con razonamiento válido.",
       ],

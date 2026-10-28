@@ -91,6 +91,26 @@ export const TREATMENT_PURPOSE_DEFINE_PROTOCOL: ExecutionProtocol = {
         "registro de finalidades por tratamiento",
         "evidencia del proceso que origina cada finalidad",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "registro de finalidades por tratamiento",
+          review_guide:
+            "Examinar las descripciones registradas para determinar si permiten comprender qué propósito concreto persigue cada utilización de datos personales. Identificar expresiones amplias como «gestión interna» o «mejora de servicios» que no expliquen suficientemente el uso previsto, así como propósitos materialmente diferentes agrupados bajo una sola denominación. Comprobar que las finalidades puedan distinguirse y relacionarse con las operaciones correspondientes.",
+          no_evidence_guidance:
+            "Revisar las descripciones operacionales, formularios, comunicaciones y antecedentes disponibles para identificar los propósitos efectivamente perseguidos. Si no existe un registro consolidado o las formulaciones son ambiguas, documentar las finalidades identificadas y precisar las que requieren aclaración o separación, sin atribuir a la organización objetivos que no hayan sido confirmados.",
+          expected_result:
+            "Finalidades individualizadas y descritas con suficiente precisión para comprender los usos previstos de los datos, diferenciando los propósitos materialmente distintos. Las formulaciones ambiguas, agrupaciones injustificadas y finalidades pendientes de confirmación deben quedar identificadas para su corrección, sin considerar acreditada su licitud únicamente por estar documentadas.",
+        },
+        {
+          evidence_item: "evidencia del proceso que origina cada finalidad",
+          review_guide:
+            "Revisar los procedimientos, formularios, comunicaciones y registros operacionales que expliquen por qué se recopilan o utilizan los datos en cada actividad. Comparar los usos declarados con las actuaciones efectivamente desarrolladas, identificando propósitos que no se desprendan del funcionamiento conocido del proceso o tratamientos adicionales que no estén reflejados en las descripciones existentes.",
+          no_evidence_guidance:
+            "Consultar la documentación disponible y a las áreas responsables para reconstruir las operaciones que justifican los propósitos identificados. Cuando no existan antecedentes suficientes, registrar los usos pendientes de corroboración y gestionar las comprobaciones necesarias. Evitar crear justificaciones retrospectivas que atribuyan a un tratamiento finalidades no acreditadas.",
+          expected_result:
+            "Antecedentes verificables que permitan fundamentar los propósitos identificados a partir de operaciones reales, con correspondencia entre las descripciones documentadas y los usos efectivos de los datos. Las diferencias, actividades no consideradas o justificaciones insuficientes deben quedar reconocidas para su revisión posterior.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "verify-data-relation",
       provenance: "legal_requirement",
@@ -107,6 +127,17 @@ export const TREATMENT_PURPOSE_DEFINE_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("purposes.data_related"),
       evidence_to_review: ["relación finalidad-datos"],
+      evidence_review_help: [
+        {
+          evidence_item: "relación finalidad-datos",
+          review_guide:
+            "Examinar las categorías de datos personales asociadas a cada propósito registrado, identificando cuáles se recopilan, consultan o utilizan en las operaciones correspondientes. Comparar estas asociaciones con formularios, registros operacionales y descripciones de procesos para detectar categorías sin una finalidad identificable, propósitos sin datos asociados cuando corresponda o vinculaciones inconsistentes con los usos efectivos. Distinguir la existencia de una relación documentada de la evaluación posterior sobre la necesidad de cada categoría.",
+          no_evidence_guidance:
+            "Consultar el inventario, los formularios de recopilación y los antecedentes de las áreas involucradas para reconstruir las asociaciones conocidas. Si existen categorías o propósitos sin correspondencia suficiente, registrar las vinculaciones pendientes de confirmar y gestionar su aclaración con los responsables del proceso, sin atribuir usos no acreditados ni considerar justificada una categoría por el solo hecho de estar registrada.",
+          expected_result:
+            "Una correspondencia documentada y verificable entre los propósitos identificados y las categorías de datos efectivamente utilizadas, con reconocimiento de asociaciones inconsistentes, incompletas o pendientes de confirmación. El resultado debe proporcionar antecedentes para evaluar posteriormente proporcionalidad y licitud, sin anticipar una conclusión favorable sobre la necesidad o legitimidad de cada tratamiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "final-confirmation",
       provenance: "legal_requirement",

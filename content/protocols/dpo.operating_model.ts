@@ -99,6 +99,17 @@ export const DPO_OPERATING_MODEL_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["expediente de designación"],
+      evidence_review_help: [
+        {
+          evidence_item: "expediente de designación",
+          review_guide:
+            "Examinar el acto o antecedente que acredita la designación del DPO y verificar la identidad de la persona designada, la autoridad que formalizó la decisión y su fecha efectiva. Contrastar estos datos con los antecedentes organizacionales disponibles para determinar si la designación continúa vigente y corresponde al DPO que ejercerá el modelo operativo evaluado.",
+          no_evidence_guidance:
+            "Registrar que no se ha podido verificar la designación y revisar si existen actos, comunicaciones o antecedentes equivalentes que permitan acreditarla. Distinguir entre ausencia del expediente, falta de un respaldo localizado y ausencia efectiva de designación vigente. No inferir que existe un DPO designado solo porque una persona ejerza informalmente funciones relacionadas con protección de datos.",
+          expected_result:
+            "Una conclusión trazable sobre la existencia y vigencia de la designación, identificando los antecedentes examinados, la persona designada y cualquier brecha que deba resolverse antes de definir su participación operativa. Si no se confirma una designación vigente, dejar constancia de que corresponde resolver ese antecedente antes de avanzar con el modelo operativo.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "organize-reporting",
       transitions: [
@@ -133,6 +144,26 @@ export const DPO_OPERATING_MODEL_PROTOCOL: ExecutionProtocol = {
         "carta o marco operativo DPO",
         "validación inicial D1.09 si está disponible",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "carta o marco operativo DPO",
+          review_guide:
+            "Examinar el marco operativo o los antecedentes equivalentes que establezcan ante qué autoridad rinde cuentas el DPO y cómo puede acceder directamente a ella. Verificar que se identifiquen la autoridad correspondiente, los canales de comunicación y las condiciones para elevar asuntos relevantes sin intermediaciones que comprometan su autonomía funcional. Contrastar estas reglas con la estructura organizacional vigente.",
+          no_evidence_guidance:
+            "Revisar organigramas, instrucciones internas o acuerdos organizacionales que permitan identificar una línea de reporte efectiva. Distinguir entre falta de un documento denominado carta operativa, reglas existentes pero insuficientemente definidas y ausencia real de acceso directo a la autoridad. Registrar las brechas sin asumir que un formato documental específico es obligatorio.",
+          expected_result:
+            "Una conclusión trazable sobre la definición de la línea de reporte y el acceso directo del DPO a la autoridad correspondiente. Identificar las reglas verificadas, sus responsables y cualquier ambigüedad que pueda dificultar la rendición de cuentas o afectar la autonomía funcional durante la operación.",
+        },
+        {
+          evidence_item: "validación inicial D1.09 si está disponible",
+          review_guide:
+            "Examinar los resultados disponibles de D1.09, especialmente los relativos a la línea de rendición directa, autonomía y posibles conflictos de funciones. Contrastar sus conclusiones y brechas con las reglas previstas en el modelo operativo, verificando si las observaciones relevantes fueron consideradas y si existe coherencia entre la validación inicial y la organización actual.",
+          no_evidence_guidance:
+            "Comprobar si D1.09 fue realizada y si sus resultados están disponibles. Si no existe una validación accesible, registrar esa circunstancia y evaluar la línea de reporte mediante los antecedentes organizacionales actuales, sin presumir incumplimiento automático. Si existen brechas conocidas de D1.09, no considerarlas resueltas únicamente porque el nuevo marco operativo las mencione.",
+          expected_result:
+            "Una conclusión que indique si la validación inicial fue utilizada como insumo, qué brechas relevantes se incorporaron al modelo operativo y cuáles siguen pendientes. Cuando D1.09 no esté disponible, dejar constancia de esa limitación y de los antecedentes alternativos utilizados para fundamentar la evaluación.",
+        },
+      ],
       help_text: [
         "Si la validación inicial está disponible, úsala como insumo: sus brechas deben informar el modelo operativo.",
       ],
@@ -156,6 +187,26 @@ export const DPO_OPERATING_MODEL_PROTOCOL: ExecutionProtocol = {
         "reglas de involucramiento",
         "carta o marco operativo DPO",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "reglas de involucramiento",
+          review_guide:
+            "Examinar las reglas que identifican los procesos y eventos en los que corresponde involucrar al DPO, como cambios relevantes en tratamientos, evaluación de riesgos, EIPD o incidentes de protección de datos. Verificar que para cada evento se establezca cuándo debe intervenir, qué área activa su participación y qué antecedentes necesita recibir. Comprobar que el involucramiento esté previsto con oportunidad suficiente para ejercer sus funciones.",
+          no_evidence_guidance:
+            "Revisar procedimientos, flujos de aprobación o instrucciones internas que puedan establecer criterios equivalentes. Distinguir entre reglas existentes pero dispersas, participación informal y ausencia de eventos definidos. No considerar suficiente que las áreas puedan consultar voluntariamente al DPO si no existen criterios que permitan identificar cuándo corresponde involucrarlo.",
+          expected_result:
+            "Una conclusión trazable sobre la definición de eventos, responsables de activación, momentos de intervención e información requerida. Identificar los procesos alcanzados y las brechas que puedan ocasionar una participación tardía, incompleta o dependiente de decisiones discrecionales de cada área.",
+        },
+        {
+          evidence_item: "carta o marco operativo DPO",
+          review_guide:
+            "Examinar cómo el marco operativo incorpora la participación del DPO en los procesos relevantes de la organización. Verificar que las funciones asignadas se relacionen con eventos concretos de involucramiento, que existan canales de coordinación con las áreas responsables y que se contemple el acceso oportuno a los antecedentes necesarios. Contrastar estas disposiciones con las reglas específicas de involucramiento.",
+          no_evidence_guidance:
+            "Revisar acuerdos organizacionales, procedimientos y otros antecedentes que puedan definir la coordinación operativa del DPO. Distinguir entre ausencia de un documento denominado carta operativa y falta real de reglas integradas. Si existen reglas de involucramiento separadas, comprobar si son coherentes con las responsabilidades y facultades reconocidas al DPO.",
+          expected_result:
+            "Una conclusión fundamentada sobre la coherencia entre el modelo operativo y los eventos que requieren participación del DPO. Identificar las funciones y mecanismos de coordinación acreditados, así como los vacíos que dificulten determinar cómo, cuándo y con qué información debe participar en los procesos alcanzados.",
+        },
+      ],
       help_text: [
         "Define cómo, cuándo y con qué información participa el DPO en cada proceso alcanzado.",
       ],
@@ -178,6 +229,26 @@ export const DPO_OPERATING_MODEL_PROTOCOL: ExecutionProtocol = {
         "canales de acceso a información",
         "carta o marco operativo DPO",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "canales de acceso a información",
+          review_guide:
+            "Examinar los canales y procedimientos mediante los cuales el DPO puede obtener información sobre tratamientos, sistemas, procesos y operaciones relevantes. Verificar quién facilita el acceso, cómo se solicita o activa y si permite recibir antecedentes suficientes y oportunos para asesorar o supervisar. Considerar las restricciones de confidencialidad y seguridad sin confundirlas con obstáculos injustificados al ejercicio de sus funciones.",
+          no_evidence_guidance:
+            "Revisar procedimientos internos, permisos, flujos de consulta o acuerdos operativos que puedan acreditar mecanismos equivalentes. Distinguir entre falta de un registro formal, acceso dependiente de gestiones informales y ausencia efectiva de un canal funcional. No presumir que el DPO tiene acceso suficiente por su sola designación o por contar con credenciales generales.",
+          expected_result:
+            "Una conclusión trazable sobre la existencia y suficiencia de los canales de acceso, identificando responsables, modalidades de solicitud y eventuales restricciones. Registrar las brechas que puedan retrasar o impedir la obtención de información necesaria para supervisar y asesorar sobre los tratamientos relevantes.",
+        },
+        {
+          evidence_item: "carta o marco operativo DPO",
+          review_guide:
+            "Examinar cómo el marco operativo reconoce y organiza el acceso del DPO a la información y a las operaciones de tratamiento pertinentes. Verificar que establezca mecanismos de coordinación con las áreas responsables, condiciones para obtener antecedentes oportunamente y vías para resolver dificultades de acceso. Contrastar estas reglas con los canales disponibles y con las funciones efectivamente asignadas.",
+          no_evidence_guidance:
+            "Revisar instrucciones organizacionales, procedimientos o acuerdos equivalentes que definan las facultades de acceso y la cooperación de las áreas. Distinguir entre ausencia de una carta operativa específica y falta real de reglas que respalden el acceso. Si existen canales técnicos o administrativos, comprobar que su utilización no dependa exclusivamente de autorizaciones discrecionales incompatibles con las funciones del DPO.",
+          expected_result:
+            "Una conclusión fundamentada sobre si el modelo operativo establece condiciones suficientes para el acceso oportuno del DPO. Identificar las responsabilidades de coordinación, los mecanismos para gestionar impedimentos y las brechas entre las reglas definidas y los canales efectivamente disponibles.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "organize-functions",
       provenance: "agency_standard",
@@ -198,6 +269,35 @@ export const DPO_OPERATING_MODEL_PROTOCOL: ExecutionProtocol = {
         "carta o marco operativo DPO",
         "validación inicial D1.09 si está disponible",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "matriz de funciones",
+          review_guide:
+            "La matriz debe permitir relacionar las funciones del DPO con actividades concretas de atención de derechos, asesoría sobre riesgos y EIPD, capacitación, supervisión y comunicación con la Agencia. Para cada ámbito corresponde identificar la intervención del DPO, las áreas con las que se coordina y las responsabilidades operativas asociadas. La revisión debe detectar funciones sin asignación clara o duplicidades que dificulten su ejercicio.",
+          no_evidence_guidance:
+            "Pueden considerarse distribuciones de responsabilidades, procedimientos o registros equivalentes que permitan reconstruir el mapa funcional. Debe distinguirse entre ausencia de una matriz formal, funciones documentadas de manera dispersa y falta efectiva de asignación operativa. La sola reproducción de atribuciones legales no acredita que estén integradas en los procesos de la organización.",
+          expected_result:
+            "Un mapa verificable que vincule las funciones pertinentes del DPO con actividades, responsabilidades y áreas de coordinación. La evaluación debe identificar funciones cubiertas, ámbitos pendientes y posibles superposiciones, sin atribuir al DPO la ejecución exclusiva de tareas que corresponden a otras áreas.",
+        },
+        {
+          evidence_item: "carta o marco operativo DPO",
+          review_guide:
+            "Corresponde verificar que el marco operativo traduzca las funciones asignadas al DPO en mecanismos de participación y coordinación con las áreas responsables. Debe establecer cómo interviene en materias de derechos, riesgos, EIPD, capacitación, supervisión y relación con la Agencia, según los procesos aplicables. Su contenido debe ser coherente con la matriz funcional y preservar la autonomía del DPO.",
+          no_evidence_guidance:
+            "La revisión puede apoyarse en instrucciones internas, procedimientos o acuerdos organizacionales que describan las responsabilidades y relaciones de trabajo. Es necesario diferenciar la falta de una carta operativa específica de la ausencia de reglas funcionales. Si existen responsabilidades dispersas, debe comprobarse si permiten una coordinación efectiva y evitan instrucciones incompatibles con la autonomía del DPO.",
+          expected_result:
+            "Una definición operativa coherente de las funciones del DPO, sus relaciones de coordinación y los mecanismos que permiten ejercerlas. Deben quedar identificadas las reglas acreditadas y las brechas que impidan traducir el mapa funcional en participación efectiva, sin exigir un documento autónomo con formato único.",
+        },
+        {
+          evidence_item: "validación inicial D1.09 si está disponible",
+          review_guide:
+            "Los resultados disponibles de D1.09 deben contrastarse con el mapa funcional propuesto, especialmente en materias de autonomía, conflictos de funciones, idoneidad, recursos y acceso a información. Corresponde identificar si las brechas detectadas condicionan alguna responsabilidad operativa y si el modelo contempla medidas concretas para abordarlas. La validación inicial funciona como antecedente, no como sustituto del mapeo.",
+          no_evidence_guidance:
+            "Debe establecerse si D1.09 fue realizada y si sus conclusiones están disponibles. Cuando no exista un resultado accesible, la evaluación puede sustentarse en antecedentes organizacionales actuales, dejando constancia de esa limitación. Las brechas conocidas no deben considerarse resueltas por el solo hecho de incorporar una función en la matriz o mencionarla en el marco operativo.",
+          expected_result:
+            "Una conclusión trazable sobre la incorporación de los hallazgos de D1.09 al modelo funcional, identificando brechas atendidas, pendientes y su efecto sobre el ejercicio del DPO. Si la validación inicial no está disponible, debe quedar identificado ese antecedente y la base alternativa utilizada, sin presumir incumplimiento automático.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "organize-cadence",
       related_activity_keys: ["dpo.initial_governance_validation"],
@@ -217,6 +317,26 @@ export const DPO_OPERATING_MODEL_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "cadencia de reuniones o seguimiento",
         "carta o marco operativo DPO",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "cadencia de reuniones o seguimiento",
+          review_guide:
+            "La evidencia debe permitir identificar cómo se organiza el seguimiento periódico del trabajo del DPO, incluyendo instancias de coordinación, responsables, frecuencia prevista y asuntos sujetos a revisión. Corresponde comprobar que exista un mecanismo para registrar avances, decisiones y asuntos pendientes, y que la periodicidad sea coherente con las funciones, riesgos y necesidades de la organización. Las reuniones no deben considerarse el único medio válido de seguimiento.",
+          no_evidence_guidance:
+            "Pueden revisarse calendarios, planes de trabajo, registros de seguimiento o acuerdos internos que permitan acreditar una organización equivalente. Debe distinguirse entre falta de un calendario formal, seguimiento realizado sin trazabilidad suficiente y ausencia de un mecanismo definido. La existencia de reuniones ocasionales no demuestra por sí sola una cadencia operativa establecida.",
+          expected_result:
+            "Una conclusión trazable sobre la definición de instancias, periodicidad, responsables y mecanismos para revisar avances y asuntos pendientes. La evaluación debe identificar las condiciones que permiten mantener activo el trabajo del DPO y las brechas que podrían afectar su continuidad, sin imponer una frecuencia universal de reuniones.",
+        },
+        {
+          evidence_item: "carta o marco operativo DPO",
+          review_guide:
+            "Corresponde verificar que el marco operativo integre el seguimiento del DPO con sus funciones, la coordinación entre áreas y la rendición de resultados ante la autoridad correspondiente. Deben identificarse las responsabilidades de convocatoria o coordinación, los mecanismos para elevar asuntos relevantes y la forma en que se revisan compromisos y necesidades de ajuste. Estas reglas deben ser coherentes con la cadencia definida.",
+          no_evidence_guidance:
+            "La revisión puede apoyarse en instrucciones internas, planes de trabajo o acuerdos organizacionales que establezcan mecanismos equivalentes. Es necesario diferenciar la ausencia de una carta operativa específica de la falta efectiva de reglas de seguimiento y rendición. Si existen instancias periódicas, debe comprobarse que sus resultados puedan relacionarse con las funciones y responsabilidades del DPO.",
+          expected_result:
+            "Una definición verificable de cómo el modelo operativo mantiene la coordinación, el seguimiento y la rendición de resultados del DPO. Deben quedar identificadas las reglas acreditadas, su relación con las instancias de seguimiento y las brechas que dificulten mantener el modelo actualizado y operativo.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "final-confirmation",

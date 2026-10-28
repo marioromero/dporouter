@@ -103,6 +103,17 @@ export const DPO_ANNUAL_REPORT_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["expediente de designación"],
+      evidence_review_help: [
+        {
+          evidence_item: "expediente de designación",
+          review_guide:
+            "Corresponde verificar que exista una designación formal del DPO y que se encuentre vigente para el período objeto de rendición. El expediente debe permitir identificar a la persona designada, la autoridad que efectuó la designación y los antecedentes que acrediten su continuidad o eventuales modificaciones.",
+          no_evidence_guidance:
+            "Pueden revisarse resoluciones, comunicaciones institucionales, instrumentos de nombramiento o registros equivalentes que permitan acreditar la designación. Debe distinguirse entre un expediente no localizado, una designación que perdió vigencia y la ausencia efectiva de un DPO designado.",
+          expected_result:
+            "Existencia de un DPO formalmente designado y acreditable, con una autoridad designante identificable ante la cual corresponda rendir resultados. Si no existe designación, debe registrarse esa condición y seguir la ruta prevista por el protocolo, sin presumir automáticamente una infracción por falta de nombramiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "plan-gate",
       transitions: [
@@ -162,6 +173,17 @@ export const DPO_ANNUAL_REPORT_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["plan anual fechado"],
+      evidence_review_help: [
+        {
+          evidence_item: "plan anual fechado",
+          review_guide:
+            "Corresponde comprobar que exista un plan anual identificable y correspondiente al período cuyos resultados serán rendidos. Revisar su fecha, período de referencia y actividades previstas para determinar si permite contrastar lo planificado con lo efectivamente realizado.",
+          no_evidence_guidance:
+            "Pueden revisarse versiones aprobadas internamente, registros de planificación o antecedentes que permitan localizar el plan del período. Distinguir entre un plan existente pero no localizado, uno correspondiente a otro período y la ausencia efectiva de planificación anual.",
+          expected_result:
+            "El plan anual del período disponible como referencia para la rendición de resultados. Si no existe, registrar esa condición y seguir la derivación prevista hacia D1.13, sin intentar elaborar el plan dentro de esta actividad.",
+        },
+      ],
       help_text: [
         "Esta guía no elabora el plan: registra si existe y deriva a D1.13 cuando falta.",
       ],
@@ -195,6 +217,26 @@ export const DPO_ANNUAL_REPORT_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.reporting.execution_consolidated"),
       evidence_to_review: ["informe anual", "revisión de plan anual"],
+      evidence_review_help: [
+        {
+          evidence_item: "informe anual",
+          review_guide:
+            "Verificar que el informe reúna las actividades desarrolladas durante el período, su estado de ejecución y antecedentes que permitan comprender el avance del trabajo del DPO. La consolidación debe distinguir lo realizado, lo pendiente y lo modificado o reprogramado, sin confundir actividad ejecutada con resultado obtenido.",
+          no_evidence_guidance:
+            "Pueden revisarse reportes parciales, registros de seguimiento y otros antecedentes que permitan reconstruir la ejecución del período. Distinguir entre un informe no localizado, información dispersa aún no consolidada y ausencia efectiva de registros suficientes para rendir cuenta.",
+          expected_result:
+            "Una consolidación identificable de la ejecución anual, con información suficiente para examinar posteriormente resultados, pendientes y hallazgos. No se exige que todas las actividades estén finalizadas, sino que su situación pueda explicarse y contrastarse con la planificación.",
+        },
+        {
+          evidence_item: "revisión de plan anual",
+          review_guide:
+            "Contrastar las actividades y prioridades del plan anual correspondiente al período con la ejecución reflejada en el informe. Identificar actividades cumplidas, pendientes, modificadas o no realizadas y comprobar que las diferencias relevantes cuenten con una explicación verificable.",
+          no_evidence_guidance:
+            "Pueden revisarse matrices de seguimiento, anotaciones sobre el plan, versiones de trabajo o registros equivalentes que documenten la comparación. Distinguir entre una revisión efectuada sin respaldo localizado y la ausencia de contraste entre lo planificado y lo ejecutado.",
+          expected_result:
+            "Una correspondencia trazable entre el plan anual y la ejecución consolidada, incluyendo desviaciones relevantes y su situación. La revisión no debe convertirse en una nueva elaboración del plan ni presumir incumplimiento por toda actividad pendiente o reprogramada.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "identify-findings",
       provenance: "legal_requirement",
@@ -211,6 +253,26 @@ export const DPO_ANNUAL_REPORT_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.reporting.findings_identified"),
       evidence_to_review: ["informe anual", "revisión de resultados"],
+      evidence_review_help: [
+        {
+          evidence_item: "informe anual",
+          review_guide:
+            "Corresponde verificar que el informe exponga los principales resultados del trabajo del DPO, los asuntos pendientes y los riesgos o hallazgos relevantes del período. La información debe permitir comprender avances y dificultades, diferenciando los resultados obtenidos de las actividades simplemente realizadas.",
+          no_evidence_guidance:
+            "Pueden revisarse informes parciales, registros de supervisión, comunicaciones o antecedentes de seguimiento que permitan reconstruir los resultados del período. Distinguir entre un informe no localizado, información todavía dispersa y ausencia de antecedentes suficientes para sustentar la rendición.",
+          expected_result:
+            "Un informe que presente una síntesis verificable de resultados, pendientes y aspectos relevantes del período. La ausencia de hallazgos negativos puede ser válida si responde a una revisión efectuada y no a la omisión de su evaluación.",
+        },
+        {
+          evidence_item: "revisión de resultados",
+          review_guide:
+            "Verificar que los resultados declarados hayan sido contrastados con antecedentes disponibles y que pendientes, riesgos y principales hallazgos estén suficientemente caracterizados. Comprobar que las conclusiones sean coherentes con el trabajo realizado y que las cuestiones relevantes no queden ocultas bajo una enumeración de tareas.",
+          no_evidence_guidance:
+            "Pueden revisarse registros de seguimiento, evaluaciones internas, antecedentes de incidentes o comunicaciones que respalden las conclusiones. Distinguir entre una revisión realizada sin constancia localizada y la falta efectiva de análisis de resultados, riesgos o pendientes.",
+          expected_result:
+            "Una revisión trazable que sustente los resultados comunicados e identifique los asuntos que requieren atención o seguimiento. No se exige que existan riesgos nuevos o hallazgos adversos, sino que los aspectos pertinentes hayan sido examinados y documentados razonablemente.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "prepare-rendering",
       provenance: "legal_requirement",
@@ -227,6 +289,26 @@ export const DPO_ANNUAL_REPORT_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.reporting.rendering_prepared"),
       evidence_to_review: ["informe anual", "evidencia de presentación"],
+      evidence_review_help: [
+        {
+          evidence_item: "informe anual",
+          review_guide:
+            "Corresponde verificar que el informe reúna los resultados del trabajo del DPO durante el período, incluidos avances, pendientes y principales asuntos que deban comunicarse a la autoridad designante. Identificar el período rendido y comprobar que el documento sea suficientemente claro para sustentar la presentación.",
+          no_evidence_guidance:
+            "Pueden revisarse versiones del informe, antecedentes de consolidación o documentos equivalentes que contengan la rendición de resultados. Distinguir entre un informe no localizado, una rendición todavía en preparación y la ausencia efectiva de un documento o contenido suficiente para rendir cuenta.",
+          expected_result:
+            "Una rendición de resultados preparada y sustentada en antecedentes verificables, correspondiente al período evaluado. Su sola elaboración no acredita que haya sido presentada a la autoridad competente.",
+        },
+        {
+          evidence_item: "evidencia de presentación",
+          review_guide:
+            "Verificar que la rendición de resultados haya sido comunicada efectivamente a la autoridad que designó al DPO, identificando destinatario, fecha y documento o contenido presentado. El respaldo debe permitir distinguir una entrega realizada de una comunicación pendiente o meramente prevista.",
+          no_evidence_guidance:
+            "Pueden revisarse correos institucionales, constancias de entrega, actas de reunión o registros equivalentes. Diferenciar entre una presentación efectuada sin respaldo localizado, una entrega dirigida a un destinatario distinto y la ausencia efectiva de rendición ante la autoridad designante.",
+          expected_result:
+            "Una constancia verificable de que los resultados del período fueron rendidos ante la autoridad que designó al DPO. No se exige aprobación formal, reunión presencial ni un medio documental único, salvo que una regla aplicable al caso disponga algo adicional.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "record-decisions",
       provenance: "legal_requirement",
@@ -243,6 +325,17 @@ export const DPO_ANNUAL_REPORT_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.reporting.decisions_recorded"),
       evidence_to_review: ["acuerdos o instrucciones resultantes"],
+      evidence_review_help: [
+        {
+          evidence_item: "acuerdos o instrucciones resultantes",
+          review_guide:
+            "Corresponde verificar si, a raíz de la rendición, la autoridad designante adoptó decisiones, formuló instrucciones o acordó medidas de seguimiento. Cuando existan, revisar que su contenido, fecha y responsables pertinentes puedan identificarse mediante un registro o comunicación verificable.",
+          no_evidence_guidance:
+            "Pueden revisarse actas, correos institucionales, comunicaciones de la autoridad o registros de seguimiento relacionados con la rendición. Distinguir entre decisiones adoptadas sin respaldo localizado, decisiones pendientes de formalización y una rendición que efectivamente no generó acuerdos ni instrucciones.",
+          expected_result:
+            "Un registro trazable de las decisiones o instrucciones que efectivamente resultaron de la rendición, cuando las haya. Si no se adoptaron, dejar constancia que permita justificar esa circunstancia conforme a las opciones del nodo, sin exigir acuerdos inexistentes ni confundir su ausencia con la falta de rendición.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "diffuse-results",
       provenance: "legal_requirement",
@@ -259,6 +352,17 @@ export const DPO_ANNUAL_REPORT_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.reporting.diffused"),
       evidence_to_review: ["evidencia de difusión"],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia de difusión",
+          review_guide:
+            "Corresponde verificar que los resultados del trabajo del DPO hayan sido comunicados internamente, identificando el contenido difundido, la fecha, el canal y los destinatarios pertinentes. La comunicación debe permitir conocer los principales resultados y asuntos que requieren atención, respetando las restricciones de confidencialidad aplicables.",
+          no_evidence_guidance:
+            "Pueden revisarse correos institucionales, publicaciones internas, actas de reuniones o registros equivalentes que acrediten la comunicación. Distinguir entre una difusión realizada sin respaldo localizado, una comunicación que no alcanzó a los destinatarios pertinentes y la ausencia efectiva de difusión de resultados.",
+          expected_result:
+            "Una constancia verificable de la difusión interna de los resultados del período, con alcance suficiente para que las áreas pertinentes conozcan las conclusiones y eventuales instrucciones que les correspondan. Esta evidencia no acredita la difusión previa del plan anual ni exige comunicar indiscriminadamente información reservada.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "final-confirmation",
       provenance: "legal_requirement",

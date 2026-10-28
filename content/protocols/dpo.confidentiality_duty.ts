@@ -103,6 +103,17 @@ export const DPO_CONFIDENTIALITY_DUTY_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["expediente de designación"],
+      evidence_review_help: [
+        {
+          evidence_item: "expediente de designación",
+          review_guide:
+            "La documentación debe permitir identificar a la persona natural que ejerce actualmente la función de DPO, la autoridad que formalizó su designación y la fecha desde la cual produce efectos. Corresponde contrastar estos antecedentes con la situación organizacional vigente, incluyendo eventuales sustituciones o términos de funciones, para determinar a quién debe vincularse la revisión del deber de confidencialidad.",
+          no_evidence_guidance:
+            "Pueden revisarse actos de designación, contratos, comunicaciones institucionales u otros antecedentes equivalentes que permitan acreditar la designación. Debe distinguirse entre falta de un expediente formal, respaldo no localizado y ausencia efectiva de un DPO designado. La realización informal de tareas de protección de datos no debe considerarse prueba suficiente de una designación vigente.",
+          expected_result:
+            "Una conclusión trazable sobre la existencia y vigencia de la designación, con identificación de la persona que ejerce la función y de los antecedentes que la acreditan. Si no se confirma una designación vigente, debe quedar registrada esa situación como antecedente pendiente antes de evaluar la formalización y los controles específicos de confidencialidad del DPO.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "verify-obligation",
       transitions: [
@@ -136,6 +147,26 @@ export const DPO_CONFIDENTIALITY_DUTY_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "cláusula, compromiso o instrumento aplicable",
         "revisión contractual",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "cláusula, compromiso o instrumento aplicable",
+          review_guide:
+            "La evidencia debe permitir identificar la fuente del deber de secreto, reserva o confidencialidad que alcanza al DPO y, cuando exista, el instrumento que lo recoge o desarrolla. Corresponde verificar su aplicabilidad a la persona designada y su alcance respecto de los datos personales y otras materias protegidas conocidas en ejercicio de sus funciones. El deber establecido directamente por la normativa no depende de la firma de una cláusula autónoma.",
+          no_evidence_guidance:
+            "Pueden revisarse disposiciones legales, contratos, compromisos, reglamentos o políticas internas que permitan establecer el deber aplicable. Debe distinguirse entre ausencia de un instrumento específico, falta de constancia documental y falta de identificación de la obligación correspondiente. No debe concluirse que el deber legal es inexistente solo porque no se encuentre una cláusula firmada.",
+          expected_result:
+            "Una conclusión fundada sobre la fuente, vigencia, alcance y aplicabilidad del deber de confidencialidad al DPO. Deben quedar identificados los instrumentos existentes y las eventuales brechas de formalización o claridad, sin presentar una cláusula independiente como requisito universal.",
+        },
+        {
+          evidence_item: "revisión contractual",
+          review_guide:
+            "Corresponde contrastar la relación jurídica del DPO —interna, externa o funcionaria, según corresponda— con las obligaciones de confidencialidad que resulten aplicables. La revisión debe identificar cláusulas, remisiones normativas o condiciones contractuales pertinentes, y verificar que no existan contradicciones con las funciones legítimas de comunicación, coordinación y relación con autoridades que ejerce el DPO.",
+          no_evidence_guidance:
+            "Es posible recurrir a antecedentes laborales, de prestación de servicios, de nombramiento o de régimen funcionario, según la modalidad de designación. Debe diferenciarse la inexistencia de un contrato individual, su falta de disponibilidad y la ausencia de una revisión documentada. En particular, no corresponde exigir un contrato privado a quien está sujeto a un régimen estatutario.",
+          expected_result:
+            "Una evaluación trazable de la relación jurídica y de las condiciones de confidencialidad aplicables al DPO, con identificación de concordancias, contradicciones y aspectos que requieran aclaración o formalización. El resultado debe servir de base para las actividades posteriores sin confundir revisión contractual con aceptación expresa del deber.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "formalize-instrument",
@@ -194,6 +225,26 @@ export const DPO_CONFIDENTIALITY_DUTY_PROTOCOL: ExecutionProtocol = {
         "cláusula, compromiso o instrumento aplicable",
         "evidencia de aceptación",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "cláusula, compromiso o instrumento aplicable",
+          review_guide:
+            "Corresponde determinar si el instrumento aplicable al DPO ya contempla suficientemente el deber de secreto, reserva o confidencialidad, considerando los datos personales y las demás materias protegidas conocidas en el ejercicio de sus funciones. Si el deber está adecuadamente recogido, debe quedar documentado el fundamento para no incorporar una formalización adicional. Si existen vacíos relevantes, corresponde identificar el instrumento interno o contractual que permita subsanarlos.",
+          no_evidence_guidance:
+            "Pueden contrastarse contratos, actos de designación, reglamentos, políticas o disposiciones normativas aplicables. Debe distinguirse entre un instrumento existente que no fue localizado, una obligación legal identificada sin formalización interna suficiente y una formalización adicional innecesaria por estar ya cubierta. La ausencia de una cláusula autónoma no elimina el deber establecido por la ley.",
+          expected_result:
+            "Una decisión trazable sobre la necesidad de formalización adicional: instrumento existente suficiente, formalización realizada o brecha pendiente. Cuando se acredite que el deber ya está contenido adecuadamente y no corresponde una actuación adicional, debe sustentarse la opción «No aplica» prevista en el nodo, sin modificar sus reglas de evaluación.",
+        },
+        {
+          evidence_item: "evidencia de aceptación",
+          review_guide:
+            "La revisión debe establecer si existe constancia pertinente de que el DPO recibió, conoció o aceptó el instrumento de confidencialidad cuando esa formalización corresponda. Pueden considerarse firmas, comunicaciones con acuse, registros de incorporación u otros medios equivalentes, según la relación jurídica y el procedimiento aplicable. No debe exigirse una aceptación separada cuando el deber ya esté suficientemente incorporado y no se requiera formalización adicional.",
+          no_evidence_guidance:
+            "Es importante diferenciar la falta de constancia de aceptación, la inexistencia de un procedimiento que la requiera y los casos en que la formalización adicional fue descartada fundadamente. Si se requiere aceptación y no puede acreditarse, debe identificarse esa brecha. La falta de firma no implica por sí misma que el deber legal sea inexistente o inexigible.",
+          expected_result:
+            "Una conclusión verificable sobre la constancia de conocimiento o aceptación cuando resulte pertinente, o sobre su falta de aplicabilidad debidamente justificada. Si el instrumento existente ya cubre el deber y no corresponde una nueva aceptación, el resultado debe ser coherente con la decisión fundada de «No aplica», sin crear requisitos documentales adicionales.",
+        },
+      ],
       help_text: [
         "Solo cuando corresponda formalizar. Si el instrumento aplicable ya contiene el deber, verifica y marca No aplica en este caso.",
       ],
@@ -216,6 +267,26 @@ export const DPO_CONFIDENTIALITY_DUTY_PROTOCOL: ExecutionProtocol = {
         "cláusula, compromiso o instrumento aplicable",
         "evidencia de aceptación",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "cláusula, compromiso o instrumento aplicable",
+          review_guide:
+            "Verificar que el deber aplicable al DPO comprenda los datos personales y las demás materias sujetas a secreto, reserva o confidencialidad conocidas en ejercicio de sus funciones. Contrastar el alcance del instrumento con las disposiciones normativas pertinentes.",
+          no_evidence_guidance:
+            "Revisar contratos, reglamentos, políticas o disposiciones aplicables. Distinguir la falta de un instrumento específico de un alcance insuficiente; el deber legal no desaparece por ausencia de cláusula.",
+          expected_result:
+            "Alcance del deber identificado y respaldado, con eventuales omisiones o ambigüedades registradas para su corrección.",
+        },
+        {
+          evidence_item: "evidencia de aceptación",
+          review_guide:
+            "Comprobar, cuando corresponda, que la constancia de conocimiento o aceptación del DPO se refiera al instrumento que contiene el alcance completo del deber, sin limitarlo solo a datos personales.",
+          no_evidence_guidance:
+            "Revisar firmas, acuses o registros equivalentes. Diferenciar la falta de constancia de aceptación de los casos en que no se requiere una aceptación separada.",
+          expected_result:
+            "Constancia pertinente del conocimiento o aceptación del alcance aplicable, o justificación documentada de por qué no corresponde una aceptación adicional.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "verify-measures",
       provenance: "legal_requirement",
@@ -232,6 +303,17 @@ export const DPO_CONFIDENTIALITY_DUTY_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.confidentiality.measures_verified"),
       evidence_to_review: ["controles organizacionales relacionados"],
+      evidence_review_help: [
+        {
+          evidence_item: "controles organizacionales relacionados",
+          review_guide:
+            "La revisión debe comprobar que existan medidas concretas para proteger la información conocida por el DPO en sus funciones, como permisos adecuados, canales seguros, custodia documental y reglas de comunicación o conservación, según los riesgos y la organización. Verificar tanto su definición como su aplicación; la presencia del deber en una cláusula no acredita por sí sola estos controles.",
+          no_evidence_guidance:
+            "Contrastar políticas, configuraciones de acceso, procedimientos o registros de aplicación. Distinguir entre medidas existentes sin respaldo suficiente, controles definidos pero no implementados y ausencia efectiva de protección, sin exigir una tecnología o documento único.",
+          expected_result:
+            "Una conclusión verificable sobre los controles existentes y su aplicación al trabajo del DPO, con brechas y medidas pendientes identificadas. Las medidas deben proteger la confidencialidad sin impedir el acceso legítimo a información necesaria ni las comunicaciones autorizadas propias de sus funciones.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "final-confirmation",
       provenance: "legal_requirement",

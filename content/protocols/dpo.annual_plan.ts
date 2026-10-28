@@ -106,6 +106,17 @@ export const DPO_ANNUAL_PLAN_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["expediente de designación"],
+      evidence_review_help: [
+        {
+          evidence_item: "expediente de designación",
+          review_guide:
+            "Corresponde verificar que exista una designación vigente del DPO, identificando a la persona natural que ejerce la función, la autoridad designante y la fecha de efecto. Contrastar estos antecedentes con posibles sustituciones o términos de funciones para establecer a quién corresponde desarrollar el plan anual.",
+          no_evidence_guidance:
+            "Pueden revisarse actos de designación, contratos, comunicaciones institucionales u otros respaldos equivalentes. Distinguir entre un expediente no localizado, documentación incompleta y ausencia efectiva de designación; el ejercicio informal de tareas de protección de datos no acredita por sí solo un DPO designado.",
+          expected_result:
+            "Una conclusión trazable sobre la existencia y vigencia de la designación, con identificación del DPO y sus antecedentes de respaldo. Si no se confirma, registrar esa situación como condición pendiente antes de evaluar el plan anual.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "review-risks",
       transitions: [
@@ -140,6 +151,26 @@ export const DPO_ANNUAL_PLAN_PROTOCOL: ExecutionProtocol = {
         "plan anual fechado",
         "modelo operativo si está disponible",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "plan anual fechado",
+          review_guide:
+            "La revisión debe establecer si las prioridades del plan se sustentan en riesgos, hallazgos, cambios normativos u operacionales y necesidades relevantes del período. Contrastar los objetivos previstos con esos antecedentes y verificar que el plan identifique el período, en vez de ser solo una lista genérica de actividades.",
+          no_evidence_guidance:
+            "Pueden revisarse borradores, evaluaciones de riesgos, informes de hallazgos o registros de planificación que permitan reconstruir las prioridades consideradas. Distinguir entre un plan no localizado, una planificación aún en elaboración y la ausencia de una revisión de base documentada.",
+          expected_result:
+            "Prioridades del período identificadas y vinculadas con antecedentes verificables, con riesgos o hallazgos relevantes no considerados registrados. La revisión debe permitir determinar si existe una base suficiente para definir las actividades del plan anual.",
+        },
+        {
+          evidence_item: "modelo operativo si está disponible",
+          review_guide:
+            "Cuando exista un modelo operativo del DPO, corresponde contrastar sus funciones, mecanismos de coordinación y seguimiento con las prioridades propuestas para el período. Considerar también las brechas operativas pendientes que puedan requerir actividades específicas en el plan anual, sin dar por resueltas por su sola mención en el plan.",
+          no_evidence_guidance:
+            "La planificación puede apoyarse en la designación, las funciones aplicables y otros antecedentes organizacionales disponibles. La falta del modelo operativo no constituye por sí sola incumplimiento de esta actividad; identificarla solo si impide fundamentar o coordinar prioridades relevantes.",
+          expected_result:
+            "Una conclusión sobre la coherencia entre las prioridades anuales y el modelo operativo disponible, señalando ajustes o brechas pendientes. Si el modelo no existe o no está disponible, dejar identificado el fundamento alternativo utilizado para planificar.",
+        },
+      ],
       help_text: [
         "Si el modelo operativo está disponible, úsalo como insumo: orienta la planificación anual.",
       ],
@@ -160,6 +191,17 @@ export const DPO_ANNUAL_PLAN_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.plan.objectives_defined"),
       evidence_to_review: ["plan anual fechado"],
+      evidence_review_help: [
+        {
+          evidence_item: "plan anual fechado",
+          review_guide:
+            "Corresponde verificar que el plan establezca objetivos y actividades concretas para el período, vinculados con las funciones del DPO y las prioridades previamente identificadas. Deben reconocerse acciones de asesoramiento, supervisión, capacitación, gestión de riesgos u otras pertinentes, según las necesidades de la organización, sin atribuir al DPO la ejecución de obligaciones propias del responsable u otras áreas.",
+          no_evidence_guidance:
+            "Pueden revisarse borradores, cronogramas o registros de planificación que permitan acreditar objetivos y actividades definidos. Distinguir entre un plan no localizado, actividades dispersas sin planificación integrada y ausencia efectiva de objetivos para el período.",
+          expected_result:
+            "Un conjunto identificable de objetivos y actividades anuales, coherente con los riesgos y obligaciones aplicables, que permita orientar y posteriormente revisar el trabajo del DPO. Señalar las brechas sin considerar que una actividad genérica o una mera intención constituye planificación suficiente.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "define-owners",
       provenance: "legal_requirement",
@@ -202,6 +244,17 @@ export const DPO_ANNUAL_PLAN_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["plan anual fechado"],
+      evidence_review_help: [
+        {
+          evidence_item: "plan anual fechado",
+          review_guide:
+            "Corresponde verificar si las actividades del plan requieren responsables de coordinación, plazos o hitos que faciliten su ejecución y seguimiento. Cuando sean pertinentes, deben estar suficientemente identificados y ser coherentes con las funciones del DPO y la participación de otras áreas; no todas las actividades necesitan el mismo nivel de detalle.",
+          no_evidence_guidance:
+            "Pueden revisarse cronogramas, acuerdos de coordinación o registros complementarios al plan. Distinguir entre responsabilidades no documentadas, actividades sin seguimiento y casos en que asignar responsables o hitos adicionales no aporta valor por la naturaleza de la actividad.",
+          expected_result:
+            "Responsables e hitos identificados cuando sean necesarios, o una justificación verificable para seleccionar «No aplica». Registrar las omisiones relevantes: la falta de información por sí sola no justifica descartar su aplicación.",
+        },
+      ],
       help_text: [
         "Solo cuando corresponda. En caso contrario marca No aplica en este caso.",
       ],
@@ -220,6 +273,17 @@ export const DPO_ANNUAL_PLAN_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.plan.presented"),
       evidence_to_review: ["evidencia de presentación"],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia de presentación",
+          review_guide:
+            "Corresponde verificar que el plan anual haya sido comunicado a la autoridad pertinente, identificando destinatario, fecha y versión presentada. Contrastar el respaldo con la línea de reporte del DPO y distinguir esta presentación de la rendición posterior de resultados.",
+          no_evidence_guidance:
+            "Pueden revisarse correos institucionales, actas, registros de entrega o comunicaciones equivalentes. Diferenciar entre una presentación realizada sin respaldo localizado, un plan aún pendiente de comunicar y la ausencia efectiva de presentación; no exigir un acta ni una aprobación formal como único medio válido.",
+          expected_result:
+            "Constancia verificable de la presentación del plan ante la autoridad correspondiente, o identificación de la gestión pendiente y sus antecedentes. La comunicación no acredita por sí sola aprobación formal ni rendición anual de resultados.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "diffuse-plan",
       provenance: "legal_requirement",
@@ -235,6 +299,17 @@ export const DPO_ANNUAL_PLAN_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.plan.diffused"),
       evidence_to_review: ["evidencia de difusión"],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia de difusión",
+          review_guide:
+            "La evidencia debe permitir comprobar que el plan anual vigente fue difundido internamente, identificando la versión, fecha, canal y destinatarios. Verificar que alcanzó a las áreas pertinentes para conocer las actividades previstas y coordinar su participación, sin exigir un medio único.",
+          no_evidence_guidance:
+            "Pueden revisarse correos institucionales, publicaciones internas, actas de reuniones o registros equivalentes. Distinguir entre una difusión realizada sin respaldo localizado, una comunicación limitada que no alcanzó a los destinatarios pertinentes y la ausencia efectiva de difusión.",
+          expected_result:
+            "Una constancia verificable de la difusión interna del plan anual, con su alcance y eventuales brechas de comunicación identificados. La difusión del plan no acredita por sí sola la comunicación posterior de los resultados de su ejecución.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "final-confirmation",
       provenance: "legal_requirement",

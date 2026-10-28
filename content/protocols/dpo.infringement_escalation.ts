@@ -111,6 +111,17 @@ export const DPO_INFRINGEMENT_ESCALATION_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["expediente de designación"],
+      evidence_review_help: [
+        {
+          evidence_item: "expediente de designación",
+          review_guide:
+            "Corresponde comprobar que exista una designación formal y vigente del DPO, identificando a la persona designada y la autoridad ante la cual rinde cuenta. Revisar los antecedentes de nombramiento y eventuales modificaciones para determinar quién debe ejercer el deber de comunicación directa.",
+          no_evidence_guidance:
+            "Pueden revisarse resoluciones, instrumentos de designación, comunicaciones institucionales o registros equivalentes que acrediten el nombramiento. Debe distinguirse entre un expediente no localizado, una designación cuya vigencia no está clara y la ausencia efectiva de un DPO designado.",
+          expected_result:
+            "Una designación vigente y acreditable, con identificación del DPO y de la autoridad correspondiente para el escalamiento. Si no existe designación, registrar esa situación y seguir la ruta prevista por el protocolo, sin presumir automáticamente una infracción por falta de nombramiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "case-gate",
       transitions: [
@@ -170,6 +181,17 @@ export const DPO_INFRINGEMENT_ESCALATION_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["antecedentes del caso conocido por el DPO"],
+      evidence_review_help: [
+        {
+          evidence_item: "antecedentes del caso conocido por el DPO",
+          review_guide:
+            "Corresponde identificar los hechos o comunicaciones que llegaron al conocimiento del DPO, su origen y la fecha en que fueron conocidos, cuando estos datos estén disponibles. Revisar si contienen elementos concretos que permitan advertir una posible infracción, diferenciando hechos conocidos, indicios e información aún no confirmada.",
+          no_evidence_guidance:
+            "Pueden revisarse comunicaciones recibidas, denuncias internas, registros de incidentes, entrevistas o antecedentes de supervisión que permitan reconstruir cómo se conoció el caso. Distinguir entre información existente pero no localizada, una referencia vaga sin elementos suficientes y la ausencia efectiva de un caso conocido por el DPO.",
+          expected_result:
+            "Antecedentes identificables que permitan determinar si existe un caso que deba continuar hacia la evaluación y comunicación previstas en el protocolo. No se exige una investigación concluida ni una infracción definitivamente acreditada, pero tampoco debe calificarse automáticamente cualquier rumor como un caso comunicable.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "register-case",
       transitions: [
@@ -202,6 +224,26 @@ export const DPO_INFRINGEMENT_ESCALATION_PROTOCOL: ExecutionProtocol = {
         "antecedentes remitidos",
         "revisión de antecedentes",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "antecedentes remitidos",
+          review_guide:
+            "Corresponde verificar que los antecedentes del caso estén identificados y registrados de manera que permitan reconocer los hechos conocidos por el DPO, su origen y la información disponible. Si ya fueron remitidos, comprobar qué documentación se incluyó y conservar la distinción entre el registro inicial y la comunicación posterior a la autoridad.",
+          no_evidence_guidance:
+            "Pueden revisarse comunicaciones recibidas, registros de incidentes, denuncias internas o documentos equivalentes que permitan reconstruir el antecedente. Distinguir entre información existente pero no localizada, antecedentes todavía no organizados y ausencia efectiva de un registro suficiente del caso.",
+          expected_result:
+            "Antecedentes identificables y trazables, disponibles para sustentar la evaluación y eventual comunicación del caso. No se exige que la remisión a la autoridad ya haya ocurrido en esta etapa ni que los hechos estén definitivamente acreditados.",
+        },
+        {
+          evidence_item: "revisión de antecedentes",
+          review_guide:
+            "Verificar que los antecedentes conocidos hayan sido examinados para identificar los hechos relevantes, las fuentes disponibles y los aspectos que requieren aclaración. La revisión debe permitir diferenciar información comprobada, indicios e incertidumbres, sin adelantar una conclusión definitiva sobre la existencia de una infracción.",
+          no_evidence_guidance:
+            "Pueden revisarse notas de análisis, entrevistas, comunicaciones internas o registros equivalentes que reflejen la revisión realizada. Distinguir entre una revisión efectuada sin respaldo localizado y la ausencia de examen suficiente de los antecedentes disponibles.",
+          expected_result:
+            "Una revisión trazable que permita comprender qué antecedentes fueron considerados y qué cuestiones permanecen abiertas. No se exige cerrar la investigación ni resolver anticipadamente la calificación jurídica del caso para dejar constancia de su conocimiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "determine-facts",
       provenance: "legal_requirement",
@@ -220,6 +262,26 @@ export const DPO_INFRINGEMENT_ESCALATION_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "antecedentes remitidos",
         "revisión de evidencia",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "antecedentes remitidos",
+          review_guide:
+            "Corresponde comprobar que los antecedentes del caso permitan identificar los hechos conocidos, las circunstancias relevantes y la disposición de protección de datos potencialmente afectada. Distinguir la información comprobada de los indicios o afirmaciones pendientes de verificación, sin presentar la calificación jurídica preliminar como una conclusión definitiva.",
+          no_evidence_guidance:
+            "Pueden revisarse comunicaciones, registros del caso, documentos recibidos o antecedentes equivalentes que permitan reconstruir los hechos y su posible relevancia normativa. Distinguir entre información no localizada, antecedentes incompletos y ausencia de elementos suficientes para describir razonablemente el caso.",
+          expected_result:
+            "Antecedentes organizados que permitan comunicar los hechos y la norma potencialmente comprometida, indicando las incertidumbres relevantes. No se exige que la investigación esté concluida ni que exista una resolución que declare formalmente la infracción.",
+        },
+        {
+          evidence_item: "revisión de evidencia",
+          review_guide:
+            "Verificar que la evidencia disponible haya sido examinada para sustentar la descripción de los hechos y la identificación preliminar de la norma posiblemente afectada. La revisión debe reconocer fuentes, contradicciones y aspectos todavía pendientes, evitando conclusiones categóricas que excedan lo acreditado.",
+          no_evidence_guidance:
+            "Pueden revisarse notas de análisis, entrevistas, registros de supervisión o antecedentes que reflejen el examen realizado. Distinguir entre una revisión efectuada sin constancia localizada y la ausencia de evaluación suficiente de la evidencia disponible.",
+          expected_result:
+            "Una revisión trazable que permita comprender por qué los hechos podrían constituir una infracción y qué aspectos requieren aclaración. La evaluación debe ser suficiente para sustentar el escalamiento cuando corresponda, sin sustituir una investigación posterior ni retrasar injustificadamente la comunicación.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "communicate-authority",
@@ -241,6 +303,35 @@ export const DPO_INFRINGEMENT_ESCALATION_PROTOCOL: ExecutionProtocol = {
         "fecha y destinatario",
         "modelo operativo si existe",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "registro de comunicación",
+          review_guide:
+            "Verificar que exista constancia de una comunicación realizada directamente por el DPO a la autoridad ante la cual rinde cuenta, con antecedentes suficientes para comprender el caso comunicado. Comprobar que el registro distinga la comunicación efectiva de un borrador, una recomendación interna o una gestión dirigida solo a intermediarios.",
+          no_evidence_guidance:
+            "Pueden revisarse correos enviados, comunicaciones institucionales, registros de reuniones, constancias de entrega u otros medios que acrediten la comunicación directa. Distinguir entre una comunicación efectuada sin respaldo localizado, una comunicación pendiente y actuaciones preparatorias que por sí solas no acreditan el cumplimiento del deber.",
+          expected_result:
+            "Una constancia verificable de que el DPO comunicó directamente a la autoridad correspondiente los hechos y la posible infracción conocidos, con las incertidumbres pertinentes. No se exige un formato universal ni una investigación concluida, pero la sola preparación del mensaje no equivale a su comunicación.",
+        },
+        {
+          evidence_item: "fecha y destinatario",
+          review_guide:
+            "Comprobar que puedan identificarse cuándo se efectuó la comunicación y quién la recibió, verificando que el destinatario corresponda a la autoridad ante la cual rinde cuenta el DPO. Contrastar estos datos con el registro de comunicación y, cuando exista, con el instrumento de designación o la estructura de reporte vigente.",
+          no_evidence_guidance:
+            "Pueden revisarse encabezados de correos, acuses de recibo, registros institucionales, actas o constancias equivalentes que permitan establecer fecha y destinatario. Si los datos no pueden corroborarse, registrar esa limitación sin presumir que la comunicación llegó a la autoridad correcta.",
+          expected_result:
+            "Fecha y destinatario identificables que permitan verificar la trazabilidad y el carácter directo de la comunicación. La evidencia debe distinguir a la autoridad correspondiente de otras personas u órganos informados, sin exigir un medio de envío específico.",
+        },
+        {
+          evidence_item: "modelo operativo si existe",
+          review_guide:
+            "Si existe un modelo operativo del DPO, revisar cómo identifica la línea de reporte y el canal de comunicación directa con la autoridad correspondiente. Contrastar esa referencia con la comunicación realizada, sin convertir el modelo en un requisito previo ni exigir un documento independiente.",
+          no_evidence_guidance:
+            "Puede consultarse el expediente de designación, la estructura institucional u otros antecedentes que permitan identificar a la autoridad ante la cual rinde cuenta el DPO. La falta de un modelo operativo documentado debe distinguirse de la falta de comunicación y no elimina ni suspende el deber legal de informar directamente.",
+          expected_result:
+            "Cuando exista, el modelo operativo aporta una referencia coherente para identificar el canal y destinatario de la comunicación directa. Si no existe, la verificación puede apoyarse en el registro de comunicación y la identificación de la autoridad competente, sin penalizar automáticamente esa ausencia.",
+        },
+      ],
       help_text: [
         "Si existe modelo operativo, su canal directo es el insumo; su ausencia no elimina el deber de comunicar.",
       ],
@@ -261,6 +352,17 @@ export const DPO_INFRINGEMENT_ESCALATION_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("dpo.escalation.measures"),
       evidence_to_review: ["medidas adoptadas o instruidas"],
+      evidence_review_help: [
+        {
+          evidence_item: "medidas adoptadas o instruidas",
+          review_guide:
+            "Verificar si, tras recibir la comunicación del DPO, la autoridad definió o instruyó medidas organizativas, funcionales o disciplinarias relacionadas con el caso y si quedaron registradas. Cuando existan, identificar su contenido, la autoridad que las dispuso y los responsables o plazos expresamente establecidos, sin presumir que deban concurrir todas las categorías.",
+          no_evidence_guidance:
+            "Pueden revisarse respuestas de la autoridad, actas, instrucciones internas, comunicaciones institucionales o registros de seguimiento que permitan determinar si se adoptaron decisiones. Distinguir entre medidas existentes sin respaldo localizado, decisiones pendientes y ausencia de medidas definidas, sin inventar instrucciones ni equiparar esta última situación automáticamente con incumplimiento.",
+          expected_result:
+            "Un registro trazable de las medidas efectivamente adoptadas o instruidas, cuando existan, que permita conocer su contenido y facilitar el seguimiento correspondiente. Si la autoridad no definió medidas, dejar constancia de esa circunstancia y reflejarla conforme a las opciones existentes, sin exigir decisiones ficticias ni trasladar al DPO la responsabilidad de adoptarlas.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "derive-findings",
       provenance: "legal_requirement",
@@ -317,6 +419,26 @@ export const DPO_INFRINGEMENT_ESCALATION_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "registro de comunicación",
         "medidas adoptadas o instruidas",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "registro de comunicación",
+          review_guide:
+            "Verificar que el registro de comunicación permita identificar el caso informado por el DPO y relacionarlo con la decisión de derivar su seguimiento al sistema de hallazgos. Si se descarta la derivación, comprobar que el fundamento se vincule con las características del caso, sin equiparar la comunicación a la autoridad con la apertura automática de un hallazgo.",
+          no_evidence_guidance:
+            "Pueden revisarse las comunicaciones enviadas a la autoridad, sus respuestas y los registros internos que permitan reconstruir el tratamiento posterior del caso. Distinguir entre una comunicación efectuada sin respaldo localizado, una decisión de seguimiento pendiente y un descarte de derivación sin fundamento documentado.",
+          expected_result:
+            "Trazabilidad entre el caso comunicado y su destino posterior: derivación al sistema de hallazgos cuando corresponda o descarte fundado. La comunicación directa a la autoridad no sustituye la derivación cuando esta resulta necesaria ni obliga a abrir un hallazgo en todos los casos.",
+        },
+        {
+          evidence_item: "medidas adoptadas o instruidas",
+          review_guide:
+            "Examinar las medidas efectivamente adoptadas o instruidas por la autoridad para determinar si requieren seguimiento mediante el sistema de hallazgos y, de ser así, comprobar su derivación. Si no existen medidas definidas o estas no requieren ese sistema, revisar el fundamento sin presumir que su ausencia excluye automáticamente el seguimiento.",
+          no_evidence_guidance:
+            "Pueden revisarse instrucciones de la autoridad, registros de decisiones, antecedentes del caso y constancias del sistema de hallazgos que permitan identificar si se dispuso seguimiento correctivo. Distinguir entre medidas existentes sin respaldo localizado, decisiones pendientes y una determinación fundada de que el sistema no corresponde al caso.",
+          expected_result:
+            "Cuando proceda, constancia que vincule las medidas o necesidades correctivas del caso con un seguimiento identificable en el sistema de hallazgos. Si no procede, se requiere fundamento suficiente para «No aplica»; no usar esa opción para ocultar una derivación pendiente o falta de información.",
+        },
       ],
       help_text: [
         "Solo cuando corresponda: si el caso no requiere seguimiento en hallazgos, marca No aplica en este caso.",

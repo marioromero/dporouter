@@ -89,6 +89,44 @@ export const MPI_LIFECYCLE_REVIEW_PROTOCOL: ExecutionProtocol = {
       help_text: [
         "Si el MPI llegó a adopción o a implementación, usa esa historia y evidencia como insumo de la revisión.",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "revisión de lifecycle",
+          review_guide:
+            "Contrastar el estado interno registrado del MPI con las decisiones, antecedentes de adopción e implementación y la situación organizacional actualmente acreditada. Comprobar que la revisión identifique el estado de partida, fecha y fundamentos, distinguiendo evaluación, adopción, implementación, operación y eventual discontinuación sin inferirlos de la certificación.",
+          no_evidence_guidance:
+            "Revisar el historial del MPI, registros de evaluación, decisiones de órganos competentes y verificaciones de componentes para reconstruir el estado que puede acreditarse. Si falta una revisión documentada, registrar esa ausencia y las comprobaciones pendientes, sin cambiar automáticamente el estado ni presumir adopción, implementación o discontinuación.",
+          expected_result:
+            "Una revisión trazable del ciclo de vida del MPI que identifique el estado registrado, la situación actual comprobada y los antecedentes que sustentan su continuidad o la necesidad de revisar su clasificación. El resultado permite valorar si corresponde mantener o actualizar el estado interno, sin confundir implementación con certificación ni deducir discontinuación solo de una certificación vencida.",
+        },
+        {
+          evidence_item: "evidencia de cambios",
+          review_guide:
+            "Examinar cambios organizacionales, operativos, contractuales o de gobierno y decisiones que puedan afectar responsables, recursos, componentes o continuidad efectiva del MPI. Verificar cuándo ocurrieron, quién los aprobó o comunicó y cómo inciden en la capacidad de mantener el programa, distinguiendo modificaciones ordinarias de decisiones formales de continuidad o discontinuación.",
+          no_evidence_guidance:
+            "Revisar actas, decisiones de dirección, reorganizaciones, cambios de responsables, modificaciones de procedimientos y comunicaciones internas para identificar antecedentes equivalentes o confirmar que no se detectaron cambios relevantes. Si hay indicios sin respaldo suficiente, registrar la información pendiente y su posible impacto, sin interpretar automáticamente una reorganización como discontinuación.",
+          expected_result:
+            "Cambios relevantes identificados y documentados, con evaluación de su impacto en la continuidad y componentes del MPI, o constancia fundada de que no se produjeron cambios relevantes. La revisión no exige evidencia de eventos inexistentes ni modifica el estado interno sin justificación.",
+        },
+        {
+          evidence_item: "historia de adopción si el MPI llegó a adopción",
+          review_guide:
+            "Si el MPI llegó a la etapa de adopción, revisar la decisión interna que la respaldó, su fecha, responsables y antecedentes posteriores que permitan comprender su continuidad. Contrastar la historia con los cambios organizacionales examinados, distinguiendo la decisión de adoptar el programa de su implementación efectiva y de la certificación administrativa.",
+          no_evidence_guidance:
+            "Revisar actas, acuerdos, aprobaciones, expedientes internos y registros históricos para localizar la decisión de adopción cuando conste que esa etapa ocurrió. Si el MPI nunca fue adoptado, registrar esta evidencia como no aplicable; si la adopción ocurrió pero falta respaldo, señalar la insuficiencia sin inventar decisiones ni fechas.",
+          expected_result:
+            "Una historia de adopción identificable y coherente con el ciclo de vida cuando esa etapa se alcanzó, que permita comprobar la decisión inicial y cambios posteriores que la afecten. Si el programa permaneció en evaluación, tratar esta evidencia como no aplicable, no como incumplimiento de una obligación de adopción.",
+        },
+        {
+          evidence_item: "evidencia de implementación si el MPI llegó a implementación",
+          review_guide:
+            "Si el MPI llegó a implementación, revisar antecedentes que acrediten la puesta en funcionamiento de sus componentes obligatorios y su continuidad operativa, conforme a las exigencias aplicables. Contrastar esa evidencia con cambios y decisiones posteriores para determinar si sigue implementado, presenta deficiencias que requieren revisión o fue objeto de discontinuación.",
+          no_evidence_guidance:
+            "Revisar el programa consolidado, evidencia de componentes, registros de funcionamiento, revisiones de brechas y decisiones internas para localizar antecedentes de implementación cuando esa etapa se alcanzó. Si el MPI no llegó a implementarse, registrar la evidencia como no aplicable; si llegó pero falta respaldo actual, señalar las comprobaciones pendientes sin deducir discontinuación automáticamente.",
+          expected_result:
+            "Evidencia suficiente y actualizada de implementación y continuidad operativa cuando se alcanzó esa etapa, con componentes funcionales y deficiencias o cambios relevantes identificados. La revisión permite distinguir un MPI implementado, uno con brechas de mantenimiento y uno formalmente discontinuado, sin equiparar la falta de certificación con falta de implementación.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "continuity-determination",
       related_activity_keys: [
@@ -131,6 +169,35 @@ export const MPI_LIFECYCLE_REVIEW_PROTOCOL: ExecutionProtocol = {
         "revisión de componentes",
         "revisión de decisiones internas",
         "decisión interna cuando corresponda",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "revisión de componentes",
+          review_guide:
+            "Comprobar si los componentes obligatorios del MPI que llegó a implementarse continúan operativos y cuentan con respaldo actualizado, incluyendo responsables, DPO, caracterización, matriz de riesgos, protocolos preventivos y mecanismos de reporte y control aplicables. Contrastar su funcionamiento real con el programa adoptado y los cambios organizacionales, distinguiendo continuidad efectiva de declaraciones o documentos históricos.",
+          no_evidence_guidance:
+            "Revisar el expediente consolidado del MPI, registros de implementación, verificaciones de componentes, antecedentes de funcionamiento y brechas identificadas para localizar respaldos actuales o precisar qué falta comprobar. Si la evidencia es insuficiente, registrar verificaciones pendientes y deficiencias sin inferir automáticamente discontinuación; si el MPI nunca llegó a implementarse, la falta de componentes operativos no prueba que haya sido discontinuado.",
+          expected_result:
+            "Una evaluación documentada de la continuidad operativa, que identifique componentes implementados, deficiencias y medidas o comprobaciones pendientes. Debe distinguir un MPI operativo de uno que requiere revisión, sin equiparar la falta de certificación con falta de implementación ni atribuir discontinuación sin respaldo suficiente.",
+        },
+        {
+          evidence_item: "revisión de decisiones internas",
+          review_guide:
+            "Examinar decisiones de órganos o responsables competentes sobre continuidad, modificación, suspensión de actividades o eventual discontinuación del MPI, verificando fechas, fundamentos y alcance organizacional. Contrastar esas decisiones con la revisión de componentes y cambios identificados, diferenciando una decisión formal de discontinuación de ajustes operativos o reorganizaciones.",
+          no_evidence_guidance:
+            "Revisar actas, acuerdos, instrucciones de dirección, registros de gobierno interno y comunicaciones institucionales para localizar decisiones pertinentes o establecer si no se adoptó ninguna decisión de cambio de estado. Si no existen decisiones nuevas, documentarlo y evaluar la situación real del MPI; ante indicios sin respaldo, registrar la incertidumbre sin inventar acuerdos ni modificar automáticamente el ciclo de vida.",
+          expected_result:
+            "Una revisión trazable de las decisiones que afectan la continuidad del MPI, identificando contenido, autoridad interna, fecha y relación con su funcionamiento efectivo. El expediente debe permitir distinguir continuidad, necesidad de correcciones y discontinuación decidida, sin convertir una reorganización, brecha documental o cambio de certificación en decisión de cese.",
+        },
+        {
+          evidence_item: "decisión interna cuando corresponda",
+          review_guide:
+            "Cuando se haya decidido discontinuar el MPI o modificar formalmente su estado, comprobar que exista un antecedente interno identificable con fecha, responsables competentes, fundamentos y alcance. Verificar su coherencia con la evaluación de continuidad y las medidas posteriores pertinentes, sin exigir una decisión de discontinuación cuando el programa sigue vigente y no se acordó su cese.",
+          no_evidence_guidance:
+            "Revisar acuerdos, actas, resoluciones internas, instrucciones y registros de aprobación para localizar la decisión cuando haya indicios de que se adoptó. Si no se decidió discontinuar o cambiar formalmente el MPI, registrar esta evidencia como no aplicable; si se afirma que hubo discontinuación sin respaldo suficiente, dejar pendiente su acreditación sin presumir una decisión válida ni crear documentos retrospectivos.",
+          expected_result:
+            "Una decisión interna verificable y coherente con los antecedentes de continuidad cuando efectivamente se haya acordado una discontinuación o cambio formal, con trazabilidad de fundamentos y responsables. Si el MPI continúa implementado y no se decidió su discontinuación, tratar la evidencia como no aplicable y documentar la conclusión de continuidad sin exigir un acto de cese inexistente.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "lifecycle-assessment",

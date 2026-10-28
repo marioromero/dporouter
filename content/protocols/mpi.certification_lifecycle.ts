@@ -126,6 +126,17 @@ export const MPI_CERTIFICATION_LIFECYCLE_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["seguimiento regulatorio"],
+      evidence_review_help: [
+        {
+          evidence_item: "seguimiento regulatorio",
+          review_guide:
+            "Verificar que exista una decisión identificable del responsable sobre solicitar la certificación inicial, renovarla o gestionar un cambio en su estado, precisando la actuación prevista y su situación actual. Contrastar el seguimiento con los antecedentes disponibles y, cuando corresponda, con comunicaciones o actuaciones de la Agencia, sin confundir la intención de iniciar un trámite con su presentación o resolución efectiva.",
+          no_evidence_guidance:
+            "Revisar acuerdos, instrucciones internas, registros de seguimiento, comunicaciones con la Agencia u otros antecedentes equivalentes que permitan establecer si el responsable adoptó una decisión concreta. Si no existe tal decisión, dejar constancia de que no se ha activado una gestión de certificación, sin presumir incumplimiento por la sola ausencia de una solicitud voluntaria.",
+          expected_result:
+            "Una decisión y tipo de gestión claramente identificados, con trazabilidad suficiente de su estado y los antecedentes que justifican continuar, renovar, actualizar o cerrar el seguimiento. Distinguir entre certificación no solicitada, trámite en preparación, solicitud presentada y estados acreditados por actos o comunicaciones pertinentes, sin modificar automáticamente el ciclo de vida interno del MPI.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "confirm-implemented",
       transitions: [
@@ -159,6 +170,26 @@ export const MPI_CERTIFICATION_LIFECYCLE_PROTOCOL: ExecutionProtocol = {
         "revisión del programa",
         "revisión documental",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "revisión del programa",
+          review_guide:
+            "Comprobar que el MPI esté efectivamente implementado y comprenda los componentes obligatorios aplicables, contrastando su contenido con las verificaciones de consolidación y cierre de brechas previas. Distinguir entre existencia documental, adopción formal y aplicación real de medidas; la certificación no es requisito para verificar la implementación interna.",
+          no_evidence_guidance:
+            "Revisar el programa consolidado, sus componentes, registros de implementación, resultados de verificaciones anteriores y antecedentes equivalentes. Si solo hay un documento proyectado, aprobación formal sin ejecución o componentes obligatorios pendientes, registrar que la implementación no está suficientemente acreditada para preparar la solicitud.",
+          expected_result:
+            "Un MPI implementado y verificable, con componentes obligatorios aplicables incorporados y sin brechas sustantivas pendientes que impidan acreditar los requisitos del modelo. La confirmación sustenta la preparación de la solicitud, pero no declara que la autoridad haya certificado el programa ni altera su estado interno.",
+        },
+        {
+          evidence_item: "revisión documental",
+          review_guide:
+            "Verificar que existan antecedentes documentales suficientes, coherentes y localizables para respaldar la implementación del MPI y las conclusiones de actividades previas. Contrastar los documentos con el estado real del programa, identificando inconsistencias, versiones desactualizadas o afirmaciones de cumplimiento sin soporte verificable.",
+          no_evidence_guidance:
+            "Revisar expedientes internos, registros de ejecución, instrumentos aprobados, constancias de difusión, matrices y otros respaldos relacionados con los componentes obligatorios. Si faltan antecedentes esenciales o no permiten comprobar la ejecución efectiva, registrar la insuficiencia y no presentar como acreditada una implementación que aún no puede verificarse.",
+          expected_result:
+            "Un expediente documental consistente y suficiente para sustentar la implementación efectiva del MPI y preparar fundadamente los antecedentes de certificación. No se exige un formato universal ni duplicar respaldos disponibles, pero cada conclusión relevante debe poder rastrearse a evidencia comprobable y actualizada.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "prepare-antecedents",
       related_activity_keys: ["mpi.assemble_program"],
@@ -175,6 +206,17 @@ export const MPI_CERTIFICATION_LIFECYCLE_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("mpi.certification.antecedents_prepared"),
       evidence_to_review: ["antecedentes remitidos"],
+      evidence_review_help: [
+        {
+          evidence_item: "antecedentes remitidos",
+          review_guide:
+            "Verificar que se hayan reunido y preparado antecedentes suficientes para sustentar la solicitud de certificación o renovación, comprobando su integridad, coherencia con el MPI implementado y correspondencia con los requisitos aplicables al procedimiento. Revisar que las versiones documentales sean identificables y estén disponibles para su presentación, distinguiendo la preparación del expediente de su remisión efectiva a la Agencia.",
+          no_evidence_guidance:
+            "Revisar el expediente del MPI, documentos de sus componentes obligatorios, verificaciones de implementación y registros de preparación para localizar antecedentes equivalentes o identificar faltantes. Si el conjunto aún es insuficiente, registrar qué debe resolverse antes de presentar la solicitud, sin exigir comprobantes de envío cuando el trámite todavía no se ha iniciado.",
+          expected_result:
+            "Antecedentes completos, consistentes y localizables para respaldar la solicitud de certificación o renovación, conforme a las exigencias e instrucciones oficiales aplicables al momento de presentarla. La preparación debe quedar acreditada sin presumir que los documentos ya se remitieron, que la solicitud fue admitida o que la certificación fue otorgada.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "record-request",
       provenance: "legal_requirement",
@@ -190,6 +232,26 @@ export const MPI_CERTIFICATION_LIFECYCLE_PROTOCOL: ExecutionProtocol = {
       answer_type: "single_select",
       options: stateOptions("mpi.certification.request_recorded"),
       evidence_to_review: ["solicitud", "evidencia de registro"],
+      evidence_review_help: [
+        {
+          evidence_item: "solicitud",
+          review_guide:
+            "Verificar que exista una solicitud de certificación o renovación identificable, presentada por el responsable ante la Agencia, con antecedentes para reconocer su objeto, fecha y relación con el MPI correspondiente. Contrastar la solicitud con la decisión adoptada y los antecedentes preparados, distinguiendo un borrador, una presentación efectiva y una eventual resolución de la autoridad.",
+          no_evidence_guidance:
+            "Revisar el expediente de certificación, registros de presentación, comunicaciones con la Agencia y documentos conservados por el responsable para localizar la solicitud o determinar si el trámite aún no se inició. Si solo existen antecedentes preparados o una decisión de solicitar, registrar que no se acredita la presentación, sin presumir denegación ni procedimiento en curso.",
+          expected_result:
+            "Una solicitud identificada y respaldada que permita comprobar su presentación, objeto y vínculo con el MPI cuya certificación se gestiona. El registro permite seguir el procedimiento sin confundir la solicitud con su admisión, aprobación, inscripción registral o certificación otorgada.",
+        },
+        {
+          evidence_item: "evidencia de registro",
+          review_guide:
+            "Comprobar que exista constancia verificable de presentación o recepción de la solicitud y un registro actualizado de su estado conocido, con fechas, referencias y comunicaciones oficiales cuando estén disponibles. Distinguir el seguimiento interno del expediente, la recepción por la Agencia y la eventual inscripción de una certificación otorgada en el registro público correspondiente.",
+          no_evidence_guidance:
+            "Revisar comprobantes de ingreso, acuses de recibo, números de expediente, comunicaciones de la Agencia u otros medios oficiales para acreditar la presentación y reconstruir el estado del procedimiento. Si la constancia es insuficiente, registrar la incertidumbre y verificar el canal utilizado, sin inventar un número de expediente ni considerar concedida la certificación.",
+          expected_result:
+            "Trazabilidad suficiente de la solicitud y de su estado administrativo conocido, respaldada por constancias de presentación o recepción y por actuaciones posteriores efectivamente ocurridas. El registro refleja hechos acreditados y fechas, sin atribuir a una solicitud en trámite efectos de certificación vigente ni exigir inscripción pública antes del otorgamiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "record-grant",
       provenance: "legal_requirement",
@@ -210,6 +272,35 @@ export const MPI_CERTIFICATION_LIFECYCLE_PROTOCOL: ExecutionProtocol = {
         "fecha de vigencia",
         "evidencia de registro",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "certificado cuando exista",
+          review_guide:
+            "Verificar, cuando la Agencia haya otorgado la certificación del MPI, que exista un certificado o antecedente oficial equivalente que identifique al responsable, el programa certificado y la decisión de otorgamiento. Comprobar su correspondencia con el expediente y distinguir entre certificación otorgada, solicitud presentada, trámite pendiente y antecedentes internos de implementación.",
+          no_evidence_guidance:
+            "Revisar resoluciones, comunicaciones oficiales, documentos del expediente y registros disponibles para determinar si la certificación fue otorgada y localizar su respaldo. Si aún no hay decisión favorable, registrar el estado acreditado del procedimiento y la ausencia legítima de certificado, sin considerar certificada a la organización ni exigir un documento que todavía no corresponde emitir.",
+          expected_result:
+            "Un certificado o respaldo oficial del otorgamiento identificable y asociado al MPI del responsable, cuando exista una decisión favorable de la autoridad. Si la certificación no fue otorgada, reflejarlo sin fabricar evidencia, atribuir vigencia inexistente ni confundir implementación interna con certificación.",
+        },
+        {
+          evidence_item: "fecha de vigencia",
+          review_guide:
+            "Comprobar que, cuando exista certificación otorgada, estén registradas sus fechas de inicio y término conforme al certificado, la resolución y las disposiciones aplicables. Contrastar las fechas con antecedentes oficiales y considerar la vigencia normativa de tres años, sin apartarse del acto administrativo ni presumir renovación automática.",
+          no_evidence_guidance:
+            "Revisar el certificado, la resolución de otorgamiento, comunicaciones oficiales e información registral disponible para identificar las fechas y aclarar discrepancias. Si la certificación no se otorgó o sus fechas no pueden acreditarse, registrar esa condición sin asignar una fecha estimada como oficial.",
+          expected_result:
+            "Fechas de vigencia documentadas y coherentes con los antecedentes oficiales, suficientes para controlar la renovación, expiración o cambios posteriores. Distinguir una certificación efectivamente otorgada de solicitudes en trámite, sin prolongar automáticamente su duración ni alterar el ciclo de vida interno del MPI.",
+        },
+        {
+          evidence_item: "evidencia de registro",
+          review_guide:
+            "Verificar, cuando la certificación haya sido otorgada, que exista respaldo de su inscripción o de la información registral oficial correspondiente, vinculando al responsable, el MPI certificado y su vigencia. Distinguir esta evidencia del comprobante de presentación de la solicitud, pues registrar una solicitud no equivale a registrar una certificación concedida.",
+          no_evidence_guidance:
+            "Consultar los antecedentes del expediente, comunicaciones de la Agencia y medios oficiales de consulta registral disponibles para localizar o verificar la inscripción. Si la certificación aún no fue otorgada, dejar constancia de que esa evidencia no corresponde en esta etapa; si fue otorgada pero no puede acreditarse la inscripción, registrar la falta de verificación sin presumir su existencia ni su inexistencia definitiva.",
+          expected_result:
+            "Un respaldo verificable de la situación registral de la certificación otorgada, relacionado con el responsable, el MPI y las fechas de vigencia acreditadas. El expediente debe distinguir la inscripción de una certificación concedida del registro de una solicitud y de los registros internos de seguimiento, que no producen por sí solos efectos oficiales.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "control-renewal",
       provenance: "legal_requirement",
@@ -226,6 +317,17 @@ export const MPI_CERTIFICATION_LIFECYCLE_PROTOCOL: ExecutionProtocol = {
       options: stateOptions("mpi.certification.renewal_controlled"),
       evidence_to_review: [
         "resoluciones de renovación, denegación, término o revocación",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "resoluciones de renovación, denegación, término o revocación",
+          review_guide:
+            "Verificar que exista un mecanismo de seguimiento de la vigencia de la certificación, con responsables definidos, fechas acreditadas, revisión periódica y actuaciones previstas para gestionar oportunamente la renovación. Examinar resoluciones de renovación, denegación, término o revocación solo cuando hayan ocurrido, comprobando su correspondencia con el expediente y su impacto en el estado real de la certificación.",
+          no_evidence_guidance:
+            "Revisar el certificado vigente, las fechas de otorgamiento y vencimiento, el expediente, los registros de seguimiento y las comunicaciones con la Agencia para identificar controles equivalentes o actuaciones pendientes. Si aún no existe una resolución, no exigirla anticipadamente; registrar la falta de control efectivo cuando no puedan acreditarse responsables, momentos de revisión o actuaciones previstas.",
+          expected_result:
+            "Un control de renovación documentado, con responsables, seguimiento de fechas oficiales y criterios de actuación que permitan anticipar la expiración sin presumir renovación automática. Las resoluciones que existan deben reflejarse fielmente, distinguiendo la vigencia de la certificación del ciclo de vida interno del MPI.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "record-closures",
@@ -246,6 +348,35 @@ export const MPI_CERTIFICATION_LIFECYCLE_PROTOCOL: ExecutionProtocol = {
         "resoluciones de renovación, denegación, término o revocación",
         "revisión de comunicaciones de Agencia",
         "evidencia de registro",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "resoluciones de renovación, denegación, término o revocación",
+          review_guide:
+            "Verificar los actos oficiales de renovación, denegación, término o revocación cuando hayan sido dictados, identificando fecha, contenido, destinatario y efectos sobre el estado de certificación del MPI. Distinguirlos de la expiración por vencimiento del plazo, que se comprueba con las fechas oficiales y antecedentes aplicables, sin presumir una resolución específica de expiración.",
+          no_evidence_guidance:
+            "Revisar el expediente de certificación, antecedentes de renovación, resoluciones notificadas y comunicaciones oficiales para determinar si ocurrió un evento que requiera actualizar el estado. Si no existe una resolución porque el supuesto no ha ocurrido, dejar constancia sin exigir documentos inexistentes; si se conoce una decisión pero falta respaldo, registrar la insuficiencia y gestionar su localización o verificación.",
+          expected_result:
+            "Un expediente actualizado con las resoluciones efectivamente emitidas y el estado de certificación que resulte de ellas, distinguiendo renovación favorable, denegación, término y revocación. Documentar la expiración cuando corresponda según la vigencia acreditada y antecedentes oficiales, sin atribuir a la Agencia una resolución no dictada.",
+        },
+        {
+          evidence_item: "revisión de comunicaciones de Agencia",
+          review_guide:
+            "Examinar las comunicaciones oficiales de la Agencia relativas a certificación, renovación y decisiones que puedan modificar su estado, verificando fechas, referencias y correspondencia con el expediente del responsable. Diferenciar comunicaciones informativas, requerimientos de antecedentes, notificaciones de resoluciones y actos con efectos jurídicos, sin tratar toda comunicación como decisión definitiva.",
+          no_evidence_guidance:
+            "Revisar los canales institucionales del procedimiento, notificaciones recibidas, registros de correspondencia y antecedentes conservados por quienes gestionan la certificación. Si no hay comunicaciones porque la Agencia no ha actuado, registrar esa circunstancia; si hay indicios de una comunicación omitida, dejar pendiente su verificación sin inventar decisiones ni presumir efectos no acreditados.",
+          expected_result:
+            "Una revisión documentada de las comunicaciones oficiales pertinentes, con trazabilidad de su recepción, contenido y relación con los cambios de estado que correspondan. El expediente refleja solo decisiones y efectos acreditados, separando requerimientos, comunicaciones de seguimiento y resoluciones que determinan el estado del procedimiento.",
+        },
+        {
+          evidence_item: "evidencia de registro",
+          review_guide:
+            "Comprobar que los eventos de expiración, denegación, término o revocación ocurridos estén reflejados en el seguimiento del expediente, con fechas, fundamentos y estado actualizado de la certificación. Contrastar los registros internos con resoluciones, comunicaciones y datos oficiales, distinguiendo la trazabilidad interna de eventuales actualizaciones del registro público.",
+          no_evidence_guidance:
+            "Revisar el historial del expediente, registros de seguimiento, fechas de vigencia, resoluciones e información registral oficial disponible para reconstruir los cambios. Si no ocurrió un evento de cierre o cambio de estado, dejar constancia sin crear un cierre ficticio; si el evento está acreditado pero no registrado, identificar la omisión y la actualización necesaria.",
+          expected_result:
+            "Un registro trazable y coherente de cada evento de cierre o cambio ocurrido, con identificación del hecho, fecha y antecedentes oficiales que lo respaldan. La información permite conocer el estado real de la certificación sin mantenerla artificialmente vigente ni modificar por ello el estado interno de implementación del MPI.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "final-confirmation",

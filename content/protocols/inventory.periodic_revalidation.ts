@@ -126,6 +126,26 @@ export const INVENTORY_PERIODIC_REVALIDATION_PROTOCOL: ExecutionProtocol = {
       fact_key: SCOPE_FACT,
       answer_type: "text",
       evidence_to_review: ["plan de revisión", "tratamientos revisados"],
+      evidence_review_help: [
+        {
+          evidence_item: "plan de revisión",
+          review_guide:
+            "Comprobar los criterios utilizados para seleccionar los tratamientos incluidos, considerando prioridades, riesgos, cambios conocidos o compromisos internos. Verificar que el alcance previsto sea identificable y distinguir una revisión de todo el inventario de una selección parcial, sin atribuir al plan una frecuencia legal universal.",
+          no_evidence_guidance:
+            "Consultar calendarios, acuerdos y antecedentes de las áreas responsables para reconstruir los criterios de selección. Si no existe un plan documentado, precisar qué tratamientos se pretende revisar y qué decisiones siguen pendientes, sin presentar una selección informal como planificación aprobada.",
+          expected_result:
+            "Un alcance previsto reconocible y fundamentado, con los tratamientos incluidos y los criterios de selección identificados. Las exclusiones y limitaciones deben quedar claras para no presentar una revisión parcial como cobertura completa del inventario.",
+        },
+        {
+          evidence_item: "tratamientos revisados",
+          review_guide:
+            "Verificar qué tratamientos fueron efectivamente incluidos en la ejecución, relacionándolos con los registros existentes del inventario. Distinguir los casos ya comprobados de aquellos seleccionados pero pendientes, identificando diferencias respecto del alcance planificado sin considerar revisado un tratamiento por su sola inclusión en la lista.",
+          no_evidence_guidance:
+            "Consultar el inventario y los antecedentes de revisión disponibles para identificar los tratamientos comprobados. Cuando falten registros, documentar los casos verificables y las revisiones pendientes, sin presumir que todos fueron examinados ni inventar resultados individuales.",
+          expected_result:
+            "Tratamientos incluidos y estado de revisión identificables, con diferencias entre cobertura prevista y efectivamente comprobada. La información debe delimitar el alcance de esta ejecución, sin atribuir resultados a operaciones todavía no revisadas.",
+        },
+      ],
       help_text: [
         "Texto libre con el alcance actual. No crea registros por tratamiento ni instancias.",
       ],
@@ -250,6 +270,17 @@ export const INVENTORY_PERIODIC_REVALIDATION_PROTOCOL: ExecutionProtocol = {
       fact_key: DATE_FACT,
       answer_type: "date",
       evidence_to_review: ["registro de revalidación"],
+      evidence_review_help: [
+        {
+          evidence_item: "registro de revalidación",
+          review_guide:
+            "Comprobar la fecha en que se efectuó la revisión del inventario mediante antecedentes de ejecución, verificaciones realizadas o constancias de las áreas participantes. Distinguirla de las fechas previstas, de revisiones anteriores y de correcciones posteriores, verificando que corresponda a la revalidación actual.",
+          no_evidence_guidance:
+            "Consultar comunicaciones, resultados de verificación y antecedentes de los responsables para identificar cuándo se realizó la revisión. Si no existe una fecha comprobable, señalar las consultas pendientes sin utilizar automáticamente la fecha actual ni atribuir ejecución a actividades solamente programadas.",
+          expected_result:
+            "Una fecha civil respaldada que identifique la revalidación efectuada, con discrepancias o incertidumbres reconocibles. El dato debe representar la revisión actual del inventario, sin implicar que todos los hallazgos fueron corregidos ni constituir un historial de ejecuciones.",
+        },
+      ],
       help_text: [
         "Una fecha por revalidación: la próxima reemplaza esta. No se conservan revisiones anteriores en el runtime.",
       ],

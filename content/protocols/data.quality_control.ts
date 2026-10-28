@@ -117,6 +117,17 @@ export const DATA_QUALITY_CONTROL_PROTOCOL: ExecutionProtocol = {
         "Revisión realizada con muestra o controles.",
       ),
       evidence_to_review: ["resultado de revisión o muestreo"],
+      evidence_review_help: [
+        {
+          evidence_item: "resultado de revisión o muestreo",
+          review_guide:
+            "Comprobar qué conjuntos de datos fueron evaluados, mediante qué controles y con qué criterios se verificó su exactitud, completitud, actualidad y pertinencia. Revisar los hallazgos considerando el origen, uso y finalidad de la información, distinguiendo errores efectivos de datos históricos válidos o campos cuya ausencia no afecta el tratamiento.",
+          no_evidence_guidance:
+            "Consultar reportes, controles de sistemas y antecedentes de las áreas responsables para localizar revisiones realizadas. Si no existen resultados documentados, identificar los datos prioritarios y las comprobaciones pendientes, sin presumir que la ausencia de hallazgos demuestra calidad suficiente ni exigir un muestreo cuando otro control resulte adecuado.",
+          expected_result:
+            "Una evaluación verificable de los datos revisados, los criterios utilizados y los resultados obtenidos, con deficiencias confirmadas y aspectos pendientes diferenciados. La información debe permitir reconocer posibles problemas de calidad y orientar su análisis posterior, sin presentar correcciones todavía no realizadas como ejecutadas.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-sources",
       provenance: "agency_standard",
@@ -135,6 +146,17 @@ export const DATA_QUALITY_CONTROL_PROTOCOL: ExecutionProtocol = {
         "Fuentes de actualización identificadas.",
       ),
       evidence_to_review: ["reglas de actualización"],
+      evidence_review_help: [
+        {
+          evidence_item: "reglas de actualización",
+          review_guide:
+            "Identificar las fuentes utilizadas para obtener información vigente y comprobar su pertinencia, fiabilidad y relación con los datos tratados. Verificar que las reglas indiquen cuándo corresponde consultar cada fuente, qué cambios requieren actualización y cómo se reconocen discrepancias, considerando las finalidades y características de la información.",
+          no_evidence_guidance:
+            "Consultar procedimientos, sistemas y áreas responsables para localizar fuentes y prácticas de actualización existentes. Si no hay criterios definidos, registrar los datos afectados y las decisiones pendientes, sin presumir que cualquier fuente disponible es válida ni imponer actualizaciones periódicas cuando no resulten necesarias.",
+          expected_result:
+            "Fuentes identificadas y vinculadas con los datos correspondientes, junto con criterios reconocibles para utilizarlas y detectar información desactualizada. Las limitaciones y reglas pendientes deben quedar documentadas, sin considerar que identificar una fuente demuestra por sí solo la actualización efectiva de los datos.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-correction",
       related_activity_keys: ["treatment.source_traceability"],
@@ -155,6 +177,26 @@ export const DATA_QUALITY_CONTROL_PROTOCOL: ExecutionProtocol = {
         "No existen datos por corregir o depurar en este caso.",
       ),
       evidence_to_review: ["incidencias detectadas", "evidencia de corrección"],
+      evidence_review_help: [
+        {
+          evidence_item: "incidencias detectadas",
+          review_guide:
+            "Revisar los problemas de calidad identificados, comprobando los datos afectados, su origen y las consecuencias para la finalidad correspondiente. Distinguir errores confirmados, información pendiente de verificación y registros históricos válidos, verificando qué situaciones requieren corrección, actualización o depuración.",
+          no_evidence_guidance:
+            "Consultar resultados de controles, reportes internos y antecedentes de los procesos para localizar posibles incidencias. Si no existe un registro, identificar los casos conocidos y las comprobaciones pendientes; cuando no se hayan detectado deficiencias, documentar esa conclusión sin generar incidencias ficticias.",
+          expected_result:
+            "Incidencias identificadas y clasificadas según su naturaleza y necesidad de intervención, con incertidumbres y acciones pendientes reconocibles. Si no existen datos por corregir o depurar, una constatación fundada que permita sustentar la opción «No aplica», sin confundirla con falta de información.",
+        },
+        {
+          evidence_item: "evidencia de corrección",
+          review_guide:
+            "Corroborar las modificaciones efectuadas mediante registros de cambios, antecedentes de actualización u otros respaldos disponibles. Comprobar que correspondan a las deficiencias identificadas y distinguir correcciones ejecutadas, medidas definidas pero pendientes y casos donde no resulta necesaria una intervención.",
+          no_evidence_guidance:
+            "Consultar registros operacionales, sistemas y áreas responsables para localizar constancias de las actuaciones realizadas. Cuando existan medidas sin ejecutar, documentar su estado sin presentarlas como completadas; si no se requieren correcciones, conservar la justificación correspondiente sin exigir comprobantes inexistentes.",
+          expected_result:
+            "Antecedentes verificables de las correcciones realizadas, vinculados con las deficiencias correspondientes y diferenciados de las acciones pendientes. Cuando no proceda intervenir, una conclusión respaldada que explique esa circunstancia sin atribuir ejecuciones que no ocurrieron.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-rectification",
       provenance: "agency_standard",
@@ -174,6 +216,17 @@ export const DATA_QUALITY_CONTROL_PROTOCOL: ExecutionProtocol = {
         "No aplica coordinación con rectificación en este caso.",
       ),
       evidence_to_review: ["reglas de actualización"],
+      evidence_review_help: [
+        {
+          evidence_item: "reglas de actualización",
+          review_guide:
+            "Verificar cómo las solicitudes de rectificación se comunican a las áreas o sistemas encargados de mantener los datos, identificando responsables y mecanismos de seguimiento. Comprobar que las reglas contemplen evitar la reutilización de información ya rectificada y coordinar, cuando proceda, la comunicación de los cambios a destinatarios anteriores.",
+          no_evidence_guidance:
+            "Consultar el procedimiento de atención de derechos y las prácticas de actualización para identificar conexiones existentes o pendientes. Si falta coordinación, registrar los aspectos que requieren definición; cuando no resulte aplicable, fundamentar esa circunstancia sin confundirla con ausencia de solicitudes o falta de información.",
+          expected_result:
+            "Criterios documentados para trasladar y verificar las rectificaciones pertinentes entre los procesos involucrados, con responsabilidades y limitaciones identificables. Cuando la coordinación no corresponda, una justificación verificable que permita sustentar «No aplica», sin presumir que las modificaciones ya fueron ejecutadas.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-recorded",
       provenance: "agency_standard",
@@ -194,6 +247,26 @@ export const DATA_QUALITY_CONTROL_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "resultado de revisión o muestreo",
         "incidencias detectadas",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "resultado de revisión o muestreo",
+          review_guide:
+            "Comprobar que los controles realizados indiquen los datos evaluados, criterios utilizados, resultados y alcance de la revisión. Verificar que las conclusiones sean coherentes con los hallazgos y permitan reconocer las medidas definidas, ejecutadas o pendientes, sin presentar una muestra limitada como evaluación de todos los registros.",
+          no_evidence_guidance:
+            "Consultar informes, registros de controles y antecedentes de las áreas participantes para recuperar los resultados disponibles. Si falta documentación, identificar las comprobaciones realizadas y sus limitaciones, dejando pendientes las no acreditadas sin reconstruir conclusiones que carezcan de respaldo.",
+          expected_result:
+            "Resultados trazables de las verificaciones efectuadas, con alcance, hallazgos y remediaciones relacionadas. Las limitaciones y acciones pendientes deben quedar diferenciadas para facilitar su seguimiento, sin atribuir correcciones que todavía no se han ejecutado.",
+        },
+        {
+          evidence_item: "incidencias detectadas",
+          review_guide:
+            "Verificar que los problemas confirmados puedan relacionarse con los datos afectados, su impacto y las acciones correctivas correspondientes. Revisar que cada incidencia tenga un estado reconocible y que las situaciones resueltas, pendientes o descartadas fundadamente estén diferenciadas.",
+          no_evidence_guidance:
+            "Consultar reportes operacionales y resultados de controles anteriores para reunir los hallazgos conocidos. Si no existe seguimiento documentado, registrar las incidencias comprobables y sus actuaciones pendientes; cuando no se hayan detectado problemas, dejar constancia de esa conclusión sin crear casos ficticios.",
+          expected_result:
+            "Incidencias registradas con sus antecedentes, medidas asociadas y estado de seguimiento, distinguiendo las correcciones verificadas de las pendientes. Si no existen hallazgos, una conclusión fundamentada que permita reconocer el resultado de la revisión y su alcance.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "final-assessment",

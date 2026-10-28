@@ -95,6 +95,26 @@ export const DATA_MINIMIZATION_REVIEW_PROTOCOL: ExecutionProtocol = {
         "matriz dato-finalidad",
         "registro de campos revisados",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "matriz dato-finalidad",
+          review_guide:
+            "Verificar las asociaciones registradas entre categorías de información y propósitos específicos, comprobando que correspondan a los usos reales de cada tratamiento. Identificar datos vinculados con finalidades demasiado generales, relaciones inconsistentes o categorías sin un propósito reconocible, considerando las diferencias entre operaciones que utilizan información similar.",
+          no_evidence_guidance:
+            "Consultar el inventario, las descripciones de procesos y las finalidades documentadas para reconstruir las asociaciones conocidas. Si existen categorías sin vinculación clara, registrar los casos pendientes y solicitar su aclaración, sin atribuir propósitos no confirmados ni considerar justificados los datos por su sola presencia en el inventario.",
+          expected_result:
+            "Una correspondencia documentada entre las categorías utilizadas y sus propósitos, con relaciones identificables y coherentes con las operaciones examinadas. Las asociaciones ambiguas o pendientes deben quedar señaladas para evaluar posteriormente su necesidad y pertinencia, sin anticipar una conclusión favorable sobre proporcionalidad.",
+        },
+        {
+          evidence_item: "registro de campos revisados",
+          review_guide:
+            "Comprobar qué información solicitan y utilizan efectivamente los formularios, sistemas y procedimientos examinados, incluyendo campos obligatorios, opcionales o incorporados históricamente. Identificar diferencias entre los datos previstos y los realmente tratados, así como campos sin una finalidad reconocible o cuya utilización requiera aclaración.",
+          no_evidence_guidance:
+            "Revisar formularios vigentes, configuraciones de sistemas y documentación operacional para identificar los campos utilizados. Cuando no exista un registro consolidado, documentar los elementos comprobados y las áreas pendientes de revisión, evitando presumir que un campo opcional es innecesario o que uno obligatorio resulta automáticamente justificado.",
+          expected_result:
+            "Campos relevantes identificados con su utilización conocida, carácter obligatorio u opcional cuando corresponda y referencia a los propósitos relacionados. Las discrepancias, campos históricos y asociaciones no aclaradas deben quedar registrados para la evaluación posterior de posibles excesos.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-excess",
       related_activity_keys: ["treatment.purpose_define"],
@@ -118,6 +138,26 @@ export const DATA_MINIMIZATION_REVIEW_PROTOCOL: ExecutionProtocol = {
         "brechas detectadas",
         "evidencia de eliminación o reducción cuando corresponda",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "brechas detectadas",
+          review_guide:
+            "Analizar los hallazgos sobre campos innecesarios, datos históricos y recopilaciones opcionales para determinar cuáles carecen de justificación suficiente respecto de su finalidad. Comprobar que se hayan diferenciado los excesos confirmados de las situaciones pendientes de aclaración y de los datos cuya conservación o utilización sigue estando fundada.",
+          no_evidence_guidance:
+            "Consultar los resultados de revisiones, formularios y configuraciones de sistemas para recuperar posibles hallazgos. Si no se realizó una evaluación, identificar los ámbitos pendientes; si no se detectaron excesos, documentar esa conclusión con sus fundamentos, sin crear brechas inexistentes.",
+          expected_result:
+            "Hallazgos clasificados según su justificación y estado, con identificación de excesos confirmados, cuestiones pendientes y casos sin deficiencias acreditadas. La información debe permitir determinar qué situaciones requieren corrección, sin considerar resuelta una brecha por el solo hecho de haberla registrado.",
+        },
+        {
+          evidence_item: "evidencia de eliminación o reducción cuando corresponda",
+          review_guide:
+            "Corroborar las modificaciones aplicadas en formularios, sistemas o procedimientos mediante registros de cambios, configuraciones actualizadas u otros respaldos disponibles. Distinguir la eliminación de datos existentes, la reducción de campos y el cese de nuevas recopilaciones, comprobando que las medidas correspondan a los excesos identificados y no sean únicamente propuestas.",
+          no_evidence_guidance:
+            "Revisar solicitudes de cambio, registros técnicos y antecedentes de las áreas responsables para localizar constancias de las acciones realizadas. Cuando existan correcciones pendientes, registrar su estado y las verificaciones necesarias. Si no se identificaron excesos, conservar la justificación de esa conclusión sin exigir comprobantes de eliminaciones que no correspondían.",
+          expected_result:
+            "Correcciones efectivamente realizadas y respaldadas, con correspondencia entre las deficiencias identificadas y las medidas aplicadas. Las acciones pendientes o parcialmente ejecutadas deben quedar diferenciadas, así como los casos en que no fue necesaria una intervención por ausencia fundada de excesos.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-gaps",
       provenance: "legal_requirement",
@@ -137,6 +177,17 @@ export const DATA_MINIMIZATION_REVIEW_PROTOCOL: ExecutionProtocol = {
         "Brechas y remediación registradas.",
       ),
       evidence_to_review: ["brechas detectadas"],
+      evidence_review_help: [
+        {
+          evidence_item: "brechas detectadas",
+          review_guide:
+            "Verificar que cada deficiencia identifique los datos afectados, su finalidad y las razones por las que el tratamiento podría resultar excesivo. Comprobar que las acciones correctivas sean pertinentes, tengan responsables y un estado reconocible, diferenciando medidas ejecutadas, pendientes y situaciones por aclarar.",
+          no_evidence_guidance:
+            "Recuperar los hallazgos de revisiones anteriores y consultar a las áreas involucradas para identificar correcciones acordadas o pendientes. Si no existe un registro consolidado, documentar las deficiencias conocidas y su seguimiento; cuando no se hayan detectado brechas, dejar constancia de la evaluación realizada sin generar incumplimientos ficticios.",
+          expected_result:
+            "Un registro trazable de las deficiencias confirmadas y sus medidas de remediación, con responsables, estado y aspectos pendientes de verificación. Cuando la revisión no identifique brechas, una conclusión fundamentada que permita reconocer el alcance de lo evaluado, sin presumir que documentar acciones equivale a ejecutarlas.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "final-assessment",
       provenance: "legal_requirement",

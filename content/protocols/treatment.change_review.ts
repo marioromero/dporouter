@@ -118,6 +118,35 @@ export const TREATMENT_CHANGE_REVIEW_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["revisión de cambio", "entrevistas", "revisión de sistemas"],
+      evidence_review_help: [
+        {
+          evidence_item: "revisión de cambio",
+          review_guide:
+            "Comprobar qué modificación se detectó o implementó y qué aspectos del tratamiento podría afectar, considerando finalidades, datos, fuentes, actores o condiciones operativas. Identificar antecedentes que permitan distinguir cambios relevantes para las obligaciones aplicables de ajustes menores que no alteran las condiciones jurídicas del tratamiento.",
+          no_evidence_guidance:
+            "Consultar solicitudes de modificación, antecedentes de proyectos y documentación de procesos para localizar cambios conocidos. Si no existe una revisión documentada, registrar las variaciones comprobables y las pendientes de aclaración, sin presumir que cualquier ajuste exige reevaluación ni descartar cambios por falta de registros.",
+          expected_result:
+            "Una identificación fundamentada de las modificaciones relevantes y de los aspectos potencialmente afectados, con incertidumbres reconocibles. Cuando no se detecte un cambio material, una constatación respaldada que permita diferenciar esa situación de la ausencia de información suficiente.",
+        },
+        {
+          evidence_item: "entrevistas",
+          review_guide:
+            "Consultar a las áreas que conocen la operación para identificar cambios en los usos de datos, participantes, procedimientos o decisiones que no figuren en los documentos disponibles. Corroborar las diferencias señaladas con antecedentes concretos y distinguir modificaciones efectivas, propuestas todavía no aplicadas y percepciones sin respaldo.",
+          no_evidence_guidance:
+            "Identificar a quienes administran o ejecutan el tratamiento y recuperar comunicaciones o antecedentes de cambios conocidos. Si no se cuenta con información suficiente, señalar las consultas pendientes y los aspectos no confirmados, evitando atribuir modificaciones a declaraciones no verificadas.",
+          expected_result:
+            "Antecedentes operacionales verificables sobre posibles modificaciones, con fuentes consultadas y diferencias relevantes identificadas. Las variaciones confirmadas deben distinguirse de propuestas o situaciones inciertas para sustentar la determinación de materialidad.",
+        },
+        {
+          evidence_item: "revisión de sistemas",
+          review_guide:
+            "Verificar si las configuraciones y funcionalidades vigentes incorporaron cambios en los datos tratados, accesos, integraciones, automatizaciones o mecanismos de conservación. Relacionar las diferencias encontradas con sus posibles consecuencias para el tratamiento, sin considerar que toda actualización tecnológica modifica su finalidad o licitud.",
+          no_evidence_guidance:
+            "Consultar configuraciones, registros de despliegue y documentación técnica para reconocer variaciones introducidas en los sistemas. Cuando falten antecedentes, identificar los componentes no comprobados y las verificaciones pendientes, sin equiparar la ausencia de registros con inexistencia de cambios.",
+          expected_result:
+            "Modificaciones técnicas identificadas con su alcance y posibles efectos sobre las condiciones del tratamiento, diferenciando cambios implementados, pendientes y no confirmados. La información debe contribuir a decidir si corresponde una reevaluación, sin anticipar su resultado jurídico.",
+        },
+      ],
       required_facts: [],
       transitions: [
         {
@@ -158,6 +187,17 @@ export const TREATMENT_CHANGE_REVIEW_PROTOCOL: ExecutionProtocol = {
       fact_key: DATE_FACT,
       answer_type: "date",
       evidence_to_review: ["registro de cambio"],
+      evidence_review_help: [
+        {
+          evidence_item: "registro de cambio",
+          review_guide:
+            "Corroborar la fecha en que se produjo la modificación mediante solicitudes aprobadas, registros operativos o antecedentes técnicos disponibles. Distinguir la fecha efectiva de las de planificación, autorización o documentación, identificando cuál corresponde al cambio actual y dejando reconocibles las discrepancias relevantes.",
+          no_evidence_guidance:
+            "Consultar comunicaciones, registros de implementación y antecedentes de las áreas responsables para localizar una fecha comprobable. Si existen referencias contradictorias o insuficientes, señalar las verificaciones pendientes sin inventar fechas ni utilizar automáticamente la del día de revisión.",
+          expected_result:
+            "Una fecha civil identificable y respaldada para la modificación evaluada, con incertidumbres pendientes diferenciadas. El registro debe corresponder al cambio actual, sin representar un historial ni atribuir fechas de ejecución a actuaciones solamente planificadas.",
+        },
+      ],
       help_text: [
         "Una fecha por revisión: un cambio nuevo reemplaza la fecha anterior. No se conserva historial de cambios en el runtime.",
       ],
@@ -176,6 +216,26 @@ export const TREATMENT_CHANGE_REVIEW_PROTOCOL: ExecutionProtocol = {
       fact_key: DESC_FACT,
       answer_type: "text",
       evidence_to_review: ["registro de cambio", "revisión documental"],
+      evidence_review_help: [
+        {
+          evidence_item: "registro de cambio",
+          review_guide:
+            "Precisar qué elementos del tratamiento fueron modificados, indicando su condición anterior, la nueva situación y la fecha relacionada. Distinguir cambios implementados de modificaciones todavía previstas, comprobando que la descripción permita reconocer diferencias concretas sin limitarse a expresiones generales como «actualización del proceso».",
+          no_evidence_guidance:
+            "Consultar solicitudes, comunicaciones y antecedentes de implementación para reconstruir la modificación identificada. Si faltan detalles sobre su alcance o estado, registrar lo comprobado y las aclaraciones pendientes, sin atribuir características anteriores o nuevas que no estén respaldadas.",
+          expected_result:
+            "Una descripción verificable del cambio actual, con atributos modificados, situación anterior y condición nueva claramente diferenciados. Las incertidumbres y actuaciones pendientes deben quedar reconocidas, sin presentar propuestas como modificaciones ejecutadas.",
+        },
+        {
+          evidence_item: "revisión documental",
+          review_guide:
+            "Cotejar procedimientos, políticas, formularios o antecedentes técnicos anteriores con los documentos que describen la operación modificada. Identificar diferencias relevantes en finalidades, datos, participantes o medios utilizados, verificando que los documentos correspondan al tratamiento evaluado y reflejen su situación real.",
+          no_evidence_guidance:
+            "Localizar documentos vigentes, antecedentes de procesos y registros de modificaciones disponibles para reconstruir las condiciones comparables. Cuando falte documentación anterior o actual, identificar las diferencias comprobables y los aspectos pendientes, sin inventar versiones ni presumir que un documento actualizado demuestra la implementación efectiva.",
+          expected_result:
+            "Antecedentes documentales que respalden las diferencias identificadas entre las condiciones del tratamiento, con su alcance y limitaciones reconocibles. La información debe permitir continuar la evaluación de los atributos afectados, sin anticipar conclusiones sobre licitud o cumplimiento.",
+        },
+      ],
       help_text: [
         "Describe solo el cambio actual. La comparación antes/después es insumo de esta evaluación; no se conservan versiones anteriores en el runtime.",
       ],
@@ -198,6 +258,26 @@ export const TREATMENT_CHANGE_REVIEW_PROTOCOL: ExecutionProtocol = {
         "atributos modificados",
         "finalidad nueva o modificada",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "atributos modificados",
+          review_guide:
+            "Identificar las diferencias concretas en categorías de datos, fuentes, participantes, sistemas, accesos o condiciones de conservación respecto de la operación anterior. Comprobar cuáles se implementaron efectivamente, su alcance y los antecedentes que las respaldan, distinguiendo modificaciones confirmadas de propuestas o situaciones pendientes.",
+          no_evidence_guidance:
+            "Consultar inventarios, registros de implementación y antecedentes de las áreas responsables para reconstruir los elementos afectados. Si la comparación es incompleta, documentar los cambios comprobados y las verificaciones pendientes, sin presumir modificaciones que no consten ni descartar diferencias por falta de documentación.",
+          expected_result:
+            "Atributos alterados identificados con su condición anterior, situación nueva y respaldo disponible, diferenciando cambios ejecutados, previstos e inciertos. La información debe permitir reconocer qué aspectos requieren evaluación posterior, sin anticipar consecuencias jurídicas.",
+        },
+        {
+          evidence_item: "finalidad nueva o modificada",
+          review_guide:
+            "Comparar los propósitos originalmente declarados con los usos actuales o previstos de la información, comprobando si se mantienen, amplían o sustituyen. Identificar las operaciones y datos involucrados, distinguiendo una finalidad realmente diferente de cambios técnicos que no alteran el objetivo perseguido.",
+          no_evidence_guidance:
+            "Consultar las finalidades documentadas, comunicaciones a titulares y antecedentes del proceso modificado para aclarar los usos pretendidos. Cuando no pueda determinarse si existe una finalidad distinta, registrar esa incertidumbre y las comprobaciones pendientes, sin atribuir compatibilidad o licitud por anticipado.",
+          expected_result:
+            "Una determinación documentada sobre la permanencia, modificación o incorporación de finalidades, con usos y datos afectados identificables. Las dudas deben quedar reconocidas para evaluar posteriormente compatibilidad y fuente de licitud, sin considerar que toda variación exige automáticamente nuevo consentimiento.",
+        },
+      ],
       required_facts: [TRIGGER_FACT, DATE_FACT, DESC_FACT],
       default_next_node_key: "impact",
       provenance: "agency_standard",
@@ -218,6 +298,35 @@ export const TREATMENT_CHANGE_REVIEW_PROTOCOL: ExecutionProtocol = {
         "compatibilidad del uso distinto",
         "minimización, conservación, calidad, actores y fuentes",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "evaluación de impacto sobre finalidad y licitud",
+          review_guide:
+            "Determinar cómo las modificaciones identificadas afectan los propósitos declarados y la fuente jurídica utilizada, considerando las operaciones y datos involucrados. Comprobar si el fundamento anterior continúa siendo aplicable o requiere una nueva evaluación, distinguiendo consecuencias acreditadas, riesgos potenciales y aspectos pendientes de interpretación.",
+          no_evidence_guidance:
+            "Consultar las finalidades, bases de licitud y antecedentes del cambio para reconstruir las condiciones que requieren revisión. Si faltan fundamentos o datos relevantes, registrar las cuestiones pendientes sin presumir que el tratamiento sigue siendo lícito ni declarar un incumplimiento por la sola existencia del cambio.",
+          expected_result:
+            "Una valoración documentada de las consecuencias del cambio sobre finalidad y licitud, con fundamentos aplicables, incertidumbres y revisiones necesarias identificadas. El análisis debe permitir reconocer las decisiones pendientes sin sustituir el juicio profesional posterior.",
+        },
+        {
+          evidence_item: "compatibilidad del uso distinto",
+          review_guide:
+            "Comparar el propósito original con la utilización nueva o propuesta, atendiendo a su relación, contexto y expectativas razonables del titular. Verificar si concurre alguno de los supuestos legalmente admitidos para tratar datos con fines distintos y qué antecedentes lo sustentan, sin considerar suficiente una relación comercial genérica.",
+          no_evidence_guidance:
+            "Recuperar las finalidades inicialmente informadas, los antecedentes de recopilación y la descripción del nuevo uso. Si no puede acreditarse compatibilidad u otra habilitación aplicable, dejar constancia de las comprobaciones pendientes, evitando atribuir consentimiento o autorización legal inexistentes.",
+          expected_result:
+            "Una evaluación fundamentada del uso distinto y del supuesto jurídico eventualmente aplicable, con hechos y limitaciones reconocibles. Cuando no exista modificación de finalidad, una constatación respaldada de esa circunstancia, sin exigir artificialmente un análisis de compatibilidad.",
+        },
+        {
+          evidence_item: "minimización, conservación, calidad, actores y fuentes",
+          review_guide:
+            "Revisar qué obligaciones pueden verse afectadas por los nuevos datos, períodos de conservación, fuentes, participantes o mecanismos operativos. Identificar diferencias relevantes respecto de la condición anterior y determinar qué controles o evaluaciones necesitan actualizarse, sin exigir repetir procesos que el cambio no afecta.",
+          no_evidence_guidance:
+            "Consultar el inventario, las reglas de conservación, los controles de calidad y los antecedentes de actores y procedencia. Si falta información sobre algún aspecto modificado, señalar las verificaciones pendientes y las áreas involucradas, sin presumir que todos los ámbitos requieren corrección.",
+          expected_result:
+            "Obligaciones y controles afectados identificados con sus antecedentes, revisiones necesarias y situaciones pendientes. Los ámbitos que permanecen sin cambios relevantes deben quedar diferenciados, permitiendo orientar las actualizaciones posteriores sin anticipar su ejecución.",
+        },
+      ],
       required_facts: [TRIGGER_FACT, "change.attributes_identified"],
       default_next_node_key: "inventory",
       provenance: "agency_standard",
@@ -234,6 +343,17 @@ export const TREATMENT_CHANGE_REVIEW_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: considerationOptions("change.inventory_updated"),
       evidence_to_review: ["actualización de inventario"],
+      evidence_review_help: [
+        {
+          evidence_item: "actualización de inventario",
+          review_guide:
+            "Comprobar en «Tratamientos» que las finalidades, datos, fuentes, actores y demás atributos afectados reflejen las condiciones efectivamente vigentes. Verificar su correspondencia con el cambio evaluado e identificar campos desactualizados o pendientes, distinguiendo las modificaciones guardadas de las descritas únicamente en esta revisión.",
+          no_evidence_guidance:
+            "Consultar los antecedentes del cambio y la información disponible en «Tratamientos» para reconocer qué atributos requieren actualización. Si existen diferencias sin resolver, identificar las correcciones pendientes y sus responsables, sin considerar que documentar el cambio en la guía equivale a modificar el inventario.",
+          expected_result:
+            "Un inventario coherente con la condición vigente del tratamiento, con los atributos afectados actualizados y las discrepancias pendientes identificadas. La información registrada debe permitir que las obligaciones y flags dependientes se determinen desde los facts actuales, sin atribuir actualizaciones que no se realizaron.",
+        },
+      ],
       help_text: [
         "Actualiza los atributos en Tratamientos; esta guía verifica que se hizo, no duplica el inventario.",
       ],
@@ -354,6 +474,17 @@ export const TREATMENT_CHANGE_REVIEW_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["Revisión de Cambio de Tratamiento"],
+      evidence_review_help: [
+        {
+          evidence_item: "Revisión de Cambio de Tratamiento",
+          review_guide:
+            "Valorar conjuntamente la modificación identificada, su fecha, las diferencias entre condiciones anteriores y nuevas, y las consecuencias sobre finalidad, licitud y obligaciones relacionadas. Comprobar que el inventario refleje los atributos vigentes y que el razonamiento explique las decisiones adoptadas, los fundamentos aplicables y los aspectos pendientes, sin considerar suficiente la sola validación automática de antecedentes.",
+          no_evidence_guidance:
+            "Recuperar los análisis, respaldos del cambio y verificaciones del inventario realizados en las etapas anteriores. Si existen decisiones sin fundamento, actualizaciones no comprobadas o consecuencias jurídicas sin resolver, identificar las revisiones pendientes antes de adoptar la conclusión. No declarar completada una evaluación cuya documentación no permita sostener el juicio profesional.",
+          expected_result:
+            "Una conclusión profesional fundamentada y trazable sobre la revisión del cambio, con hechos, criterios jurídicos y decisiones identificables. El registro debe distinguir las obligaciones reevaluadas, las actuaciones realizadas y los asuntos pendientes, sin presentar la revisión completada como garantía automática de cumplimiento integral.",
+        },
+      ],
       help_text: [
         "Documenta tu razonamiento a continuación. La conclusión solo queda registrada al adoptar con razonamiento válido.",
       ],

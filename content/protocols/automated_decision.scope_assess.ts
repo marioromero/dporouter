@@ -87,6 +87,26 @@ export const AUTOMATED_DECISION_SCOPE_ASSESS_PROTOCOL: ExecutionProtocol = {
         "inventario/matriz de usos automatizados",
         "process maps",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "inventario/matriz de usos automatizados",
+          review_guide:
+            "Examinar el inventario asociado al tratamiento para comprobar que se identificaron y revisaron los usos concretos de decisiones basadas en tratamiento automatizado o elaboración de perfiles, incluidos aquellos cuya cobertura jurídica deba evaluarse posteriormente. Contrastar el contenido con las actividades y sistemas del tratamiento, distinguiendo un inventario efectivamente revisado de una colección simplemente vacía y verificando que cada uso identificado esté representado de manera reconocible.",
+          no_evidence_guidance:
+            "Consultar al responsable del tratamiento y a las áreas de producto, TI o analítica para determinar si existen sistemas o procesos que produzcan decisiones automatizadas o perfiles relevantes. Si no existe inventario o no se ha revisado su completitud, mantener la evaluación pendiente; una colección `automatedUses[]` vacía no acredita por sí sola la inexistencia de usos comprendidos por el artículo 8 bis.",
+          expected_result:
+            "Un inventario revisado para el tratamiento correspondiente, con los usos automatizados identificados y suficientemente diferenciados o con una conclusión documentada de que no existen usos relevantes tras la revisión. Deben quedar explícitos los sistemas, procesos o fuentes cuya cobertura no se haya podido verificar, sin crear sesiones individuales por cada uso.",
+        },
+        {
+          evidence_item: "process maps",
+          review_guide:
+            "Contrastar los mapas de procesos del tratamiento con el inventario de usos automatizados para identificar dónde se generan perfiles, recomendaciones, clasificaciones o decisiones y qué intervención tienen en las actuaciones de la empresa. Examinar los actores, entradas, resultados y momentos de decisión para detectar usos omitidos o duplicados, sin considerar que toda automatización administrativa constituya automáticamente una decisión comprendida por el artículo 8 bis.",
+          no_evidence_guidance:
+            "Solicitar diagramas de procesos, descripciones operativas o recorridos explicativos de las actividades pertinentes, consultando a los responsables de negocio y tecnología. Si no existen mapas suficientes, reconstruir los puntos de decisión a partir de antecedentes disponibles e identificar las rutas pendientes de revisión, evitando concluir ausencia de automatización por falta de documentación.",
+          expected_result:
+            "Mapas o descripciones de proceso que permitan contrastar la existencia, finalidad y ubicación de los usos automatizados con el inventario del tratamiento. Las divergencias y procesos no comprobados deben quedar reconocidos, proporcionando una base trazable para confirmar o mantener pendiente la revisión del inventario.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "structural-gate",
       provenance: "agency_standard",
@@ -264,6 +284,71 @@ export const AUTOMATED_DECISION_SCOPE_ASSESS_PROTOCOL: ExecutionProtocol = {
         "contratos",
         "habilitación legal cuando se invoque",
         "análisis profesional",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "matriz de usos automatizados",
+          review_guide:
+            "Examinar la clasificación individual de todos los usos registrados para comprobar que cada uno cuente con una evaluación de cobertura del artículo 8 bis y, cuando corresponda, de su vía legal. Contrastar las conclusiones individuales con el conjunto representado en `automatedUses[]`, distinguiendo usos no comprendidos, usos comprendidos con excepción identificada y usos comprendidos sin vía legal, sin perder casos pendientes ni consolidar categorías incompatibles.",
+          no_evidence_guidance:
+            "Recabar la matriz de evaluación y consultar al responsable del tratamiento o al profesional encargado sobre los usos cuya clasificación no esté documentada. Si falta cobertura o vía legal en alguno de los usos que la requieren, registrar el punto pendiente y no adoptar una conclusión conjunta definitiva basándose únicamente en otros usos evaluados.",
+          expected_result:
+            "Una matriz completa y trazable por uso que sustente una conclusión profesional conjunta compatible con los estados reales del tratamiento. Los usos sin cobertura o vía legal determinadas deben impedir una conclusión prematura, conservando el detalle individual en la colección existente y sin generar nuevos hechos por uso.",
+        },
+        {
+          evidence_item: "documentación de profiling",
+          review_guide:
+            "Revisar las actividades de elaboración de perfiles asociadas a los usos inventariados, identificando qué características personales se analizan, qué resultados se producen y cómo influyen en decisiones sobre titulares. Distinguir la elaboración de perfiles de la decisión que eventualmente se adopta a partir de ella y examinar su contribución a posibles efectos jurídicos o afectaciones significativas, sin atribuir automáticamente el mismo alcance legal a todas las técnicas de perfilamiento.",
+          no_evidence_guidance:
+            "Solicitar a producto, analítica o tecnología las descripciones funcionales de los modelos, segmentaciones o sistemas de clasificación utilizados en el tratamiento. Si no es posible establecer qué perfiles se generan o cómo se utilizan para tomar decisiones, identificar la incertidumbre y no afirmar cobertura ni exclusión del artículo 8 bis sin antecedentes suficientes.",
+          expected_result:
+            "Documentación que permita comprender los usos de elaboración de perfiles, los resultados que generan y su intervención en decisiones relevantes para el titular. Las relaciones no acreditadas entre perfilamiento, decisión y afectación deben permanecer abiertas a evaluación profesional, sin decisiones automatizadas del propio Nexo DPO.",
+        },
+        {
+          evidence_item: "lógica/inputs/outputs relevantes",
+          review_guide:
+            "Examinar las entradas, reglas, modelos y resultados relevantes de cada uso para comprender cómo el tratamiento automatizado contribuye a una decisión concreta. Revisar los factores principales utilizados, los resultados producidos y la intervención humana cuando exista, procurando una explicación significativa de su funcionamiento sin exigir acceso irrestricto a código fuente ni considerar una descripción comercial del algoritmo como evidencia técnica suficiente.",
+          no_evidence_guidance:
+            "Recabar especificaciones funcionales, descripciones de modelos y antecedentes explicativos de los responsables técnicos que permitan reconstruir el flujo entre entradas, procesamiento y resultados. Si la lógica o sus efectos no pueden comprenderse con respaldo suficiente, identificar qué información falta y mantener pendiente la valoración correspondiente, sin inferir automáticamente la existencia o ausencia de cobertura jurídica.",
+          expected_result:
+            "Una descripción verificable y comprensible de las entradas, operaciones y resultados relevantes para cada uso, suficiente para sustentar la evaluación de automatización, perfilamiento y decisión producida. Las limitaciones técnicas y los elementos no explicados deben quedar documentados, preservando la futura capacidad de información y transparencia exigida por el artículo 8 bis.",
+        },
+        {
+          evidence_item: "consecuencias para titulares",
+          review_guide:
+            "Evaluar qué efectos produce cada decisión automatizada sobre los titulares, distinguiendo consecuencias jurídicas de otras afectaciones que puedan resultar significativamente relevantes. Examinar la naturaleza, intensidad y contexto de la decisión, sus consecuencias prácticas y las posibilidades de intervención humana, sin presumir que cualquier recomendación, clasificación o cambio de experiencia digital supera automáticamente el umbral del artículo 8 bis.",
+          no_evidence_guidance:
+            "Solicitar a los responsables de negocio y del tratamiento una descripción de las decisiones producidas y de sus consecuencias previsibles para los titulares, utilizando escenarios ficticios cuando sea necesario. Si las consecuencias no están suficientemente identificadas, registrar la falta de antecedentes y evitar clasificar el uso solamente por el nombre de la herramienta o por la existencia de automatización.",
+          expected_result:
+            "Un análisis por uso que describa los efectos jurídicos o las posibles afectaciones significativas y fundamente su valoración dentro del artículo 8 bis. Deben distinguirse impactos comprobados, consecuencias previsibles e incertidumbres, sin resolver reclamaciones individuales ni atribuir automáticamente afectaciones a todo uso tecnológico.",
+        },
+        {
+          evidence_item: "contratos",
+          review_guide:
+            "Examinar los contratos y las condiciones de prestación pertinentes para determinar si una decisión automatizada comprendida es realmente necesaria para celebrar o ejecutar un contrato entre el titular y el responsable, conforme a la letra a) del artículo 8 bis. Verificar la relación entre la decisión, la obligación contractual y su necesidad efectiva, sin confundir conveniencia empresarial, eficiencia operativa o mera mención contractual con el requisito legal de necesidad.",
+          no_evidence_guidance:
+            "Recabar las cláusulas y antecedentes que describan las prestaciones contractuales relacionadas con el uso automatizado, consultando a las áreas jurídica y operacional. Cuando no pueda verificarse la necesidad contractual de la decisión, identificar la evaluación pendiente sin inventar obligaciones, atribuir efectos a contratos no revisados o considerar automáticamente acreditada la excepción.",
+          expected_result:
+            "Un análisis documentado que permita valorar, para cada uso comprendido que invoque esta vía, si la decisión es necesaria para celebrar o ejecutar el contrato correspondiente. Las justificaciones insuficientes deben quedar diferenciadas de las excepciones acreditadas, sin alterar el contrato ni crear una base legal nueva.",
+        },
+        {
+          evidence_item: "habilitación legal cuando se invoque",
+          review_guide:
+            "Verificar que, cuando se invoque la letra c) del artículo 8 bis, exista una disposición legal identificable que habilite la decisión automatizada y contemple las salvaguardas exigibles para proteger los derechos y libertades del titular. Examinar el alcance de la habilitación y su correspondencia con la decisión concreta, evitando interpretar permisos generales de tratamiento de datos como autorizaciones específicas para cualquier decisión automatizada.",
+          no_evidence_guidance:
+            "Solicitar la identificación de la norma invocada y el análisis jurídico que relaciona su contenido con el uso automatizado correspondiente. Si la habilitación o las salvaguardas legales no pueden verificarse, registrar el punto como no acreditado o pendiente según los antecedentes, sin inventar autorizaciones regulatorias ni atribuir a políticas internas valor de habilitación legal.",
+          expected_result:
+            "Un fundamento legal identificable y revisable para cada decisión comprendida que invoque la excepción de habilitación legal, con su alcance y salvaguardas pertinentes documentados. La ausencia de norma aplicable o las dudas sobre sus condiciones deben quedar expresamente reflejadas y sujetas a evaluación profesional.",
+        },
+        {
+          evidence_item: "análisis profesional",
+          review_guide:
+            "Examinar el razonamiento jurídico conjunto para verificar que explique las conclusiones de cobertura de todos los usos registrados, los hechos relevantes, los efectos sobre titulares y las vías legales evaluadas. Comprobar que la conclusión seleccionada sea compatible con el conjunto de estados documentados, que las referencias a los usos estén completas y que las decisiones cubiertas se deriven a D4.09 aunque exista una excepción legal.",
+          no_evidence_guidance:
+            "Solicitar al profesional responsable la fundamentación de los usos y de la conclusión conjunta, identificando clasificaciones pendientes, contradicciones o ausencia de respaldo jurídico. Si el análisis es insuficiente, mantener la evaluación sin finalizar y completar los antecedentes necesarios mediante el mecanismo existente de ReasoningRecord, sin generar conclusiones automáticamente ni crear un registro separado por uso.",
+          expected_result:
+            "Un juicio profesional documentado en un único ReasoningRecord del tratamiento, coherente con las clasificaciones individuales y con los resultados canónicos permitidos. Debe conservar las referencias exactas a los usos considerados, los fundamentos y la evidencia pertinente, sin reemplazar el guard de finalización ni excluir D4.09 para usos cubiertos con excepción.",
+        },
       ],
       help_text: [
         "Evalúa por cada uso: ¿decisión basada en tratamiento automatizado o profiling? ¿Produce efectos jurídicos o afectación significativa similar? ¿Necesaria para contrato? ¿Consentimiento previo y expreso? ¿Habilitación legal con salvaguardas? Documenta la conclusión individual de cada uso en el razonamiento.",

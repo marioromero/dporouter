@@ -55,6 +55,132 @@ function satisfied(fact_key: string): FactCondition {
   return { op: "fact_in", fact_key, values: ["yes", "na"] };
 }
 
+const EVIDENCE_REVIEW_HELP: Record<
+  string,
+  import("./types").GuidanceNode["evidence_review_help"]
+> = {
+  "check-owners": [
+    {
+      evidence_item: "procedimiento",
+      review_guide:
+        "Examinar cómo el procedimiento asigna responsables internos para gestionar las salvaguardas de cada uso automatizado comprendido en el artículo 8 bis. Verificar que se identifiquen las funciones encargadas de proporcionar información, obtener explicaciones, intervenir humanamente y tramitar revisiones, distinguiendo responsables generales del tratamiento de quienes cuentan realmente con competencia y medios para actuar sobre una decisión.",
+      no_evidence_guidance:
+        "Consultar a privacidad, responsables del tratamiento y equipos operacionales para identificar quién podría ejercer cada función y cómo se coordinarían las actuaciones. Si no existe una asignación formal o verificable, documentar las responsabilidades pendientes sin presumir que designar un DPO o propietario del sistema equivale a disponer de todos los operadores necesarios.",
+      expected_result:
+        "Un procedimiento que identifique responsables y funciones para las salvaguardas de los usos comprendidos, con rutas de coordinación suficientemente claras. Las competencias no asignadas, capacidades no demostradas y dependencias entre áreas deben quedar reconocidas, sin crear expedientes individuales de decisiones.",
+    },
+    {
+      evidence_item: "flujo de revisión",
+      review_guide:
+        "Contrastar el flujo de revisión con los responsables designados para comprobar quién recibe una solicitud, quién obtiene los antecedentes de la decisión automatizada y quién puede realizar la intervención humana correspondiente. Examinar las transferencias de responsabilidad y la posibilidad de escalar situaciones complejas, evitando procesos en que ninguna persona tenga capacidad real para revisar o corregir el resultado.",
+      no_evidence_guidance:
+        "Solicitar diagramas, instrucciones de derivación o explicaciones operacionales que permitan reconstruir las responsabilidades del flujo. Si existen etapas sin encargado o sin facultades definidas, identificar esas brechas sin atribuir automáticamente capacidad de decisión a quienes solo reciben o trasladan solicitudes.",
+      expected_result:
+        "Un flujo de revisión trazable que relacione las etapas de atención con responsables identificados y facultades pertinentes para cada uso comprendido. Los puntos de transferencia, escalamiento y revisión no definidos deben quedar explícitos, diferenciando diseño organizacional de funcionamiento comprobado.",
+    },
+  ],
+  "check-channels": [
+    {
+      evidence_item: "canal para punto de vista",
+      review_guide:
+        "Verificar que los titulares puedan expresar su punto de vista respecto de decisiones automatizadas comprendidas y que exista una ruta para recibirlo y ponerlo a disposición de quienes revisan la decisión. Examinar la accesibilidad del canal, la claridad de sus instrucciones y su conexión con los usos pertinentes, evitando considerar suficiente un buzón genérico sin procedimiento de derivación.",
+      no_evidence_guidance:
+        "Consultar los canales de atención y los procedimientos destinados a recibir observaciones o antecedentes de los titulares. Si no existe una ruta identificable para incorporar su punto de vista, señalar las definiciones pendientes sin inventar formularios disponibles ni asumir que cualquier canal comercial satisface esta garantía.",
+      expected_result:
+        "Un canal previsto y operacionalmente verificable para recibir el punto de vista del titular y derivarlo al proceso de revisión correspondiente. Deben quedar reconocidas las restricciones de acceso, derivaciones incompletas y usos que todavía no cuenten con cobertura acreditada.",
+    },
+    {
+      evidence_item: "canal/proceso de revisión",
+      review_guide:
+        "Examinar cómo se solicita la revisión de una decisión automatizada comprendida, quién recibe el requerimiento y cómo se inicia la evaluación correspondiente. Verificar que el canal esté vinculado a un proceso real, con responsables y mecanismos de atención diferenciados según el uso, sin asumir que proporcionar una dirección de contacto equivale a garantizar una revisión efectiva.",
+      no_evidence_guidance:
+        "Recabar los procedimientos y canales de revisión existentes, consultando a las áreas encargadas de decisiones automatizadas. Si no existe una conexión verificable entre recepción, evaluación y respuesta, registrar la brecha sin diseñar un sistema de tickets de casos reales ni inventar plazos legales específicos.",
+      expected_result:
+        "Un mecanismo que permita solicitar revisión y encauzarla hacia responsables con capacidad de evaluar la decisión automatizada pertinente. Las limitaciones operativas y los usos sin canal efectivo deben quedar identificados, sin exigir una plataforma tecnológica determinada.",
+    },
+  ],
+  "check-explanation": [
+    {
+      evidence_item: "mecanismo para explicación",
+      review_guide:
+        "Comprobar que exista una forma efectiva de obtener información comprensible sobre cómo se produjo cada tipo de decisión automatizada comprendida, considerando los datos y factores relevantes, el proceso decisorio y las consecuencias del resultado. Examinar cómo se obtiene esa explicación de los equipos o sistemas pertinentes y distinguir un contenido explicativo útil de una declaración genérica sobre el uso de algoritmos.",
+      no_evidence_guidance:
+        "Consultar las especificaciones de los sistemas, las descripciones de modelos y a los responsables técnicos para determinar qué información puede utilizarse para explicar una decisión. Si no existen mecanismos suficientes para obtenerla, identificar las dependencias y limitaciones técnicas sin inventar explicaciones o presumir que disponer del código fuente asegura una comunicación comprensible.",
+      expected_result:
+        "Un mecanismo revisable que permita obtener explicaciones pertinentes y comprensibles para los usos automatizados comprendidos, con responsables, fuentes y limitaciones identificados. Las capacidades no implementadas y los factores relevantes aún no explicables deben quedar expresamente documentados.",
+    },
+    {
+      evidence_item: "prueba de explicación",
+      review_guide:
+        "Examinar una prueba controlada que permita generar una explicación de una decisión automatizada ficticia y comprobar que describa los elementos pertinentes del resultado de manera comprensible. Contrastar el contenido producido con el funcionamiento conocido del sistema, evitando considerar suficiente una explicación genérica que no permita entender la decisión ni una salida técnica inaccesible para el titular.",
+      no_evidence_guidance:
+        "Solicitar una demostración con escenarios simulados o antecedentes verificables de pruebas realizadas previamente, sin utilizar datos personales reales. Si no se ha demostrado la capacidad de generar una explicación, señalar los pasos pendientes y las limitaciones técnicas, sin confundir una especificación teórica con funcionamiento efectivamente comprobado.",
+      expected_result:
+        "Una prueba revisable de obtención de explicaciones para los usos examinados, con contenido, comprensión y correspondencia técnica evaluables. Las decisiones o modelos no incluidos en la prueba deben permanecer identificados como límites de cobertura, sin afirmar que todos los usos están habilitados a partir de un único ejemplo.",
+    },
+  ],
+  "check-intervention": [
+    {
+      evidence_item: "diseño de intervención humana",
+      review_guide:
+        "Examinar si el diseño permite que una persona competente evalúe sustantivamente la decisión automatizada, acceda a los antecedentes pertinentes y tenga facultades reales para mantenerla, modificarla o revertirla cuando corresponda. Revisar la independencia funcional, los criterios de actuación y la disponibilidad de información, evitando considerar intervención humana una aprobación meramente formal o una ratificación inevitable del resultado automatizado.",
+      no_evidence_guidance:
+        "Recabar las funciones asignadas a los revisores humanos, sus facultades y la información que tendrían disponible para intervenir. Si el diseño no contempla capacidad efectiva de análisis o corrección, identificar las brechas sin presumir que la presencia de una persona dentro del proceso basta para satisfacer la garantía.",
+      expected_result:
+        "Un diseño de intervención humana que establezca responsables competentes, acceso a antecedentes relevantes y facultades sustantivas de revisión de las decisiones comprendidas. Las restricciones de autoridad, información o recursos deben quedar reconocidas, diferenciando capacidades diseñadas de capacidades efectivamente implementadas.",
+    },
+    {
+      evidence_item: "walkthrough funcional",
+      review_guide:
+        "Recorrer con una decisión ficticia cómo interviene una persona en el proceso, qué antecedentes puede consultar y qué acciones puede ejecutar frente al resultado automatizado. Observar si el recorrido permite una valoración independiente y una modificación real cuando corresponda, distinguiendo los controles funcionales de una intervención meramente nominal o de una aprobación predeterminada.",
+      no_evidence_guidance:
+        "Solicitar una demostración controlada del proceso de intervención humana, incluyendo las facultades disponibles para el operador y los resultados que podría producir. Si no puede verificarse una actuación sustantiva, registrar las etapas no comprobadas y los límites de acceso o autoridad sin utilizar decisiones reales de titulares.",
+      expected_result:
+        "Un recorrido funcional revisable que permita acreditar la capacidad de intervención humana sustantiva dentro de los usos probados, con información disponible, actuaciones y resultados observados. Las capacidades no demostradas y las restricciones funcionales deben quedar explícitas.",
+    },
+    {
+      evidence_item: "entrevistas con operadores",
+      review_guide:
+        "Contrastar mediante entrevistas si los operadores conocen los criterios de revisión, comprenden las decisiones automatizadas sobre las que intervienen y disponen de autoridad e información para cuestionarlas. Examinar la correspondencia entre el procedimiento declarado y sus prácticas operacionales, distinguiendo conocimiento general del sistema de capacidad efectiva para valorar y corregir decisiones.",
+      no_evidence_guidance:
+        "Consultar a los responsables de equipos y operadores previstos para identificar funciones, formación, recursos y facultades relacionados con la intervención humana. Si no existen operadores identificados o no hay antecedentes suficientes sobre su actuación, registrar la incertidumbre sin atribuir competencia real a un cargo solamente por su denominación.",
+      expected_result:
+        "Antecedentes de entrevistas que permitan contrastar la preparación, facultades y posibilidades reales de actuación de los operadores frente a las decisiones comprendidas. Deben quedar identificadas las necesidades de formación, acceso a información o definición de responsabilidades, sin convertir las entrevistas en expedientes individuales.",
+    },
+  ],
+  "check-viewpoint": [
+    {
+      evidence_item: "operadores responsables de revisión humana",
+      review_guide:
+        "Verificar que los operadores encargados de la revisión puedan recibir, comprender y considerar efectivamente las observaciones o antecedentes aportados por el titular al expresar su punto de vista. Examinar si disponen de facultades para incorporar esa información en la valoración de la decisión y distinguir una recepción meramente administrativa de una consideración sustantiva dentro del proceso.",
+      no_evidence_guidance:
+        "Consultar las atribuciones, instrucciones y prácticas previstas para los operadores de revisión humana, identificando cómo se utilizarían observaciones y antecedentes adicionales. Si los responsables no cuentan con facultades o una ruta clara para incorporarlos, registrar la brecha sin presumir que reenviar un mensaje constituye una consideración efectiva del punto de vista.",
+      expected_result:
+        "Operadores identificados y capacitados funcionalmente para considerar el punto de vista del titular en la revisión de decisiones automatizadas comprendidas, con responsabilidades y facultades revisables. Las limitaciones de actuación o de incorporación de antecedentes deben quedar explícitas.",
+    },
+    {
+      evidence_item: "revisión del flujo de intervención",
+      review_guide:
+        "Examinar el flujo completo desde la recepción del punto de vista del titular hasta su consideración por el revisor humano y la posibilidad de revisar el resultado automatizado. Contrastar las etapas con las capacidades funcionales disponibles y comprobar que las observaciones puedan influir en la evaluación, sin exigir que toda revisión produzca necesariamente una modificación de la decisión.",
+      no_evidence_guidance:
+        "Recabar diagramas o instrucciones sobre recepción, derivación, evaluación e incorporación de observaciones en el procedimiento. Si no puede verificarse cómo llegan los antecedentes al revisor o cómo serían considerados, identificar las etapas pendientes sin implementar un ciclo de vida de solicitudes individuales.",
+      expected_result:
+        "Un flujo revisable que permita incorporar el punto de vista del titular en la evaluación humana y habilite la solicitud de revisión correspondiente, con responsabilidades y resultados posibles identificados. Los puntos de desconexión, etapas meramente nominales y usos sin cobertura suficiente deben quedar reconocidos.",
+    },
+  ],
+  "check-coherence": [
+    {
+      evidence_item: "walkthrough/prueba controlada",
+      review_guide:
+        "Contrastar mediante un recorrido controlado las salvaguardas efectivamente previstas para los usos automatizados comprendidos con la información pública y las medidas de transparencia definidas en D3. Verificar que las explicaciones, canales de intervención y revisión y posibilidades de expresar el punto de vista sean coherentes con lo que la organización comunica, detectando promesas no implementadas o capacidades existentes que no estén suficientemente reflejadas en la información pública.",
+      no_evidence_guidance:
+        "Recabar los antecedentes de transparencia pública de D3 y una prueba controlada de los mecanismos de salvaguarda del tratamiento. Si no se dispone de información pública o demostración funcional suficiente, identificar las discrepancias y verificaciones pendientes sin modificar las definiciones canónicas de D3 ni inventar comunicaciones ya publicadas.",
+      expected_result:
+        "Una comprobación documentada de coherencia entre los mecanismos de salvaguarda de D4.09 y las declaraciones de información y transparencia de D3, con discrepancias y limitaciones identificadas. La revisión debe conservar D3 como fuente de verdad y distinguir las capacidades operacionales verificadas de las aún no implementadas.",
+    },
+  ],
+};
+
 function checkOptions(factKey: string, yesHint: string) {
   return [
     {
@@ -99,6 +225,7 @@ function node(
     answer_type: "yes_no_unknown",
     options: checkOptions(factKey, yesHint),
     evidence_to_review: evidence,
+    evidence_review_help: EVIDENCE_REVIEW_HELP[node_key] ?? [],
     required_facts: [],
     default_next_node_key: next,
     ...(related ? { related_activity_keys: related } : {}),

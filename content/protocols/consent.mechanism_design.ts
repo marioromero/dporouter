@@ -166,6 +166,17 @@ export const CONSENT_MECHANISM_DESIGN_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: verifyOptions("consent.mechanism.purpose_confirmed"),
       evidence_to_review: ["diseño del flujo"],
+      evidence_review_help: [
+        {
+          evidence_item: "diseño del flujo",
+          review_guide:
+            "Identificar en la secuencia propuesta qué utilización concreta de datos se someterá a autorización, comprobando su correspondencia con la finalidad documentada en D2 y la ruta jurídica de consentimiento. Verificar que el propósito sea reconocible y no quede confundido con otros usos independientes o autorizaciones generales para tratamientos futuros.",
+          no_evidence_guidance:
+            "Consultar las finalidades y bases de licitud registradas en D2, junto con los formularios o antecedentes del proceso previsto, para precisar qué uso necesita consentimiento. Si la finalidad no está determinada o existen discrepancias, señalar las aclaraciones pendientes sin inventar propósitos ni asignar una base jurídica desde esta guía.",
+          expected_result:
+            "Una finalidad concreta e identificable, vinculada al mecanismo previsto y coherente con la ruta de consentimiento establecida en D2. Las discrepancias o indefiniciones deben quedar reconocidas para su corrección, sin considerar acreditada todavía la especificidad de la manifestación ni la validez integral del consentimiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-channel",
       provenance: "agency_standard",
@@ -182,6 +193,26 @@ export const CONSENT_MECHANISM_DESIGN_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: verifyOptions("consent.mechanism.channel_identified"),
       evidence_to_review: ["especificación funcional", "scripts y canales"],
+      evidence_review_help: [
+        {
+          evidence_item: "especificación funcional",
+          review_guide:
+            "Identificar cómo se solicitará y recibirá la manifestación de voluntad, precisando la modalidad prevista, sus etapas y los componentes que intervienen. Verificar que la descripción corresponda a la finalidad activa y permita reconocer dónde se presenta la solicitud y cómo se expresa la decisión, distinguiendo funcionalidades implementadas de propuestas.",
+          no_evidence_guidance:
+            "Consultar diagramas de proceso, requisitos del sistema y antecedentes de las áreas responsables para reconstruir la secuencia prevista. Si el mecanismo no está definido, identificar las decisiones de diseño pendientes sin atribuir funcionalidades inexistentes ni presumir que utilizar un formulario equivale a obtener consentimiento válido.",
+          expected_result:
+            "Una modalidad de obtención identificable, vinculada a la finalidad correspondiente y con sus principales etapas y componentes descritos. Las funcionalidades pendientes o no comprobadas deben quedar diferenciadas, permitiendo continuar la revisión sin anticipar la validez integral del consentimiento.",
+        },
+        {
+          evidence_item: "scripts y canales",
+          review_guide:
+            "Revisar los medios concretos mediante los cuales se solicitará consentimiento, como pantallas, formularios, comunicaciones escritas o guiones verbales, según corresponda. Comprobar que los textos y acciones previstos sean coherentes con la modalidad declarada y permitan identificar cómo interactúa el titular, sin imponer una interfaz tecnológica específica.",
+          no_evidence_guidance:
+            "Consultar formularios, guiones de atención, comunicaciones y antecedentes operativos para localizar los canales utilizados o previstos. Cuando falten materiales, señalar qué textos o interacciones requieren definición y evitar considerar implementado un canal que solo aparece mencionado en una propuesta.",
+          expected_result:
+            "Canales y materiales de obtención identificados, con correspondencia verificable respecto de la modalidad prevista y la finalidad activa. Las diferencias entre diseño, implementación y funcionamiento comprobado deben quedar reconocidas para las evaluaciones posteriores de información, prueba y retiro.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-information",
       provenance: "agency_standard",
@@ -198,6 +229,26 @@ export const CONSENT_MECHANISM_DESIGN_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: verifyOptions("consent.mechanism.information_verified"),
       evidence_to_review: ["formularios", "textos y pantallas"],
+      evidence_review_help: [
+        {
+          evidence_item: "formularios",
+          review_guide:
+            "Comprobar qué información recibe el titular antes de expresar su decisión, verificando que pueda identificar al responsable, los datos involucrados y la finalidad que pretende autorizar. Revisar la ubicación de las explicaciones y su relación con la solicitud de consentimiento, distinguiendo información disponible oportunamente de contenidos presentados después de aceptar.",
+          no_evidence_guidance:
+            "Consultar modelos de formularios, requisitos funcionales y antecedentes del proceso de obtención para reconstruir la información prevista. Si faltan explicaciones o no puede comprobarse cuándo se presentan, identificar los ajustes pendientes sin presumir que una casilla de aceptación demuestra consentimiento informado.",
+          expected_result:
+            "Un formulario cuyo diseño permita conocer oportunamente la información relevante para decidir sobre el tratamiento, con omisiones y aspectos pendientes identificados. La revisión debe distinguir el contenido diseñado de su implementación efectiva, sin anticipar la validez integral del consentimiento.",
+        },
+        {
+          evidence_item: "textos y pantallas",
+          review_guide:
+            "Revisar las explicaciones, mensajes y pantallas que acompañan la solicitud, comprobando que describan comprensiblemente el uso previsto de los datos y permitan acceder a la información relevante antes de consentir. Identificar textos ambiguos, referencias insuficientes o secuencias que oculten información necesaria hasta después de la manifestación.",
+          no_evidence_guidance:
+            "Recuperar prototipos, guiones, capturas y contenidos previstos para el canal de obtención, identificando qué verá o escuchará el titular y en qué momento. Cuando falten materiales o existan contradicciones, señalar las verificaciones pendientes sin atribuir claridad o disponibilidad a textos todavía no definidos.",
+          expected_result:
+            "Mensajes y pantallas coherentes con la finalidad activa, comprensibles y disponibles en el momento pertinente del flujo, con diferencias o limitaciones reconocibles. La evidencia debe respaldar el diseño informativo sin confundir una presentación adecuada con consentimientos efectivamente obtenidos.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-specificity",
       provenance: "agency_standard",
@@ -214,6 +265,26 @@ export const CONSENT_MECHANISM_DESIGN_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: verifyOptions("consent.mechanism.specificity_verified"),
       evidence_to_review: ["formularios", "textos y pantallas"],
+      evidence_review_help: [
+        {
+          evidence_item: "formularios",
+          review_guide:
+            "Comprobar que los controles de autorización permitan identificar qué finalidad concreta acepta el titular y distinguirla de otros usos independientes. Revisar si las opciones agrupadas mantienen una vinculación inequívoca con las finalidades descritas, evitando aceptaciones generales que incorporen tratamientos diferentes sin una decisión suficientemente específica.",
+          no_evidence_guidance:
+            "Consultar modelos de formularios, prototipos y antecedentes del flujo para reconstruir cómo se vinculará cada decisión con los usos previstos. Si faltan controles o no puede determinarse qué finalidad comprende la autorización, identificar los ajustes pendientes sin presumir especificidad por la sola existencia de una casilla.",
+          expected_result:
+            "Un diseño en el que la manifestación pueda asociarse claramente con la finalidad activa, diferenciando autorizaciones independientes cuando corresponda. Los agrupamientos confusos o las vinculaciones pendientes deben quedar identificados, sin atribuir consentimientos individuales efectivamente obtenidos.",
+        },
+        {
+          evidence_item: "textos y pantallas",
+          review_guide:
+            "Revisar que las expresiones utilizadas junto a la solicitud describan con precisión las finalidades autorizadas y correspondan a las opciones disponibles. Detectar textos genéricos, referencias a usos futuros indeterminados o mensajes que mezclen propósitos diferentes, comprobando que el titular pueda reconocer el alcance de su decisión.",
+          no_evidence_guidance:
+            "Recuperar textos, guiones y pantallas previstos para la obtención, relacionándolos con las finalidades documentadas en D2. Cuando existan formulaciones incompletas o contradictorias, señalar las correcciones necesarias sin inventar autorizaciones ni considerar suficiente una referencia general a la política de privacidad.",
+          expected_result:
+            "Textos y pantallas que permitan comprender qué finalidad o finalidades comprende cada manifestación, con correspondencia verificable respecto del diseño del mecanismo. Las ambigüedades relevantes deben quedar reconocidas, sin considerar que una redacción específica demuestra por sí sola la validez integral del consentimiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-priority",
       provenance: "agency_standard",
@@ -230,6 +301,26 @@ export const CONSENT_MECHANISM_DESIGN_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: verifyOptions("consent.mechanism.priority_verified"),
       evidence_to_review: ["diseño del flujo", "especificación funcional"],
+      evidence_review_help: [
+        {
+          evidence_item: "diseño del flujo",
+          review_guide:
+            "Comprobar el orden de las etapas previstas, identificando cuándo se solicita y manifiesta el consentimiento y cuándo comienzan las operaciones vinculadas a la finalidad activa. Detectar rutas que permitan iniciar ese tratamiento antes de la autorización, incluyendo continuaciones sin respuesta o activaciones automáticas, sin confundirlo con operaciones sustentadas en otra base jurídica.",
+          no_evidence_guidance:
+            "Consultar diagramas, recorridos del proceso y antecedentes de las áreas responsables para reconstruir la secuencia entre autorización e inicio del tratamiento. Si no puede determinarse el momento de activación, identificar las verificaciones pendientes sin asumir que mostrar primero un formulario garantiza consentimiento previo.",
+          expected_result:
+            "Una secuencia identificable en la que la manifestación anteceda al tratamiento que depende del consentimiento, con posibles rutas anticipadas o incertidumbres documentadas. El diseño debe permitir valorar la anterioridad sin considerar probado su funcionamiento efectivo por la sola existencia del diagrama.",
+        },
+        {
+          evidence_item: "especificación funcional",
+          review_guide:
+            "Verificar que las reglas previstas condicionen el inicio de las operaciones basadas en consentimiento a la obtención de una manifestación válida. Revisar disparadores, estados y comportamientos ante aceptación, rechazo o ausencia de respuesta, identificando procesos que puedan ejecutarse anticipadamente o continuar sin autorización.",
+          no_evidence_guidance:
+            "Revisar requisitos, configuraciones y descripciones funcionales del mecanismo para determinar qué condición habilita el tratamiento. Si no existen reglas claras o faltan detalles sobre los disparadores, señalar las definiciones pendientes sin atribuir bloqueos o controles que no estén especificados.",
+          expected_result:
+            "Reglas funcionales que vinculen la habilitación del tratamiento con una manifestación previa de consentimiento, contemplando los casos sin autorización. Las condiciones incompletas o no verificadas deben quedar identificadas, sin afirmar que los controles están implementados o funcionan correctamente solo porque figuren en una especificación.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-affirmative",
       provenance: "agency_standard",
@@ -246,6 +337,26 @@ export const CONSENT_MECHANISM_DESIGN_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: verifyOptions("consent.mechanism.affirmative_verified"),
       evidence_to_review: ["formularios", "textos y pantallas"],
+      evidence_review_help: [
+        {
+          evidence_item: "formularios",
+          review_guide:
+            "Comprobar que los controles previstos requieran una intervención reconocible del titular para expresar su autorización, como seleccionar una opción o emitir una declaración expresa, según la modalidad utilizada. Revisar que la aceptación no aparezca predeterminada ni resulte de acciones que puedan ejecutarse sin una voluntad afirmativa identificable.",
+          no_evidence_guidance:
+            "Consultar modelos, prototipos y requisitos del proceso para identificar cómo se recogerá la manifestación. Si no existen controles definidos o se desconoce su comportamiento inicial, señalar las comprobaciones pendientes sin presumir una autorización válida por la presencia de botones o casillas.",
+          expected_result:
+            "Un diseño que permita reconocer una manifestación afirmativa e inequívoca, sin selecciones de aceptación predeterminadas ni mecanismos que sustituyan la decisión del titular. Las limitaciones pendientes deben quedar identificadas, sin considerar acreditado que se hayan obtenido consentimientos individuales.",
+        },
+        {
+          evidence_item: "textos y pantallas",
+          review_guide:
+            "Revisar que las instrucciones y mensajes asociados a la decisión permitan distinguir claramente una autorización de otras interacciones del proceso. Comprobar que las expresiones utilizadas comuniquen el sentido de la acción solicitada y no presenten la continuación de una navegación o una aceptación ajena como consentimiento para el tratamiento.",
+          no_evidence_guidance:
+            "Recuperar mensajes, guiones y pantallas del canal previsto para establecer cómo se solicita y expresa la autorización. Si las instrucciones son ambiguas o todavía no están definidas, identificar los textos que requieren aclaración sin atribuir voluntad afirmativa a interacciones cuyo significado no puede determinarse.",
+          expected_result:
+            "Mensajes e interacciones cuyo significado permita reconocer inequívocamente la autorización solicitada, diferenciándola de acciones ordinarias sin finalidad de consentir. Las ambigüedades materiales deben quedar reconocidas, sin equiparar la claridad del texto con la eficacia funcional del mecanismo.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-no-silence",
       provenance: "agency_standard",
@@ -262,6 +373,26 @@ export const CONSENT_MECHANISM_DESIGN_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: verifyOptions("consent.mechanism.no_silence_ensured"),
       evidence_to_review: ["diseño del flujo", "especificación funcional"],
+      evidence_review_help: [
+        {
+          evidence_item: "diseño del flujo",
+          review_guide:
+            "Examinar las rutas previstas cuando el titular no responde, abandona el proceso o deja transcurrir el tiempo sin decidir. Comprobar que ninguna de estas situaciones se transforme en aceptación tácita ni habilite el tratamiento basado en consentimiento, distinguiendo las operaciones que puedan sustentarse válidamente en otra fuente de licitud.",
+          no_evidence_guidance:
+            "Consultar diagramas, recorridos y antecedentes del proceso para reconstruir qué sucede ante la ausencia de respuesta. Si no están definidos los caminos de inactividad o abandono, identificar las decisiones pendientes sin presumir que la falta de una opción de rechazo implica consentimiento.",
+          expected_result:
+            "Un flujo en el que la ausencia de manifestación no genere autorización ni habilite el tratamiento dependiente de consentimiento, con rutas de inactividad y abandono identificables. Las situaciones no definidas deben quedar reconocidas, sin atribuir eficacia funcional a un diseño todavía no comprobado.",
+        },
+        {
+          evidence_item: "especificación funcional",
+          review_guide:
+            "Verificar las reglas que determinan el estado de autorización ante respuestas omitidas, plazos vencidos o interacciones incompletas. Comprobar que los valores iniciales, comportamientos automáticos y condiciones de activación no conviertan la inacción en aceptación ni ejecuten operaciones sujetas a consentimiento sin una manifestación válida.",
+          no_evidence_guidance:
+            "Revisar requisitos, configuraciones y reglas previstas para conocer cómo se interpretan los estados sin respuesta. Cuando falten definiciones o existan comportamientos contradictorios, identificar los controles pendientes sin dar por implementadas condiciones de bloqueo o rechazo automático.",
+          expected_result:
+            "Reglas funcionales que mantengan diferenciada la ausencia de consentimiento de una autorización afirmativa y eviten habilitaciones automáticas por silencio. Las inconsistencias o condiciones no verificadas deben quedar documentadas, sin considerar probado el funcionamiento del mecanismo por la sola existencia de una especificación.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-mandate",
       provenance: "agency_standard",
@@ -283,6 +414,17 @@ export const CONSENT_MECHANISM_DESIGN_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "mecanismo previsto para mandatario cuando corresponda",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "mecanismo previsto para mandatario cuando corresponda",
+          review_guide:
+            "Verificar si el canal de obtención admite que un mandatario consienta por el titular y, de ser así, cómo se comprobará su facultad expresa antes de aceptar esa manifestación. Revisar los antecedentes y controles previstos para distinguir una autorización acreditable de la sola declaración de actuar por otra persona. Si no interviene mandatario, comprobar que esa situación corresponda al diseño de la finalidad activa.",
+          no_evidence_guidance:
+            "Consultar los procedimientos de representación, formularios y antecedentes del canal para determinar si se contempla la actuación de mandatarios y cómo se verificarían sus facultades. Cuando falten definiciones, identificar las comprobaciones pendientes sin presumir que existe autorización expresa. Si esa modalidad no interviene, dejar identificada la razón para seleccionar «No aplica».",
+          expected_result:
+            "Un diseño que contemple la comprobación de facultades expresas cuando el consentimiento pueda otorgarse mediante mandatario, con controles y limitaciones identificables. Si no interviene mandatario, la inaplicabilidad debe estar justificada por el alcance del mecanismo, sin exigir documentos de mandato innecesarios ni considerar acreditadas representaciones individuales.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-documented",
       provenance: "agency_standard",
@@ -299,6 +441,17 @@ export const CONSENT_MECHANISM_DESIGN_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: verifyOptions("consent.mechanism.documented"),
       evidence_to_review: ["evidencia del mecanismo"],
+      evidence_review_help: [
+        {
+          evidence_item: "evidencia del mecanismo",
+          review_guide:
+            "Comprobar que los antecedentes disponibles describan el mecanismo de obtención para la finalidad activa, incluyendo el canal, la información presentada, la manifestación exigida y su momento respecto del tratamiento. Verificar que el diseño identifique sus conexiones con libertad, capacidad de prueba y retiro, distinguiendo las evaluaciones realizadas de las pendientes.",
+          no_evidence_guidance:
+            "Recopilar especificaciones, formularios, guiones y antecedentes del flujo para reconstruir el mecanismo y sus relaciones con las evaluaciones correspondientes. Si la documentación es parcial o no permite identificar esas conexiones, señalar los elementos pendientes sin inventar controles, resultados ni consentimientos obtenidos.",
+          expected_result:
+            "Un mecanismo documentado de forma trazable para la finalidad activa, con sus componentes principales y conexiones con libertad, prueba y retiro identificables. Las condiciones no evaluadas o pendientes deben quedar diferenciadas, sin considerar que documentar el diseño acredita por sí solo la validez integral del consentimiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "synthesis",
       related_activity_keys: [

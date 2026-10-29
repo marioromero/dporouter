@@ -159,6 +159,26 @@ export const CONSENT_PROOF_DESIGN_PROTOCOL: ExecutionProtocol = {
         "especificación de logs y registros del sistema externo",
         "pruebas del mecanismo",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "especificación de logs y registros del sistema externo",
+          review_guide:
+            "Verificar que los registros previstos permitan reconocer qué declaración o acción afirmativa constituyó la manifestación de consentimiento, identificando cómo se genera y conserva su constancia según el canal utilizado. Revisar que la evidencia corresponda a una intervención positiva y no a estados predeterminados, silencio o mera inacción, distinguiendo funcionalidades diseñadas de las implementadas.",
+          no_evidence_guidance:
+            "Consultar los requisitos técnicos, modelos de registro y responsables del sistema externo para determinar qué constancia producirá el mecanismo al recibir una manifestación. Si no existe una definición suficiente, identificar los elementos pendientes sin inventar eventos registrados ni exigir un formato tecnológico único.",
+          expected_result:
+            "Una capacidad documentada para producir constancias interpretables de declaraciones o acciones afirmativas, con el origen de la manifestación y las limitaciones del diseño identificables. Las funcionalidades no implementadas o sin verificar deben quedar diferenciadas, sin considerarlas prueba de consentimientos individuales efectivamente otorgados.",
+        },
+        {
+          evidence_item: "pruebas del mecanismo",
+          review_guide:
+            "Comprobar mediante demostraciones o recorridos funcionales que una manifestación afirmativa de prueba produzca la constancia prevista y pueda distinguirse de interacciones sin autorización. Revisar los resultados observables y eventuales fallos, sin utilizar datos de titulares reales ni considerar suficiente la presencia visual de un botón de aceptación.",
+          no_evidence_guidance:
+            "Solicitar una demostración controlada o revisar resultados de pruebas existentes que permitan comprobar la generación de evidencia. Si solo se dispone de especificaciones o no es posible ejecutar el mecanismo, identificar qué capacidades siguen sin comprobarse sin presentar funcionalidades declaradas como pruebas exitosas.",
+          expected_result:
+            "Resultados verificables de pruebas o demostraciones que permitan determinar si el mecanismo genera evidencia de la manifestación conforme a lo previsto, con fallos e incertidumbres identificados. La comprobación debe sustentar la capacidad probatoria sin atribuir validez jurídica a consentimientos individuales ni anticipar su recuperación posterior.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-purpose",
       provenance: "agency_standard",
@@ -178,6 +198,26 @@ export const CONSENT_PROOF_DESIGN_PROTOCOL: ExecutionProtocol = {
         "Vínculo con la finalidad específica por diseño.",
       ),
       evidence_to_review: ["modelo de evidencia", "diseño técnico o funcional"],
+      evidence_review_help: [
+        {
+          evidence_item: "modelo de evidencia",
+          review_guide:
+            "Comprobar que la constancia prevista permita relacionar cada manifestación con la finalidad concreta autorizada, identificando cómo queda representado su alcance cuando existen varios usos de datos. Revisar que la evidencia no se limite a una aceptación genérica ni dependa de interpretaciones posteriores para determinar qué tratamiento fue consentido.",
+          no_evidence_guidance:
+            "Consultar modelos de registro, ejemplos de constancias y antecedentes del mecanismo para identificar cómo se representará la finalidad autorizada. Si falta esa vinculación o no puede reconstruirse el alcance de la manifestación, señalar las definiciones pendientes sin inventar registros ni asumir especificidad por una aceptación aislada.",
+          expected_result:
+            "Un modelo de evidencia capaz de asociar inequívocamente la manifestación con la finalidad activa y distinguir otras autorizaciones cuando corresponda. Las vinculaciones incompletas o ambiguas deben quedar identificadas, sin considerar que el modelo acredita consentimientos individuales efectivamente otorgados.",
+        },
+        {
+          evidence_item: "diseño técnico o funcional",
+          review_guide:
+            "Verificar cómo el mecanismo trasladará la finalidad seleccionada a la constancia generada, revisando la correspondencia entre las opciones ofrecidas al titular y los datos que podrán recuperarse. Identificar rutas, reglas o transformaciones que puedan perder esa relación o registrar una finalidad diferente de la autorizada.",
+          no_evidence_guidance:
+            "Revisar especificaciones, flujos y configuraciones del sistema externo para reconstruir cómo se vinculará la decisión con la finalidad registrada. Cuando las reglas no estén definidas o existan discrepancias entre interfaz y evidencia, identificar las comprobaciones pendientes sin atribuir funcionalidades implementadas a un diseño documental.",
+          expected_result:
+            "Un diseño que permita conservar la correspondencia entre la finalidad autorizada y la evidencia generable, con reglas y posibles fallos identificables. Las funcionalidades no comprobadas deben quedar diferenciadas, sin afirmar que una vinculación prevista funciona correctamente por su sola especificación.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-information",
       provenance: "agency_standard",
@@ -197,6 +237,26 @@ export const CONSENT_PROOF_DESIGN_PROTOCOL: ExecutionProtocol = {
         "Información y condiciones registrables por diseño.",
       ),
       evidence_to_review: ["modelo de evidencia", "captura de ejemplo"],
+      evidence_review_help: [
+        {
+          evidence_item: "modelo de evidencia",
+          review_guide:
+            "Comprobar que la constancia prevista permita identificar o reconstruir la información y condiciones relevantes presentadas al titular cuando consiente, incluyendo la versión o contenido aplicable y su relación con la manifestación. Verificar que los cambios posteriores en formularios o textos no impidan determinar qué información correspondía al momento de autorizar.",
+          no_evidence_guidance:
+            "Consultar modelos de registro, especificaciones y antecedentes de los textos utilizados para identificar cómo se conservará la referencia a lo informado. Si no existe una vinculación verificable entre la manifestación y ese contenido, señalar las definiciones pendientes sin presumir que la política actualmente publicada refleja las condiciones anteriores.",
+          expected_result:
+            "Un modelo capaz de vincular cada manifestación con la información y condiciones que le correspondían, permitiendo reconstruirlas aun cuando los textos cambien posteriormente. Las referencias incompletas o inciertas deben quedar identificadas, sin considerar acreditados consentimientos individuales por la sola definición del modelo.",
+        },
+        {
+          evidence_item: "captura de ejemplo",
+          review_guide:
+            "Revisar una muestra representativa de la presentación utilizada para solicitar consentimiento, identificando los textos, condiciones y referencias que acompañan la decisión. Contrastar esa muestra con el modelo de evidencia para comprobar que el mecanismo pueda relacionar el contenido mostrado con la constancia generable, sin tratar la imagen como prueba de lo informado a todos los titulares.",
+          no_evidence_guidance:
+            "Obtener una muestra del formulario, pantalla o material equivalente correspondiente al canal previsto, mediante un prototipo o una demostración controlada. Si no existe una captura adecuada o el medio no es visual, consultar una representación equivalente y señalar las comprobaciones pendientes sin inventar contenidos presentados.",
+          expected_result:
+            "Una muestra revisable de la información asociada a la solicitud, cuya correspondencia con la evidencia generable pueda comprobarse. Las diferencias o limitaciones deben quedar reconocidas, sin atribuir a una captura ilustrativa valor de prueba de todas las manifestaciones efectivamente obtenidas.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-priority",
       provenance: "agency_standard",
@@ -219,6 +279,26 @@ export const CONSENT_PROOF_DESIGN_PROTOCOL: ExecutionProtocol = {
         "especificación de logs y registros del sistema externo",
         "pruebas del mecanismo",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "especificación de logs y registros del sistema externo",
+          review_guide:
+            "Comprobar que las constancias previstas permitan establecer el orden entre la manifestación de consentimiento y el inicio de las operaciones sustentadas en ella. Revisar cómo se relacionan ambos acontecimientos mediante registros u otros antecedentes verificables, identificando rutas de tratamiento cuya anterioridad no pueda reconstruirse de forma fiable.",
+          no_evidence_guidance:
+            "Consultar los modelos de registro, requisitos funcionales y responsables del sistema externo para identificar cómo podrá acreditarse la secuencia entre autorización y tratamiento. Si faltan referencias temporales o mecanismos equivalentes de comprobación, señalar las definiciones pendientes sin inventar eventos, marcas de tiempo ni controles implementados.",
+          expected_result:
+            "Un diseño probatorio capaz de demostrar que la manifestación antecede al tratamiento basado en consentimiento, con antecedentes suficientes para reconstruir el orden de los acontecimientos. Las rutas sin respaldo o con información temporal incierta deben quedar identificadas, sin exigir un formato técnico universal.",
+        },
+        {
+          evidence_item: "pruebas del mecanismo",
+          review_guide:
+            "Verificar mediante demostraciones controladas que la evidencia generada permita comprobar la secuencia entre una autorización de prueba y la activación del tratamiento correspondiente. Revisar también los resultados ante ausencia de consentimiento y posibles rutas alternativas, distinguiendo el funcionamiento observado de lo previsto en las especificaciones.",
+          no_evidence_guidance:
+            "Solicitar un recorrido funcional o consultar resultados de pruebas existentes que muestren cómo se acredita el orden entre manifestación y tratamiento. Cuando no pueda ejecutarse la demostración, identificar las comprobaciones pendientes sin presentar como verificada una secuencia descrita únicamente en documentos.",
+          expected_result:
+            "Resultados de pruebas que permitan valorar si la evidencia generada acredita efectivamente la anterioridad, con secuencias observadas, fallos y limitaciones identificables. La demostración debe respaldar la capacidad del mecanismo sin atribuir consentimientos reales ni garantizar el comportamiento de todas las ejecuciones futuras.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-mandate",
       provenance: "agency_standard",
@@ -238,6 +318,17 @@ export const CONSENT_PROOF_DESIGN_PROTOCOL: ExecutionProtocol = {
         "No interviene representante ni mandatario en este caso.",
       ),
       evidence_to_review: ["modelo de evidencia"],
+      evidence_review_help: [
+        {
+          evidence_item: "modelo de evidencia",
+          review_guide:
+            "Comprobar que la constancia prevista permita identificar cuándo el consentimiento es otorgado por un representante legal o mandatario, relacionando esa actuación con la manifestación y los antecedentes de representación correspondientes. Cuando intervenga mandatario, verificar que el modelo permita acreditar su facultad expresa para consentir. Si no interviene ninguna de estas modalidades, contrastar esa condición con el alcance real del mecanismo.",
+          no_evidence_guidance:
+            "Consultar las especificaciones del sistema externo, formularios y procedimientos de representación para determinar qué antecedentes podrán registrarse y relacionarse con la autorización. Si el modelo no contempla una modalidad utilizada o sus facultades no pueden acreditarse, señalar las definiciones pendientes sin inventar registros. Justificar «No aplica» únicamente cuando no intervengan representantes ni mandatarios.",
+          expected_result:
+            "Un modelo capaz de vincular la manifestación con la actuación y facultades acreditables del representante o mandatario, según corresponda, incluyendo la facultad expresa exigida al mandatario. Las limitaciones deben quedar identificadas o, cuando no exista representación, sustentada su inaplicabilidad, sin requerir documentos individuales reales en Stage 1.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-recovery",
       provenance: "agency_standard",
@@ -259,6 +350,26 @@ export const CONSENT_PROOF_DESIGN_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "procedimiento de conservación y recuperación",
         "pruebas del mecanismo",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de conservación y recuperación",
+          review_guide:
+            "Comprobar cómo se conservarán, protegerán y localizarán posteriormente las constancias de consentimiento generadas por el sistema externo, identificando responsables, condiciones de acceso y criterios de conservación pertinentes. Revisar que el procedimiento permita recuperar evidencia interpretable y suficientemente íntegra, sin fijar períodos arbitrarios ni suponer que generar un registro garantiza su disponibilidad futura.",
+          no_evidence_guidance:
+            "Consultar procedimientos operativos, especificaciones de almacenamiento y responsables del sistema para reconstruir cómo se conservará y recuperará la evidencia. Si faltan definiciones sobre acceso, protección o conservación, identificar las verificaciones pendientes sin inventar períodos obligatorios ni atribuir controles que no estén documentados.",
+          expected_result:
+            "Un procedimiento verificable que contemple conservación apropiada, protección y recuperación posterior de constancias utilizables para acreditar consentimiento. Los riesgos, limitaciones y condiciones pendientes deben quedar identificados, sin considerar que la mera existencia de un repositorio demuestra una capacidad de recuperación efectiva.",
+        },
+        {
+          evidence_item: "pruebas del mecanismo",
+          review_guide:
+            "Verificar mediante demostraciones controladas que una constancia de prueba pueda conservarse y recuperarse posteriormente con su contenido interpretable e íntegro. Revisar los resultados de búsqueda, acceso y recuperación, identificando fallos o restricciones relevantes y diferenciando el comportamiento observado de las funcionalidades descritas en el procedimiento.",
+          no_evidence_guidance:
+            "Solicitar una demostración con datos ficticios o revisar resultados de pruebas existentes que permitan comprobar la recuperación de evidencia previamente generada. Si no puede realizarse la prueba o solo se dispone de especificaciones, señalar las comprobaciones pendientes sin presentar una capacidad declarada como funcionamiento acreditado.",
+          expected_result:
+            "Resultados verificables de conservación y recuperación que permitan valorar si las constancias permanecen disponibles, íntegras e interpretables para su utilización probatoria. Los fallos e incertidumbres deben quedar reconocidos, sin garantizar disponibilidad indefinida ni atribuir pruebas individuales reales a una demostración controlada.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "synthesis",

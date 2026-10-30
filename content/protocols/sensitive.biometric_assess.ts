@@ -150,6 +150,26 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
         "arquitectura funcional",
         "finalidad declarada",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "descripción del sistema",
+          review_guide: "La descripción debe explicar qué características físicas, fisiológicas o conductuales procesa el sistema y cómo se utilizan para permitir o confirmar una identificación única. La mera captura de imágenes, voz o identificadores comunes no acredita por sí sola un tratamiento biométrico.",
+          no_evidence_guidance: "Si no puede determinarse el funcionamiento del sistema, la calificación biométrica debe permanecer pendiente de aclaración. No corresponde inferir identificación única únicamente por el nombre comercial de la tecnología.",
+          expected_result: "Una descripción suficientemente precisa para establecer si el sistema utiliza tratamiento técnico específico dirigido a la identificación única de personas.",
+        },
+        {
+          evidence_item: "arquitectura funcional",
+          review_guide: "El flujo funcional debe permitir comprender cómo se capturan, transforman, comparan o utilizan las características personales para identificar o verificar una identidad. Resulta relevante distinguir el procesamiento biométrico de otras funciones técnicas que no persiguen identificación única.",
+          no_evidence_guidance: "Cuando la arquitectura no permita conocer las operaciones efectivas, corresponde identificar las funciones pendientes de verificar. No debe presumirse que todo componente que procesa imágenes o audio realiza identificación biométrica.",
+          expected_result: "Un flujo técnico verificable que permita reconocer las operaciones relacionadas con la identificación única y su papel dentro de la finalidad evaluada.",
+        },
+        {
+          evidence_item: "finalidad declarada",
+          review_guide: "La finalidad debe establecer para qué se utiliza la identificación biométrica, diferenciando su función concreta de objetivos generales como seguridad, acceso o autenticación. La evaluación requiere relacionar ese propósito con las operaciones realmente efectuadas.",
+          no_evidence_guidance: "Si la finalidad no explica el uso de la identificación biométrica, debe aclararse antes de concluir. Una denominación genérica del proceso no resulta suficiente para determinar el propósito específico del tratamiento.",
+          expected_result: "Una finalidad concreta y documentada que permita relacionar el uso biométrico declarado con las funciones técnicas del sistema.",
+        },
+      ],
       help_text: [
         "No confundir un identificador común con dato biométrico si no existe el tratamiento técnico específico.",
       ],
@@ -172,6 +192,20 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
         "revisión funcional y técnica",
         "documentación del proveedor o del sistema",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "revisión funcional y técnica",
+          review_guide: "Es necesario establecer si el procesamiento técnico permite identificar o confirmar de manera única a una persona. Deben distinguirse las funciones de identificación o verificación biométrica de otros análisis que no buscan reconocer una identidad individual.",
+          no_evidence_guidance: "Cuando no pueda determinarse el propósito o resultado del procesamiento, la clasificación funcional debe permanecer sin acreditar. La presencia de características físicas o conductuales no basta para concluir que existe identificación biométrica.",
+          expected_result: "Una evaluación técnica documentada que permita determinar si el funcionamiento del sistema encaja en la definición del artículo 16 ter.",
+        },
+        {
+          evidence_item: "documentación del proveedor o del sistema",
+          review_guide: "La documentación técnica debe respaldar qué operaciones realiza la tecnología y si estas permiten identificar o verificar una identidad única. Las descripciones comerciales deben contrastarse con las funciones efectivamente utilizadas por la organización.",
+          no_evidence_guidance: "Si la documentación no aclara el funcionamiento, pueden requerirse antecedentes técnicos adicionales del sistema o proveedor. Las capacidades no comprobadas deben permanecer como información pendiente.",
+          expected_result: "Antecedentes técnicos suficientes para confirmar o descartar fundadamente el uso de procesamiento biométrico destinado a identificación única.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "system-identified",
       provenance: "legal_requirement",
@@ -190,6 +224,14 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
         "El sistema biométrico utilizado está identificado.",
       ),
       evidence_to_review: ["descripción del sistema"],
+      evidence_review_help: [
+        {
+          evidence_item: "descripción del sistema",
+          review_guide: "Debe quedar identificado el sistema biométrico utilizado y las funciones relevantes para el tratamiento. La denominación debe permitir reconocer la tecnología sobre la cual se informa al titular, evitando referencias excesivamente genéricas.",
+          no_evidence_guidance: "Cuando no sea posible identificar qué sistema procesa los datos biométricos, este requisito informativo permanece pendiente. Es necesario aclarar el sistema efectivamente utilizado antes de considerar completa la información.",
+          expected_result: "Un sistema biométrico identificable y descrito con claridad suficiente para informar al titular cuál se utiliza.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "specific-purpose",
       provenance: "legal_requirement",
@@ -208,6 +250,14 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
         "La finalidad específica está identificada.",
       ),
       evidence_to_review: ["finalidad declarada"],
+      evidence_review_help: [
+        {
+          evidence_item: "finalidad declarada",
+          review_guide: "La finalidad informada debe explicar el uso específico de los datos recolectados por el sistema biométrico. No basta una declaración amplia que impida distinguir para qué se realiza la identificación o verificación.",
+          no_evidence_guidance: "Si el propósito declarado no corresponde al uso efectivo o resulta ambiguo, debe aclararse antes de considerarlo verificado. La falta de precisión no puede suplirse con una referencia general a la política de privacidad.",
+          expected_result: "Una finalidad específica, comprensible y coherente con el funcionamiento biométrico evaluado, apta para ser informada al titular.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "usage-period",
       provenance: "legal_requirement",
@@ -226,6 +276,14 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
         "El período de utilización está identificado.",
       ),
       evidence_to_review: ["período declarado"],
+      evidence_review_help: [
+        {
+          evidence_item: "período declarado",
+          review_guide: "La información debe indicar el período durante el cual se utilizarán los datos biométricos. Corresponde comprobar que el plazo o criterio temporal informado sea suficientemente determinado y guarde coherencia con el tratamiento evaluado.",
+          no_evidence_guidance: "Si no existe una definición clara del período de utilización, este requisito permanece pendiente de acreditación. No debe suponerse que una política general de conservación informa necesariamente cuánto tiempo se utilizan los datos biométricos.",
+          expected_result: "Un período de utilización identificable y coherente con la finalidad, que pueda comunicarse de manera comprensible al titular.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "rights-info",
       provenance: "legal_requirement",
@@ -248,6 +306,20 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
         "aviso e información entregada",
         "mecanismo de derechos",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "aviso e información entregada",
+          review_guide: "El aviso debe explicar de manera comprensible cómo puede el titular ejercer sus derechos respecto del tratamiento biométrico. Su contenido debe corresponder al sistema y finalidad evaluados, sin limitarse a una referencia imprecisa a la normativa.",
+          no_evidence_guidance: "Cuando la información entregada no permita comprender cómo ejercer derechos, el requisito debe considerarse pendiente de verificación o adecuación. La existencia de un aviso general no demuestra por sí sola que se proporciona la información especial.",
+          expected_result: "Información clara y verificable sobre el ejercicio de derechos en relación con el tratamiento biométrico.",
+        },
+        {
+          evidence_item: "mecanismo de derechos",
+          review_guide: "El mecanismo debe permitir que el titular conozca cómo presentar y gestionar el ejercicio de sus derechos. La revisión debe comprobar la coherencia entre el procedimiento disponible y la información efectivamente proporcionada, sin duplicar las evaluaciones de D4.",
+          no_evidence_guidance: "Si el mecanismo no está identificado o su funcionamiento no puede verificarse, corresponde documentar la limitación. No debe darse por acreditada la información sobre derechos únicamente porque existe una política de privacidad.",
+          expected_result: "Un mecanismo de ejercicio de derechos identificable y coherente con las instrucciones comunicadas al titular respecto del tratamiento biométrico.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "consent-route",
       provenance: "legal_requirement",
@@ -267,6 +339,20 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
         "documentación de consentimiento",
         "mecanismo de consentimiento (contexto D3)",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "documentación de consentimiento",
+          review_guide: "El consentimiento debe constituir una manifestación expresa vinculada al tratamiento biométrico y su finalidad. Es importante distinguir la existencia de un formulario o pantalla de la acreditación de una manifestación válida del titular.",
+          no_evidence_guidance: "Cuando el consentimiento expreso no pueda acreditarse, esta vía permanece sin respaldo suficiente. La ausencia de consentimiento no acredita automáticamente una excepción legal alternativa.",
+          expected_result: "Una evaluación documentada que permita establecer si existe consentimiento expreso aplicable al tratamiento biométrico y a la finalidad examinada.",
+        },
+        {
+          evidence_item: "mecanismo de consentimiento (contexto D3)",
+          review_guide: "La evaluación debe determinar si el mecanismo utilizado permite obtener consentimiento expreso conforme al artículo 16. Los antecedentes de D3 sirven como contexto, sin reemplazar la comprobación de su correspondencia con esta finalidad biométrica.",
+          no_evidence_guidance: "Si el funcionamiento del mecanismo no está suficientemente documentado, su adecuación no puede presumirse. La incertidumbre debe identificarse sin duplicar ni modificar los hechos de D3.",
+          expected_result: "Un mecanismo de consentimiento verificable y coherente con la exigencia de manifestación expresa, relacionado con la finalidad biométrica evaluada.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "noconsent-route",
       related_activity_keys: ["consent.mechanism_design"],
@@ -284,6 +370,14 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("bio03.noconsent_16bis"),
       evidence_to_review: ["fundamento del art. 16 bis cuando no exista consentimiento"],
+      evidence_review_help: [
+        {
+          evidence_item: "fundamento del art. 16 bis cuando no exista consentimiento",
+          review_guide: "La justificación debe identificar una hipótesis concreta del inciso segundo del artículo 16 bis y demostrar su correspondencia con los hechos del tratamiento. No pueden utilizarse por analogía excepciones generales del artículo 16 que no estén comprendidas en esa remisión.",
+          no_evidence_guidance: "Si no se identifica una hipótesis legal aplicable o faltan antecedentes esenciales, la vía sin consentimiento permanece sin acreditar. Una hipótesis examinada y descartada debe distinguirse de una que todavía no puede evaluarse.",
+          expected_result: "Un fundamento jurídico documentado que permita acreditar o descartar una de las hipótesis sin consentimiento autorizadas por el artículo 16 ter mediante su remisión al artículo 16 bis.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "analysis-ready",
       provenance: "legal_requirement",
@@ -303,6 +397,14 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
         "Uso, información y vía están verificados y documentados.",
       ),
       evidence_to_review: ["Reasoning Record biométrico"],
+      evidence_review_help: [
+        {
+          evidence_item: "Reasoning Record biométrico",
+          review_guide: "El razonamiento debe integrar la definición técnica del tratamiento, los cuatro requisitos de información y la vía jurídica examinada. También debe reflejar los hechos relevantes, las alternativas analizadas y las incertidumbres que puedan afectar la conclusión.",
+          no_evidence_guidance: "Cuando falten antecedentes esenciales sobre la tecnología, la información entregada o la vía jurídica, la evaluación permanece incompleta. La ausencia de información no equivale a una conclusión fundada de incumplimiento.",
+          expected_result: "Un análisis profesional suficientemente respaldado para adoptar una conclusión sobre los requisitos de licitud e información del tratamiento biométrico.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "sufficiency-gate",
       provenance: "agency_standard",
@@ -365,6 +467,14 @@ export const SENSITIVE_BIOMETRIC_ASSESS_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["Reasoning Record biométrico"],
+      evidence_review_help: [
+        {
+          evidence_item: "Reasoning Record biométrico",
+          review_guide: "La conclusión debe ser coherente con el uso técnico verificado, el cumplimiento de los cuatro elementos informativos y la vía jurídica evaluada. Las advertencias estructurales relevantes deben considerarse expresamente en el razonamiento, sin tratarlas como decisiones automáticas.",
+          no_evidence_guidance: "Si existen vacíos materiales en el ReasoningRecord, la evaluación no debe finalizarse prematuramente. Es necesario diferenciar la falta de antecedentes de una conclusión profesional fundada sobre condiciones no cumplidas.",
+          expected_result: "Un ReasoningRecord completo y trazable que fundamente la conclusión sobre licitud e información biométrica, incluyendo las advertencias y alternativas pertinentes.",
+        },
+      ],
       help_text: [
         "Si existe advertencia estructural (contexto biométrico), considérala expresamente en el razonamiento: no cambia la candidatura pero forma parte de los hechos relevantes.",
         "No uses la falta de información como fundamento de incumplimiento: si faltan antecedentes, la evaluación queda incompleta.",

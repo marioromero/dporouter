@@ -152,6 +152,26 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
         "análisis de licitud D2",
         "mapeo de datos y operaciones",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "descripción de finalidad",
+          review_guide: "La finalidad debe precisar para qué se tratan datos relacionados con obligaciones económicas, financieras, bancarias o comerciales. Su descripción debe permitir determinar qué operaciones se pretenden amparar en el artículo 13 letra a), sin asumir que cualquier uso financiero queda incluido.",
+          no_evidence_guidance: "Si la finalidad es demasiado amplia o no permite reconocer las operaciones concretas, el análisis del ámbito permanece pendiente. No debe presumirse aplicable el Título III únicamente por la actividad económica de la organización.",
+          expected_result: "Una finalidad documentada y suficientemente delimitada para evaluar su encaje material en el Título III.",
+        },
+        {
+          evidence_item: "análisis de licitud D2",
+          review_guide: "El análisis debe permitir comprobar qué fuente de licitud se considera para la finalidad y si corresponde a la letra a) del artículo 13. Esta revisión utiliza el contexto registrado en D2, sin redefinir ni modificar su conclusión.",
+          no_evidence_guidance: "Cuando el contexto de D2 es insuficiente o ambiguo, la candidatura al régimen especial no debe presumirse. La identificación de la vía debe aclararse en el ámbito correspondiente de D2.",
+          expected_result: "Una referencia verificable a la ruta jurídica evaluada en D2, como antecedente para examinar el ámbito del Título III.",
+        },
+        {
+          evidence_item: "mapeo de datos y operaciones",
+          review_guide: "El mapeo debe cubrir las categorías de información y operaciones vinculadas a la finalidad, incluidas aquellas que se comunican o actualizan. Es importante detectar usos omitidos que puedan quedar fuera del ámbito permitido.",
+          no_evidence_guidance: "Si existen operaciones o categorías sin identificar, la cobertura del análisis queda incompleta. No corresponde asumir que todos los datos vinculados comparten automáticamente el mismo fundamento legal.",
+          expected_result: "Un conjunto documentado de categorías y operaciones que permita evaluar íntegramente la finalidad respecto del Título III.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "route-confirm",
       provenance: "agency_standard",
@@ -168,6 +188,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.route_confirmed"),
       evidence_to_review: ["análisis de licitud D2"],
+      evidence_review_help: [
+        {
+          evidence_item: "análisis de licitud D2",
+          review_guide: "La revisión debe comprobar que D2 considera la fuente especial de licitud del artículo 13 letra a) para la finalidad activa. Esa selección constituye una candidatura que aún requiere verificar las condiciones materiales del Título III.",
+          no_evidence_guidance: "Si no puede determinarse la vía evaluada por D2, el análisis no debe avanzar sobre una presunción de licitud financiera. La falta de claridad corresponde a un antecedente pendiente, no a una confirmación del ámbito.",
+          expected_result: "Una candidatura jurídica identificada y trazable, diferenciada de la conclusión posterior sobre aplicabilidad del Título III.",
+        },
+      ],
       help_text: [
         "No asumir dato financiero o económico como art. 13(a): la ruta solo se sostiene dentro del ámbito material del Título III.",
       ],
@@ -191,6 +219,20 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
         "categorías abstractas de obligaciones",
         "mapeo de datos y operaciones",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "categorías abstractas de obligaciones",
+          review_guide: "Las categorías deben permitir determinar si las obligaciones tienen carácter económico, financiero, bancario o comercial. Su denominación general no basta para establecer que la información sea legalmente comunicable conforme al artículo 17.",
+          no_evidence_guidance: "Cuando la naturaleza de una categoría no pueda establecerse, debe permanecer pendiente de análisis. No es necesario incorporar antecedentes de deudores o deudas reales para aclarar su clasificación.",
+          expected_result: "Una caracterización fundamentada de las obligaciones comprendidas en la finalidad, apta para contrastarse con las inclusiones y exclusiones legales.",
+        },
+        {
+          evidence_item: "mapeo de datos y operaciones",
+          review_guide: "El mapeo debe relacionar las categorías de obligaciones con las operaciones efectivamente realizadas, especialmente comunicación y tratamiento de información financiera. La revisión debe distinguir la naturaleza del dato de la habilitación específica para cada operación.",
+          no_evidence_guidance: "Si no se conocen las operaciones asociadas a las categorías, el encaje material queda sin acreditar. La presencia de una obligación financiera no determina automáticamente que cualquier comunicación esté permitida.",
+          expected_result: "Una relación verificable entre categorías de obligaciones y operaciones que permita continuar el análisis del artículo 17.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "art17-fit",
       provenance: "legal_requirement",
@@ -209,6 +251,20 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "matriz de inclusiones y exclusiones",
         "instrumentos y modelos utilizados",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "matriz de inclusiones y exclusiones",
+          review_guide: "La matriz debe contrastar cada categoría y operación con los supuestos comunicables del artículo 17 y sus exclusiones. Una clasificación general como deuda comercial no resulta suficiente para establecer el encaje permitido.",
+          no_evidence_guidance: "Si no se han distinguido los supuestos legalmente admitidos de los excluidos, el ámbito permanece pendiente de determinación. No corresponde presumir comunicabilidad de categorías que aún no han sido evaluadas.",
+          expected_result: "Una evaluación fundamentada de los supuestos del artículo 17 pertinentes para la finalidad y sus operaciones.",
+        },
+        {
+          evidence_item: "instrumentos y modelos utilizados",
+          review_guide: "Los modelos de instrumentos deben permitir identificar si las obligaciones se documentan mediante alguna de las formas reconocidas por la ley. Es necesario considerar la naturaleza del instrumento y su correspondencia con el supuesto legal, no solamente su denominación comercial.",
+          no_evidence_guidance: "Cuando no pueda comprobarse el tipo de instrumento o su relación con la obligación, la inclusión no queda acreditada. Las dudas deben mantenerse identificadas sin incorporar instrumentos de deuda reales.",
+          expected_result: "Una caracterización verificable de los instrumentos pertinentes y su posible encaje en las categorías comunicables del artículo 17.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "art17-exclusions",
@@ -229,6 +285,20 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
         "matriz de inclusiones y exclusiones",
         "letras y pagarés protestados, cheques protestados, créditos y préstamos dentro del ámbito legal",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "matriz de inclusiones y exclusiones",
+          review_guide: "La revisión debe diferenciar obligaciones comunicables de aquellas expresamente excluidas, considerando las condiciones específicas de cada supuesto. Una categoría inicialmente comprendida puede dejar de ser comunicable por una exclusión legal aplicable.",
+          no_evidence_guidance: "Si las exclusiones no han sido examinadas, la evaluación del artículo 17 permanece incompleta. La ausencia de una exclusión documentada no demuestra que esta no exista.",
+          expected_result: "Una matriz fundamentada que identifique inclusiones, exclusiones aplicables y categorías que todavía requieren aclaración.",
+        },
+        {
+          evidence_item: "letras y pagarés protestados, cheques protestados, créditos y préstamos dentro del ámbito legal",
+          review_guide: "Debe comprobarse que los instrumentos y operaciones correspondan a los supuestos y condiciones previstos en el artículo 17. En préstamos y créditos, resulta especialmente relevante verificar su origen y las entidades comprendidas en la norma, además de las exclusiones.",
+          no_evidence_guidance: "Si la categoría o sus condiciones no pueden comprobarse, no debe presumirse que la información es comunicable. Una deuda documentada no equivale por sí sola a una obligación admitida en este régimen.",
+          expected_result: "Una evaluación documentada de los instrumentos y créditos que pueden quedar comprendidos en el artículo 17, con sus restricciones identificadas.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "art17-special",
       provenance: "legal_requirement",
@@ -247,6 +317,20 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "matriz de inclusiones y exclusiones",
         "normativa y decretos invocados",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "matriz de inclusiones y exclusiones",
+          review_guide: "La revisión debe contemplar las reglas sobre obligaciones repactadas, renegociadas, novadas o sujetas a modalidad pendiente, así como las exclusiones relativas a servicios básicos, educación, salud y autopistas. También debe considerar las condiciones particulares de cesantía cuando correspondan.",
+          no_evidence_guidance: "Si una categoría especial no ha sido analizada, su comunicabilidad debe mantenerse pendiente. No corresponde extender una exclusión o excepción a supuestos diferentes de los previstos por la ley.",
+          expected_result: "Un análisis diferenciado de las categorías especiales relevantes, indicando su inclusión, exclusión o condición pendiente de verificar.",
+        },
+        {
+          evidence_item: "normativa y decretos invocados",
+          review_guide: "El fundamento normativo debe permitir comprobar las excepciones y condiciones especiales aplicables. Cuando se invoque un decreto supremo, es necesario verificar su existencia y alcance, sin asumir que habilita indiscriminadamente todas las obligaciones de dinero.",
+          no_evidence_guidance: "Sin una norma pertinente identificada, el supuesto especial no queda acreditado. Las referencias normativas incompletas deben distinguirse de las categorías que la ley excluye expresamente.",
+          expected_result: "Un fundamento legal identificable para los supuestos especiales invocados y una evaluación de su correspondencia con la finalidad.",
+        },
       ],
       help_text: [
         "Esta lista operacional no es taxonomía persistente: vive en evidencia y análisis.",
@@ -270,6 +354,20 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
         "normativa y decretos invocados",
         "instrumentos y modelos utilizados",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "normativa y decretos invocados",
+          review_guide: "El decreto debe habilitar la categoría concreta de obligación de dinero invocada. Además, corresponde comprobar las condiciones legales relativas al instrumento de pago o crédito, consentimiento expreso del obligado y fecha de vencimiento.",
+          no_evidence_guidance: "Si el decreto no está identificado o sus condiciones no pueden acreditarse, la categoría no debe considerarse habilitada por esta vía. La inexistencia de esta excepción no convierte automáticamente en ilícitas otras categorías amparadas directamente por la ley.",
+          expected_result: "Un decreto aplicable y una evaluación documentada de todos los requisitos que permiten invocar la habilitación especial.",
+        },
+        {
+          evidence_item: "instrumentos y modelos utilizados",
+          review_guide: "Los modelos deben permitir verificar que la obligación se sustenta en un instrumento de pago o crédito válidamente emitido que contempla el consentimiento expreso del deudor u obligado y la fecha de vencimiento. No basta con que exista un formato de documento comercial.",
+          no_evidence_guidance: "Cuando los instrumentos no permitan comprobar alguna condición exigida, esta vía permanece sin acreditar. La evaluación puede efectuarse sobre modelos abstractos sin examinar información de deudores reales.",
+          expected_result: "Instrumentos evaluados respecto de su validez y de las condiciones expresas exigidas para la categoría habilitada por decreto.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "decree-ref",
       provenance: "legal_requirement",
@@ -284,6 +382,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       fact_key: "fin07.decree_ref",
       answer_type: "text",
       evidence_to_review: ["normativa y decretos invocados"],
+      evidence_review_help: [
+        {
+          evidence_item: "normativa y decretos invocados",
+          review_guide: "La referencia debe identificar suficientemente el decreto supremo o disposición invocada y permitir comprobar que ampara la categoría evaluada. Conviene contrastar su texto en una fuente oficial, evitando referencias genéricas a regulaciones financieras.",
+          no_evidence_guidance: "Si no existe una referencia verificable, la habilitación por decreto queda pendiente. Cuando no se invoque esta vía, corresponde reflejar su inaplicabilidad sin inventar una disposición.",
+          expected_result: "Una cita normativa precisa y trazable cuando corresponda, o la ausencia justificada de una norma por no aplicarse esta vía.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "prescription-capacity",
       provenance: "legal_requirement",
@@ -300,6 +406,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.prescription_capacity"),
       evidence_to_review: ["procedimiento de prescripción y supresión"],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de prescripción y supresión",
+          review_guide: "El procedimiento debe permitir identificar información relativa a obligaciones prescritas y suprimirla de los registros o bases correspondientes. La verificación debe considerar que la supresión opera sin exigir solicitud del titular, orden judicial ni instrucción de la autoridad.",
+          no_evidence_guidance: "Si no puede comprobarse una capacidad de supresión oficiosa, el requisito permanece pendiente o requiere corrección según los antecedentes. La evaluación debe referirse al diseño del procedimiento, sin almacenar obligaciones individuales.",
+          expected_result: "Un procedimiento verificable para identificar y suprimir información de obligaciones prescritas de oficio, conforme al artículo 17.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "five-year-rule",
       provenance: "legal_requirement",
@@ -316,6 +430,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.five_year_rule"),
       evidence_to_review: ["reglas de antigüedad"],
+      evidence_review_help: [
+        {
+          evidence_item: "reglas de antigüedad",
+          review_guide: "Las reglas deben impedir la comunicación de información comprendida en el artículo 17 una vez transcurridos cinco años desde que la obligación se hizo exigible. Es necesario distinguir la fecha de exigibilidad de otros hitos, como la generación del registro o su última actualización.",
+          no_evidence_guidance: "Si las reglas no permiten determinar el momento desde el cual se aplica el límite legal, el requisito no queda acreditado. No es necesario crear temporizadores ni registrar vencimientos de deudas reales en Nexo DPO.",
+          expected_result: "Una capacidad procedimental verificable para impedir comunicaciones después del plazo legal contado desde la exigibilidad.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "payment-extinction",
       provenance: "legal_requirement",
@@ -332,6 +454,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.payment_extinction"),
       evidence_to_review: ["procedimiento de pago y extinción"],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de pago y extinción",
+          review_guide: "El procedimiento debe impedir que continúe la comunicación de una obligación después de su pago o extinción por otro modo legal. Debe distinguirse esa prohibición de comunicación de los efectos que el artículo 19 establece respecto de la subsistencia del fundamento de los datos.",
+          no_evidence_guidance: "Si el procedimiento no permite reconocer y aplicar los efectos del pago o extinción, la condición permanece sin acreditar. No corresponde interpretar que la ausencia de caducidad automática autoriza continuar comunicando la obligación.",
+          expected_result: "Un mecanismo verificable para detener la comunicación tras el pago o extinción, diferenciando esa restricción de los demás efectos legales sobre los datos.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "judicial-context",
       provenance: "legal_requirement",
@@ -348,6 +478,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.judicial_context"),
       evidence_to_review: ["procedimiento de pago y extinción"],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de pago y extinción",
+          review_guide: "Debe comprobarse que el procedimiento distinga la comunicación ordinaria de la información requerida por tribunales de justicia con motivo de juicios pendientes. La regla judicial no debe utilizarse como habilitación general para continuar divulgando obligaciones.",
+          no_evidence_guidance: "Si el procedimiento no distingue los requerimientos judiciales pertinentes, esta condición permanece pendiente. No debe presumirse que cualquier controversia o cobranza equivale a una solicitud judicial comprendida en el artículo 18.",
+          expected_result: "Una distinción documentada entre la prohibición general de comunicación y el supuesto específico de información requerida por tribunales en juicios pendientes.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "creditor-notification",
       provenance: "legal_requirement",
@@ -364,6 +502,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.creditor_notification"),
       evidence_to_review: ["procedimiento de actualización"],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de actualización",
+          review_guide: "Cuando el acreedor interviene directamente en el pago o extinción, el procedimiento debe contemplar el aviso al responsable del registro o base accesible al público dentro del plazo legal de siete días hábiles, considerando las condiciones y alternativas previstas en el artículo 19.",
+          no_evidence_guidance: "Si no puede comprobarse quién realiza el aviso o cómo se respeta el plazo, la condición permanece pendiente. No corresponde exigir esta actuación a un actor que no interviene en el supuesto legal correspondiente.",
+          expected_result: "Un procedimiento verificable de notificación del pago o extinción por el acreedor cuando corresponda, con la responsabilidad y el plazo legal identificados.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "debtor-request",
       provenance: "legal_requirement",
@@ -380,6 +526,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.debtor_request"),
       evidence_to_review: ["procedimiento de actualización"],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de actualización",
+          review_guide: "El procedimiento debe contemplar la posibilidad legal de que el deudor solicite directamente la modificación del registro y, bajo las condiciones previstas, libere al acreedor de su obligación de aviso. La evaluación debe considerar la constancia suficiente del pago y la formalización de la opción cuando corresponda.",
+          no_evidence_guidance: "Si esta alternativa no está contemplada o sus condiciones resultan ambiguas, el procedimiento requiere aclaración. No debe confundirse el requerimiento directo del deudor con una eliminación automática de todas las obligaciones del acreedor.",
+          expected_result: "Una alternativa de modificación directa por el deudor debidamente prevista y delimitada conforme al artículo 19.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "downstream-update",
       provenance: "legal_requirement",
@@ -396,6 +550,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.downstream_update"),
       evidence_to_review: ["procedimiento de actualización"],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de actualización",
+          review_guide: "El procedimiento debe contemplar que quienes traten datos obtenidos de una fuente accesible al público actualicen la información cuando dicha fuente comunique el pago o extinción. Es importante identificar cómo se recibe y aplica la modificación correspondiente.",
+          no_evidence_guidance: "Si no existe una forma verificable de reconocer y actualizar información procedente de esa fuente, el requisito permanece sin acreditar. La revisión debe considerar la función del responsable sin crear registros individuales de obligaciones.",
+          expected_result: "Una capacidad documentada de actualización coherente con los cambios comunicados por la fuente pública correspondiente.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "update-deadline",
       provenance: "legal_requirement",
@@ -412,6 +574,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.update_deadline"),
       evidence_to_review: ["procedimiento de actualización"],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de actualización",
+          review_guide: "El procedimiento debe permitir aplicar la actualización tan pronto la fuente pública comunique el pago o extinción, o dentro del plazo legal correspondiente. Es necesario distinguir este deber del plazo de aviso que corresponde al acreedor.",
+          no_evidence_guidance: "Si no puede verificarse que el procedimiento contemple el plazo legal de actualización, la condición permanece pendiente o requiere corrección. La evaluación no necesita temporizadores ni seguimiento de casos individuales.",
+          expected_result: "Un procedimiento verificable que contemple el plazo de actualización aplicable a quienes tratan datos provenientes de la fuente pública.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "temp-blocking",
       provenance: "legal_requirement",
@@ -428,6 +598,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("fin07.temp_blocking"),
       evidence_to_review: ["procedimiento de bloqueo"],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de bloqueo",
+          review_guide: "El procedimiento debe permitir bloquear los datos cuando no resulte posible actualizarlos oportunamente después de la comunicación pertinente. El bloqueo es una medida temporal mientras se actualiza la información y no equivale por sí solo a supresión definitiva.",
+          no_evidence_guidance: "Si no existe una capacidad de bloqueo ante retrasos de actualización, el requisito no queda acreditado. Debe distinguirse una ausencia de procedimiento comprobada de una capacidad que todavía no ha podido verificarse.",
+          expected_result: "Un mecanismo verificable de bloqueo temporal hasta que se complete la actualización de los datos correspondientes.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "scope-select",
       provenance: "legal_requirement",
@@ -462,6 +640,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["matriz de inclusiones y exclusiones"],
+      evidence_review_help: [
+        {
+          evidence_item: "matriz de inclusiones y exclusiones",
+          review_guide: "La matriz debe permitir adoptar una conclusión sobre si las categorías y operaciones de la finalidad están materialmente comprendidas en el Título III. Una conclusión fuera de ámbito puede estar fundada incluso si D2 consideró preliminarmente el artículo 13 letra a).",
+          no_evidence_guidance: "Cuando falten antecedentes esenciales para decidir el ámbito, la evaluación debe permanecer indeterminada. La ausencia de respaldo no equivale a una conclusión profesional de fuera de ámbito.",
+          expected_result: "Una determinación fundada de `in_scope` u `out_of_scope`, sustentada en las inclusiones, exclusiones y operaciones evaluadas.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "requirements-select",
       provenance: "legal_requirement",
@@ -503,6 +689,38 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
         "procedimiento de actualización",
         "procedimiento de bloqueo",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "procedimiento de prescripción y supresión",
+          review_guide: "La revisión debe comprobar que el tratamiento cuenta con capacidad para suprimir de oficio la información relativa a obligaciones prescritas. Estar dentro del ámbito del Título III no demuestra automáticamente que este requisito se cumpla.",
+          no_evidence_guidance: "Si la supresión oficiosa no puede verificarse, el requisito permanece pendiente de acreditación. Si se constata que el mecanismo es insuficiente, corresponde identificar una brecha de remediación.",
+          expected_result: "Una conclusión documentada sobre el cumplimiento o la deficiencia de la supresión de información prescrita.",
+        },
+        {
+          evidence_item: "reglas de antigüedad",
+          review_guide: "Las reglas deben permitir comprobar el límite de cinco años desde la exigibilidad y su efecto sobre la comunicación de información. La evaluación debe considerar este límite independientemente de otras condiciones, como pago o extinción.",
+          no_evidence_guidance: "Si no se conoce cómo se aplica el límite temporal, no debe presumirse su cumplimiento. Una deficiencia comprobada debe distinguirse de la ausencia de información suficiente.",
+          expected_result: "Una evaluación del cumplimiento del límite de antigüedad previsto en el artículo 18.",
+        },
+        {
+          evidence_item: "procedimiento de pago y extinción",
+          review_guide: "El procedimiento debe asegurar que no se continúe comunicando información después del pago o extinción por otro modo legal, preservando el supuesto judicial específico cuando corresponda. La subsistencia de otros efectos jurídicos de los datos no elimina esta restricción.",
+          no_evidence_guidance: "Si no puede comprobarse cómo se impide la comunicación posterior, la condición permanece sin acreditar. Cuando se detecte una comunicación incompatible, corresponde documentar la brecha concreta.",
+          expected_result: "Una evaluación sustentada de las restricciones de comunicación aplicables tras el pago o extinción.",
+        },
+        {
+          evidence_item: "procedimiento de actualización",
+          review_guide: "La revisión debe integrar el aviso del acreedor, la alternativa de requerimiento del deudor y la actualización de datos provenientes de una fuente accesible al público, según corresponda a los actores involucrados. Los deberes y plazos de cada supuesto deben permanecer diferenciados.",
+          no_evidence_guidance: "Si el procedimiento no permite comprobar responsabilidades o plazos aplicables, la evaluación queda incompleta o requiere remediación según la deficiencia acreditada. No debe suponerse que un único mecanismo satisface automáticamente todas las obligaciones.",
+          expected_result: "Una conclusión documentada sobre las capacidades de aviso y actualización exigibles al tratamiento y sus actores pertinentes.",
+        },
+        {
+          evidence_item: "procedimiento de bloqueo",
+          review_guide: "El mecanismo debe permitir suspender temporalmente el tratamiento de los datos cuando la actualización de información procedente de la fuente pública no pueda realizarse oportunamente. Debe comprobarse que el bloqueo se mantenga hasta que la información quede actualizada.",
+          no_evidence_guidance: "Cuando esta capacidad no pueda verificarse, el cumplimiento permanece pendiente. Si el procedimiento carece de una respuesta ante retrasos de actualización, debe identificarse la deficiencia correspondiente.",
+          expected_result: "Una evaluación documentada de la capacidad de bloqueo temporal exigida por el artículo 19.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "analysis-ready",
       provenance: "legal_requirement",
@@ -522,6 +740,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
         "Ámbito, restricciones, hechos relevantes, alternativas y conclusión preliminar están documentados.",
       ),
       evidence_to_review: ["Reasoning Record del Título III"],
+      evidence_review_help: [
+        {
+          evidence_item: "Reasoning Record del Título III",
+          review_guide: "El análisis debe integrar la ruta candidata de D2, la naturaleza de las obligaciones, las inclusiones y exclusiones del artículo 17 y las restricciones de los artículos 18 y 19. Debe justificar separadamente la determinación de ámbito y la evaluación de requisitos.",
+          no_evidence_guidance: "Si faltan antecedentes que puedan modificar una de las dos determinaciones, la evaluación debe permanecer incompleta. No corresponde confundir una conclusión de fuera de ámbito con una brecha de requisitos.",
+          expected_result: "Un razonamiento profesional suficientemente respaldado para concluir sobre el ámbito material y, cuando corresponda, sobre el cumplimiento de sus restricciones.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "sufficiency-gate",
       provenance: "agency_standard",
@@ -591,6 +817,14 @@ export const FINANCIAL_TITLEIII_SCOPE_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["Reasoning Record del Título III"],
+      evidence_review_help: [
+        {
+          evidence_item: "Reasoning Record del Título III",
+          review_guide: "La conclusión debe ser coherente con la determinación de ámbito y el estado de los requisitos, respetando las tres combinaciones permitidas. El ReasoningRecord debe considerar todos los datos vinculados y reflejar las exclusiones, procedimientos, plazos y alternativas relevantes.",
+          no_evidence_guidance: "Cuando existan vacíos materiales en el razonamiento, la conclusión debe mantenerse pendiente. Una determinación fuera de ámbito exige fundamento propio y no modifica automáticamente la ruta registrada en D2.",
+          expected_result: "Un ReasoningRecord completo y trazable que fundamente una de las tres conclusiones profesionales válidas, sin registrar información financiera individual.",
+        },
+      ],
       help_text: [
         "Out_of_scope puede concluirse aunque D2 haya seleccionado preliminarmente la ruta: eso no modifica D2 automáticamente.",
       ],

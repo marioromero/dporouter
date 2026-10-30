@@ -225,6 +225,20 @@ export const GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL: ExecutionProtocol = {
         "flujo de sistema y datos",
         "clasificación estructural de los datos",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "flujo de sistema y datos",
+          review_guide: "El flujo debe permitir reconocer qué información de ubicación obtiene o genera el sistema, cómo se utiliza y qué operaciones quedan comprendidas en la finalidad. Resulta importante distinguir datos personales de geolocalización de referencias territoriales que no se vinculan con personas identificadas o identificables.",
+          no_evidence_guidance: "Cuando el funcionamiento del sistema no permita determinar qué datos de ubicación se tratan, la clasificación permanece pendiente. No corresponde inferir la ausencia de geolocalización únicamente porque el proceso no utiliza coordenadas explícitas.",
+          expected_result: "Una descripción verificable de las operaciones y categorías de geolocalización vinculadas a la finalidad, sin incorporar ubicaciones reales.",
+        },
+        {
+          evidence_item: "clasificación estructural de los datos",
+          review_guide: "La clasificación debe identificar las categorías vinculadas que constituyen datos personales de geolocalización. Es necesario comprobar que el universo de datos esté cubierto y que ninguna categoría relevante permanezca sin determinar.",
+          no_evidence_guidance: "Si existen categorías sin clasificar o con información insuficiente, la verificación debe permanecer incompleta respecto de ellas. La incertidumbre no demuestra por sí sola una deficiencia material del tratamiento.",
+          expected_result: "Una clasificación completa y documentada de los datos vinculados respecto de geolocalización, sin almacenar posiciones, coordenadas ni recorridos personales.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-clear-info",
       provenance: "agency_standard",
@@ -244,6 +258,26 @@ export const GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL: ExecutionProtocol = {
         "Información clara, suficiente y oportuna verificada.",
       ),
       evidence_to_review: ["aviso de privacidad", "flujo de permisos", "capturas"],
+      evidence_review_help: [
+        {
+          evidence_item: "aviso de privacidad",
+          review_guide: "El aviso debe proporcionar información comprensible sobre el tratamiento de geolocalización y sus características relevantes. La evaluación debe comprobar que el contenido sea suficientemente preciso y se comunique en un momento oportuno respecto del tratamiento.",
+          no_evidence_guidance: "Si no se dispone del aviso o no puede verificarse su contenido, el requisito permanece pendiente de evaluación. Cuando se compruebe que la información es insuficiente o no se entrega oportunamente, corresponde identificar la brecha concreta.",
+          expected_result: "Información al titular evaluada respecto de su claridad, suficiencia y oportunidad, con posibles deficiencias identificadas de forma verificable.",
+        },
+        {
+          evidence_item: "flujo de permisos",
+          review_guide: "El flujo debe permitir determinar cuándo se informa al titular sobre el uso de geolocalización y cómo se relaciona esa comunicación con la activación del tratamiento. La concesión de un permiso técnico no sustituye por sí sola la información especial exigida por la ley.",
+          no_evidence_guidance: "Cuando no pueda establecerse la secuencia entre información y tratamiento, la oportunidad de la comunicación queda sin verificar. La ausencia de evidencia debe distinguirse de un flujo comprobado que informa tardíamente.",
+          expected_result: "Una secuencia de información y tratamiento suficientemente documentada para valorar si la comunicación al titular resulta oportuna.",
+        },
+        {
+          evidence_item: "capturas",
+          review_guide: "Las capturas pueden servir para comprobar qué contenido informativo se muestra y si resulta legible y comprensible dentro de la interacción. Es importante contrastar lo observado con el flujo real, pues una imagen aislada no demuestra cuándo se entrega la información.",
+          no_evidence_guidance: "Si no existen capturas revisables, el contenido puede contrastarse mediante otra descripción verificable de la interfaz. La falta de imágenes no demuestra automáticamente una infracción ni debe resolverse incorporando información personal real.",
+          expected_result: "Una constatación documentada de la información visible al titular y de sus posibles limitaciones, complementada por el contexto del flujo cuando corresponda.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-type",
       provenance: "agency_standard",
@@ -262,6 +296,20 @@ export const GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL: ExecutionProtocol = {
         "Tipo de geolocalización informado.",
       ),
       evidence_to_review: ["aviso de privacidad", "flujo de sistema y datos"],
+      evidence_review_help: [
+        {
+          evidence_item: "aviso de privacidad",
+          review_guide: "La información debe permitir al titular comprender qué tipo de datos de geolocalización son tratados. Una referencia genérica a ubicación puede resultar insuficiente si no permite reconocer las categorías utilizadas por el sistema.",
+          no_evidence_guidance: "Si el aviso no está disponible, este requisito permanece pendiente hasta comprobar su contenido. Si el aviso existe pero omite o describe incorrectamente los tipos tratados, corresponde identificar la deficiencia.",
+          expected_result: "Una descripción informativa clara y coherente con los tipos de geolocalización efectivamente tratados.",
+        },
+        {
+          evidence_item: "flujo de sistema y datos",
+          review_guide: "El flujo debe permitir identificar las categorías de ubicación obtenidas, inferidas o utilizadas por el tratamiento. La comparación con el aviso ayuda a comprobar que lo informado corresponda a las operaciones efectivas.",
+          no_evidence_guidance: "Si no se conocen suficientemente las operaciones del sistema, no puede confirmarse la integridad de los tipos informados. Las categorías pendientes deben mantenerse identificadas sin presumir que no se tratan.",
+          expected_result: "Una correspondencia verificable entre los datos de geolocalización tratados y los tipos comunicados al titular.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-purpose",
       provenance: "agency_standard",
@@ -280,6 +328,20 @@ export const GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL: ExecutionProtocol = {
         "Finalidad informada.",
       ),
       evidence_to_review: ["aviso de privacidad", "contexto de licitud"],
+      evidence_review_help: [
+        {
+          evidence_item: "aviso de privacidad",
+          review_guide: "El aviso debe explicar para qué se utilizan los datos de geolocalización de forma suficientemente específica y comprensible. La simple mención de funcionalidades generales no demuestra necesariamente que se informe la finalidad efectiva del tratamiento.",
+          no_evidence_guidance: "Cuando no pueda comprobarse qué finalidad se comunica, la condición permanece sin verificar. Si la finalidad comunicada es incompleta o no corresponde al tratamiento real, debe documentarse esa diferencia.",
+          expected_result: "Una finalidad de geolocalización informada de manera clara y coherente con el uso efectivamente realizado.",
+        },
+        {
+          evidence_item: "contexto de licitud",
+          review_guide: "La revisión debe contrastar la finalidad informada con el tratamiento cuya fuente de licitud fue evaluada en D2. Esta comparación busca detectar discrepancias, sin volver a determinar ni modificar la vía jurídica ya registrada.",
+          no_evidence_guidance: "Si el contexto de D2 es insuficiente para realizar la comparación, la coherencia de la información permanece pendiente. No debe suplirse esa falta creando una base de licitud exclusiva de geolocalización.",
+          expected_result: "Una correspondencia documentada entre la finalidad comunicada al titular y la finalidad respaldada por el contexto de licitud existente.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-duration",
       provenance: "agency_standard",
@@ -300,6 +362,20 @@ export const GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "aviso de privacidad",
         "información de conservación y duración",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "aviso de privacidad",
+          review_guide: "El aviso debe comunicar la duración del tratamiento de geolocalización de forma comprensible. La evaluación debe comprobar que el período o criterio temporal indicado sea suficientemente claro y corresponda al uso efectivo de los datos.",
+          no_evidence_guidance: "Si la duración no puede comprobarse, la condición permanece pendiente de evaluación. Cuando el aviso omite la duración o comunica un período incompatible con el tratamiento, corresponde identificar la brecha.",
+          expected_result: "Una duración del tratamiento informada de manera verificable y coherente con la finalidad de geolocalización.",
+        },
+        {
+          evidence_item: "información de conservación y duración",
+          review_guide: "Los antecedentes deben permitir distinguir el tiempo durante el cual se utilizan los datos de geolocalización y, cuando corresponda, su conservación posterior. La revisión debe comprobar la coherencia de esos períodos con lo comunicado al titular, sin modificar las reglas canónicas de D2.",
+          no_evidence_guidance: "Si los períodos no están suficientemente definidos, no puede acreditarse que la información sobre duración sea completa. La incertidumbre debe registrarse sin introducir automáticamente nuevas reglas de conservación.",
+          expected_result: "Una definición verificable de la duración del tratamiento y su correspondencia con la información entregada, conservando la separación respecto de D2.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "check-sharing",
@@ -323,6 +399,20 @@ export const GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL: ExecutionProtocol = {
         "descripción de intercambio con terceros",
         "contratos como evidencia contextual cuando corresponda",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "descripción de intercambio con terceros",
+          review_guide: "La descripción debe permitir establecer si los datos de geolocalización se comunican o ceden a terceros para prestar un servicio con valor añadido. Es importante diferenciar esa situación de otros intercambios que no correspondan al supuesto específico evaluado.",
+          no_evidence_guidance: "Si no puede determinarse si existe comunicación para valor añadido, la rama debe permanecer como información insuficiente. La ausencia de antecedentes no acredita que no exista intercambio ni constituye por sí sola una brecha de información al titular.",
+          expected_result: "Una determinación verificable sobre la existencia o ausencia de comunicación o cesión a terceros para un servicio con valor añadido.",
+        },
+        {
+          evidence_item: "contratos como evidencia contextual cuando corresponda",
+          review_guide: "Cuando existan contratos relacionados con terceros, sus cláusulas pueden ayudar a determinar qué datos se comparten, con quién y para qué servicio. La denominación contractual no basta por sí sola para establecer si el intercambio corresponde a valor añadido.",
+          no_evidence_guidance: "Si no existen contratos aplicables o su contenido no aclara las operaciones, la evaluación debe apoyarse en otros antecedentes verificables del intercambio. La falta de un contrato no permite concluir automáticamente que la comunicación existe o está ausente.",
+          expected_result: "Una evaluación contextual del intercambio con terceros que respalde la clasificación de la comunicación para efectos del artículo 16 sexies.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "check-disclosure",
       provenance: "agency_standard",
@@ -344,6 +434,20 @@ export const GEOLOCATION_REQUIREMENTS_ASSESS_PROTOCOL: ExecutionProtocol = {
       evidence_to_review: [
         "aviso de privacidad",
         "descripción de intercambio con terceros",
+      ],
+      evidence_review_help: [
+        {
+          evidence_item: "aviso de privacidad",
+          review_guide: "Cuando exista comunicación o cesión de geolocalización a terceros para un servicio con valor añadido, el aviso debe informar esa circunstancia al titular. La evaluación debe distinguir información efectivamente entregada de referencias generales a proveedores o colaboradores.",
+          no_evidence_guidance: "Si existe comunicación pero no puede comprobarse que se informa, la condición permanece indeterminada. Si se acredita que no se informa, corresponde remediación; cuando no existe esa comunicación, la condición específica no resulta aplicable.",
+          expected_result: "Una conclusión verificable sobre si el titular es informado de la comunicación para valor añadido, o sobre la inaplicabilidad de esa condición cuando no existe dicho intercambio.",
+        },
+        {
+          evidence_item: "descripción de intercambio con terceros",
+          review_guide: "El intercambio descrito debe contrastarse con la información comunicada al titular para comprobar que esta representa la operación real. La revisión debe centrarse en la existencia del supuesto de valor añadido y en su información, no en cualquier relación contractual con terceros.",
+          no_evidence_guidance: "Cuando no pueda establecerse el alcance del intercambio, la verificación informativa debe mantenerse pendiente. No corresponde seleccionar inaplicabilidad sin respaldo de ausencia de comunicación para valor añadido.",
+          expected_result: "Una correspondencia documentada entre la comunicación o cesión efectivamente identificada y la información proporcionada al titular, cuando corresponda.",
+        },
       ],
       required_facts: [],
       default_next_node_key: "synthesis",

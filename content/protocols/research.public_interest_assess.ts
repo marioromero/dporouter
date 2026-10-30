@@ -146,6 +146,20 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
         "descripción de finalidad",
         "mapeo de datos",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "descripción de finalidad",
+          review_guide: "La finalidad debe expresar qué actividad histórica, estadística, científica o de investigación se pretende realizar y para qué se utilizan los datos. Una descripción genérica no permite comprobar si el tratamiento corresponde al régimen especial.",
+          no_evidence_guidance: "Cuando el propósito resulte ambiguo, es necesario aclarar el uso efectivo de los datos antes de evaluar la aplicabilidad del artículo 16 quinquies. La sola denominación del proyecto no acredita su finalidad.",
+          expected_result: "Una finalidad concreta y documentada que permita examinar su naturaleza, exclusividad e interés público.",
+        },
+        {
+          evidence_item: "mapeo de datos",
+          review_guide: "El mapeo debe identificar las categorías de datos vinculadas a la finalidad y permitir reconocer cuáles son sensibles. Interesa comprobar que la revisión cubra los datos efectivamente utilizados y no omita categorías relevantes para la evaluación de riesgos.",
+          no_evidence_guidance: "Si la relación entre datos y finalidad está incompleta, las categorías pendientes deben identificarse y contrastarse con el tratamiento declarado. No corresponde presumir que los datos sin clasificar carecen de sensibilidad.",
+          expected_result: "Un mapeo verificable de las categorías utilizadas, con información suficiente sobre su vinculación a la finalidad y su eventual carácter sensible.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "purpose-nature",
       provenance: "agency_standard",
@@ -207,6 +221,20 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
         "protocolo o proyecto de investigación",
         "descripción de finalidad",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "protocolo o proyecto de investigación",
+          review_guide: "El proyecto debe permitir reconocer los objetivos, las actividades previstas y su correspondencia con fines históricos, estadísticos, científicos o de estudio e investigación. La existencia de un documento denominado investigación no demuestra por sí sola el encaje jurídico.",
+          no_evidence_guidance: "Si los objetivos no están suficientemente descritos, la naturaleza de la finalidad debe permanecer pendiente de determinación. Es necesario distinguir una actividad efectivamente investigativa de otros usos que solo incorporan análisis de datos.",
+          expected_result: "Una caracterización fundamentada de la naturaleza del proyecto que permita determinar si corresponde a los fines contemplados por el artículo 16 quinquies.",
+        },
+        {
+          evidence_item: "descripción de finalidad",
+          review_guide: "La descripción debe permitir identificar la naturaleza principal de la finalidad y reconocer si combina varios fines comprendidos en el régimen. Una combinación de fines históricos y estadísticos, por ejemplo, no constituye automáticamente un uso ajeno al artículo.",
+          no_evidence_guidance: "Cuando no pueda distinguirse la naturaleza de las actividades, la clasificación debe mantenerse pendiente. La existencia de varios objetivos requiere revisar su contenido, no descartar automáticamente la finalidad por ser mixta.",
+          expected_result: "Una clasificación documentada de la finalidad, con las distintas naturalezas identificadas cuando corresponda.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "exclusivity-check",
       provenance: "legal_requirement",
@@ -229,6 +257,20 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
         "descripción de finalidad",
         "mapeo de datos",
       ],
+      evidence_review_help: [
+        {
+          evidence_item: "descripción de finalidad",
+          review_guide: "La evaluación debe comprobar que el tratamiento se realiza exclusivamente para los fines especiales contemplados en la ley. La coexistencia de varios fines admitidos puede ser compatible con la exclusividad; un uso adicional ajeno al régimen requiere un análisis diferente.",
+          no_evidence_guidance: "Si existen objetivos secundarios insuficientemente descritos, la exclusividad no debe presumirse acreditada. Las finalidades ajenas o pendientes de aclaración deben distinguirse de aquellas comprendidas por el artículo.",
+          expected_result: "Una conclusión fundamentada sobre la exclusividad del tratamiento respecto de los fines legalmente admitidos.",
+        },
+        {
+          evidence_item: "mapeo de datos",
+          review_guide: "La relación entre datos y usos debe permitir comprobar que las categorías tratadas se destinan a los fines especiales declarados. Es necesario identificar reutilizaciones, comunicaciones u operaciones que puedan responder a objetivos distintos.",
+          no_evidence_guidance: "Cuando no sea posible conocer el destino de determinadas categorías, la exclusividad queda pendiente de verificar respecto de esos usos. No basta con que el propósito principal del proyecto sea investigativo.",
+          expected_result: "Un análisis trazable de los usos de las categorías de datos que respalde o descarte la exclusividad exigida.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "public-interest-check",
       provenance: "legal_requirement",
@@ -248,6 +290,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
         "El interés público fue verificado y documentado.",
       ),
       evidence_to_review: ["justificación de interés público"],
+      evidence_review_help: [
+        {
+          evidence_item: "justificación de interés público",
+          review_guide: "El fundamento debe explicar de qué manera la investigación o actividad especial atiende una finalidad de interés público. La utilidad exclusiva para la organización o la expectativa de obtener beneficios económicos no demuestra por sí sola esta condición.",
+          no_evidence_guidance: "Si el beneficio público no está identificado o suficientemente justificado, el requisito permanece sin acreditar. Corresponde distinguir una justificación todavía incompleta de una finalidad que no satisface esta condición.",
+          expected_result: "Una justificación profesional documentada del interés público atendido por la finalidad, coherente con los objetivos y operaciones del tratamiento.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "quality-measures",
       provenance: "legal_requirement",
@@ -263,6 +313,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("res05.quality_measures"),
       evidence_to_review: ["medidas de calidad"],
+      evidence_review_help: [
+        {
+          evidence_item: "medidas de calidad",
+          review_guide: "Las medidas deben permitir valorar si los datos son adecuados, pertinentes y suficientemente exactos para la finalidad investigativa. También interesa comprobar cómo se reconocen y gestionan errores, inconsistencias o limitaciones relevantes.",
+          no_evidence_guidance: "Si las medidas no están definidas o carecen de respaldo verificable, su cumplimiento debe mantenerse pendiente de evaluación. La calidad no debe presumirse únicamente por la procedencia de los datos.",
+          expected_result: "Medidas de calidad identificadas y respaldadas, adecuadas para sostener la fiabilidad de los datos utilizados en la finalidad especial.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "security-measures",
       provenance: "legal_requirement",
@@ -278,6 +336,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("res05.security_measures"),
       evidence_to_review: ["medidas de seguridad"],
+      evidence_review_help: [
+        {
+          evidence_item: "medidas de seguridad",
+          review_guide: "La evaluación debe comprobar que existan medidas de seguridad apropiadas al tipo de datos, las operaciones realizadas y los riesgos del tratamiento. Una política general no acredita por sí sola que las medidas necesarias estén implementadas.",
+          no_evidence_guidance: "Cuando las medidas no puedan verificarse, las deficiencias deben quedar identificadas sin presumir cumplimiento. La evaluación requiere distinguir controles previstos de aquellos cuya aplicación está respaldada.",
+          expected_result: "Medidas de seguridad suficientes y acreditables para proteger los datos durante su utilización en la finalidad especial.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "exclusive-use",
       provenance: "legal_requirement",
@@ -294,6 +360,20 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("res05.exclusive_use"),
       evidence_to_review: ["medidas de calidad", "medidas de seguridad"],
+      evidence_review_help: [
+        {
+          evidence_item: "medidas de calidad",
+          review_guide: "Las medidas de calidad deben contribuir a que los datos se mantengan pertinentes para los fines declarados, evitando usos o transformaciones incompatibles con el proyecto. Interesa comprobar su relación con la exclusividad del tratamiento, no solo con la exactitud de los registros.",
+          no_evidence_guidance: "Si no puede determinarse cómo las medidas contribuyen al uso exclusivo, esta condición permanece pendiente de acreditación. Una revisión general de calidad no sustituye el análisis de su relación con la finalidad.",
+          expected_result: "Medidas de calidad vinculadas de manera verificable con la utilización de los datos para los fines especiales declarados.",
+        },
+        {
+          evidence_item: "medidas de seguridad",
+          review_guide: "Los controles deben contribuir a evitar accesos, comunicaciones o reutilizaciones de datos para finalidades distintas de las permitidas. La existencia de seguridad técnica debe evaluarse junto con su capacidad de resguardar el destino exclusivo de la información.",
+          no_evidence_guidance: "Cuando no se compruebe cómo se previenen usos incompatibles, el resguardo de exclusividad queda pendiente. No debe considerarse suficiente la mera existencia de controles generales de acceso.",
+          expected_result: "Controles de seguridad verificables que contribuyan a restringir el tratamiento a los fines especiales evaluados.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "storage-regime",
       provenance: "legal_requirement",
@@ -310,6 +390,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("res05.storage_regime"),
       evidence_to_review: ["diseño de conservación"],
+      evidence_review_help: [
+        {
+          evidence_item: "diseño de conservación",
+          review_guide: "El diseño debe distinguir la conservación ordinaria de la posibilidad especial de almacenar y utilizar datos por período indeterminado. Esta última solo puede justificarse cuando se cumplen las condiciones del artículo 16 quinquies, sin asumir que toda investigación permite conservar indefinidamente.",
+          no_evidence_guidance: "Si no se acredita el cumplimiento de las condiciones legales, la conservación por período indeterminado no debe presumirse habilitada. Las limitaciones deben documentarse sin modificar automáticamente las reglas registradas en D2.",
+          expected_result: "Una evaluación documentada de la conservación prevista y de las condiciones que permitirían, cuando corresponda, acogerse al régimen especial de período indeterminado.",
+        },
+      ],
       help_text: [
         "Esta regla puede ser contexto para la conservación D2; no sobrescribe reglas de conservación ni facts canónicos de D2.",
       ],
@@ -329,6 +417,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("res05.risk_assessed"),
       evidence_to_review: ["evaluación de riesgos cuando existan sensibles"],
+      evidence_review_help: [
+        {
+          evidence_item: "evaluación de riesgos cuando existan sensibles",
+          review_guide: "Cuando intervienen datos sensibles, la evaluación debe identificar los riesgos derivados de su tratamiento, considerando la naturaleza de los datos, las operaciones y sus posibles efectos sobre los titulares. Este análisis es específico del artículo 16 quinquies y no reemplaza una eventual EIPD.",
+          no_evidence_guidance: "Si existen datos sensibles y sus riesgos no están identificados, la condición queda pendiente de acreditación. Cuando no intervengan datos sensibles, debe reconocerse esa circunstancia sin exigir artificialmente esta rama.",
+          expected_result: "Una identificación documentada de los riesgos posibles asociados a datos sensibles, cuando corresponda, suficiente para fundamentar las medidas de mitigación.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "mitigation-measures",
       provenance: "legal_requirement",
@@ -345,6 +441,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
       answer_type: "yes_no_unknown",
       options: consideredOptions("res05.mitigation_sufficient"),
       evidence_to_review: ["medidas de mitigación"],
+      evidence_review_help: [
+        {
+          evidence_item: "medidas de mitigación",
+          review_guide: "Las medidas deben responder a los riesgos identificados en el tratamiento de datos sensibles y orientarse a reducirlos o mitigarlos. Es importante comprobar su relación con los riesgos concretos, en lugar de considerar suficiente una lista genérica de controles.",
+          no_evidence_guidance: "Si los riesgos identificados no cuentan con medidas de reducción o mitigación verificables, esta condición permanece sin acreditar. La evaluación debe distinguir medidas proyectadas de aquellas efectivamente implementadas.",
+          expected_result: "Medidas de mitigación documentadas y vinculadas a los riesgos del tratamiento sensible, con respaldo suficiente para valorar su aplicación.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "publishes-results",
       provenance: "legal_requirement",
@@ -363,6 +467,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
         "Se determinó si existen publicaciones o difusión de resultados.",
       ),
       evidence_to_review: ["proceso de publicación"],
+      evidence_review_help: [
+        {
+          evidence_item: "proceso de publicación",
+          review_guide: "El proceso debe permitir determinar si se difunden resultados o análisis del tratamiento y qué información se pretende publicar. Conviene diferenciar los datos utilizados internamente de aquellos que podrían quedar accesibles a terceros mediante la publicación.",
+          no_evidence_guidance: "Si no está definido si habrá difusión o qué datos incluirá, esta circunstancia debe permanecer pendiente de aclaración. La ausencia de publicaciones realizadas no permite presumir que nunca se publicarán resultados.",
+          expected_result: "Una determinación documentada sobre la existencia de publicaciones o difusión y el tipo de información que comprenderían.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "publication-anonymized",
       provenance: "agency_standard",
@@ -382,6 +494,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
         "Se verificó la anonimización previa de lo publicado.",
       ),
       evidence_to_review: ["diseño de anonimización"],
+      evidence_review_help: [
+        {
+          evidence_item: "diseño de anonimización",
+          review_guide: "El diseño debe permitir comprobar que los datos personales incluidos en publicaciones o resultados serán anonimizados antes de su difusión. La eliminación de nombres o la seudonimización no garantizan por sí solas que la identificación de los titulares resulte imposible.",
+          no_evidence_guidance: "Si no puede verificarse la anonimización previa, esta condición permanece sin acreditar cuando existen publicaciones. Deben identificarse las medidas necesarias sin incorporar datos personales reales al workspace de cumplimiento.",
+          expected_result: "Un procedimiento verificable de anonimización previa, adecuado para evitar que los datos publicados puedan asociarse con personas identificadas o identificables.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "analysis-ready",
       provenance: "legal_requirement",
@@ -401,6 +521,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
         "Aplicabilidad, condiciones, riesgos y publicaciones están documentados.",
       ),
       evidence_to_review: ["Reasoning Record del régimen de investigación"],
+      evidence_review_help: [
+        {
+          evidence_item: "Reasoning Record del régimen de investigación",
+          review_guide: "El razonamiento debe integrar la naturaleza y exclusividad de la finalidad, la justificación del interés público y las medidas de calidad y seguridad. También debe considerar la conservación especial, los riesgos de datos sensibles y la anonimización de publicaciones cuando correspondan.",
+          no_evidence_guidance: "Si persisten vacíos capaces de afectar la conclusión, la evaluación permanece incompleta. La ausencia de antecedentes no debe convertirse automáticamente en una declaración de régimen incumplido.",
+          expected_result: "Un análisis profesional suficientemente documentado para determinar la aplicabilidad y las condiciones del régimen especial.",
+        },
+      ],
       required_facts: [],
       default_next_node_key: "sufficiency-gate",
       provenance: "agency_standard",
@@ -469,6 +597,14 @@ export const RESEARCH_PUBLIC_INTEREST_ASSESS_PROTOCOL: ExecutionProtocol = {
         },
       ],
       evidence_to_review: ["Reasoning Record del régimen de investigación"],
+      evidence_review_help: [
+        {
+          evidence_item: "Reasoning Record del régimen de investigación",
+          review_guide: "La conclusión profesional debe ser coherente con la exclusividad e interés público acreditados, las medidas adoptadas y las condiciones adicionales que resulten aplicables. El ReasoningRecord debe distinguir requisitos cumplidos, supuestos descartados e información pendiente.",
+          no_evidence_guidance: "Cuando faltan fundamentos esenciales, la evaluación no debe finalizar prematuramente. Una decisión de régimen no aplicable o incumplido requiere justificación profesional, no solamente documentación insuficiente.",
+          expected_result: "Un ReasoningRecord completo y trazable que respalde la conclusión sobre aplicabilidad y cumplimiento del artículo 16 quinquies.",
+        },
+      ],
       help_text: [
         "Documenta exclusividad, interés público, alternativas y riesgo cuando corresponda.",
       ],

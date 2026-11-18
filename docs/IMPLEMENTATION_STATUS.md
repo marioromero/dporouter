@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last controlled update: 2026-10-21 (handoff and documentation sync; advisor access, glossary and section tones recorded; e2e declared stale)
+Last controlled update: 2026-11-18 (Triage orientation engine and Trabajo indicators)
 
 ## Functional baseline
 
@@ -30,15 +30,15 @@ Do not invent them.
 
 Current iteration:
 
-`Handoff and documentation sync`
+`Triage orientation engine and Trabajo indicators`
 
 Status:
 
-`COMPLETED (documentation only; no runtime change)`
+`COMPLETED`
 
 UX RESET está implementado:
 
-* navegación principal Empresa / Trabajo / Diagnóstico / Buscar /
+* navegación principal Empresa / Triage / Trabajo / Diagnóstico / Buscar /
   Glosario / Referencias (Trabajo reemplaza Mapa + Dominios; redirects
   conservan deep links antiguos);
 * acceso asesor local con nómina fija (`pablo`, `carlos`, `mario`),
@@ -61,6 +61,11 @@ UX RESET está implementado:
 * siguiente revisión sugerida con información real;
 * Glosario con búsqueda y flotante de consulta, sin claves técnicas;
 * tonos visuales por sección en la ficha de actividad (solo presentación).
+* Triage de orientación con bloques opcionales T01–T08, catálogo SII local,
+  respuestas editables y guardado automático separado por asesor + empresa;
+* motor de orientación read-only con indicadores calculados en Trabajo, motivos
+  por procedencia y scope, sin escrituras al workspace jurídico ni reglas para
+  D7–D12 pendientes.
 
 Deuda declarada: la suite `e2e/` quedó obsoleta tras el acceso asesor (helpers
 con perfiles libres y navegación directa sin sesión/empresa). El gate confiable
@@ -304,11 +309,17 @@ Still not implemented:
 
 * guided protocols for D6–D12 activities;
 * D07-D12;
-* real characterization UI;
+* canonical characterization questionnaire in Diagnóstico;
 * backend persistent client context (local treatment/purpose workspace exists);
 * state-effect engine;
 * Stage 2 persistence;
 * AI.
+
+Triage local storage uses `dporouter.orientation.v1`, schema/questionnaire
+version 1. Answers are intentionally not part of the existing CompanyState
+JSON backup. Official SII activity catalog snapshot: 674 unique six-digit
+codes, consulted 2026-11-18; SII page publishes no version used by this
+implementation.
 
 Documentation and onboarding assets:
 

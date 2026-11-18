@@ -871,3 +871,55 @@ Consequences:
   without changing the canonical activity model or Stage 1 scopes.
 * UX contract, architecture, status and data contracts must describe
   the access gate as implemented, not as future design.
+
+---
+
+## ADR-056 — Independent local storage for orientation triage
+
+Status: ACCEPTED
+
+Triage answers are auxiliary characterization input and must not mutate the
+legal/work workspace or enter protocol evaluation implicitly.
+
+Decision:
+
+* Persist triage responses under the separate, versioned
+  `dporouter.orientation.v1` localStorage key.
+* Scope each entry by stable advisor ID and company ID. Shared company access
+  does not merge advisors' orientation responses.
+* Keep questionnaire and storage versions explicit; validate reads and writes.
+  Corrupt or future-version data is preserved and blocks writes rather than
+  being silently normalized or replaced.
+* Autosave locally and retain in-memory changes with a retry path when storage
+  fails. Existing company JSON export/import remains unchanged and does not
+  include this separate store.
+* Triage answers never write canonical facts, protocol answers, activity
+  states, reasoning records, dependencies, treatments or applicability
+  conclusions. A future orientation engine requires a separate iteration.
+
+---
+
+## ADR-057 — Computed, read-only Triage orientation in Trabajo
+
+Status: ACCEPTED
+
+Stage 3A presents explanatory review suggestions without changing the legal or
+operational work model.
+
+Decision:
+
+* Evaluate a central, stable-ID rule catalog from Triage answers and an
+  allowlisted read-only projection of existing workspace structures/facts.
+* Produce only ephemeral `amber`, `blue` or `gray` indicators with retained
+  source, active scope and human-readable reasons. Blue is limited to resolved
+  structured antecedents in the active context. Unresolved or conflicting facts
+  cannot support blue.
+* Preserve all reasons for an item; a blue reason determines the displayed
+  level over amber without adding scores or numeric weighting.
+* Never persist computed indicators or write legal facts, protocol answers,
+  activity states, dependencies, or applicability. Every activity remains
+  accessible independently of its indicator.
+* Do not route from `activity_dependencies` or infer sensitive/minor/transfer
+  regimes from SII codes, groups, generic digital services or providers.
+* Do not define activity rules for domains without canonical content. D7–D12
+  remain navigable and their future rules require the relevant approved content.

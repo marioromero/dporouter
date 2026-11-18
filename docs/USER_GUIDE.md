@@ -107,7 +107,45 @@ Reglas útiles:
 Un hecho indica su origen. Si dos orígenes discrepan, se muestra “En conflicto”
 y se requiere una decisión explícita.
 
-## 7. Buscar, Glosario y Referencias
+## 7. Triage de orientación
+
+**Triage** permite caracterizar progresivamente una empresa en ocho bloques
+opcionales. Las respuestas se pueden cambiar o quitar; dejar una opción sin
+marcar no equivale a responder “Ninguna” ni “No lo sé”.
+
+- El selector usa la empresa activa; las respuestas se aíslan por asesor y
+  empresa.
+- Cada cambio se guarda automáticamente en este navegador. Al volver desde
+  Trabajo o recargar la página, las respuestas se restauran.
+- La sección es una ayuda de orientación general, no determina cumplimiento,
+  roles jurídicos ni aplicabilidad de actividades.
+- Las actividades económicas se buscan en una copia local del catálogo oficial
+  del SII; no se consulta al SII mientras se usa el formulario.
+- Si el navegador no permite guardar, los cambios permanecen en memoria durante
+  la sesión y aparece una opción para reintentar.
+
+Las respuestas de Triage usan almacenamiento separado y **no están incluidas**
+en la exportación/importación JSON de Empresa. Borrar los datos del navegador
+puede eliminarlas.
+
+En **Trabajo**, los marcadores de la brújula muestran orientación, separada del
+estado operativo:
+
+- **Ámbar**: existe una señal general de Triage.
+- **Azul**: hay un antecedente estructurado en el workspace del tratamiento o
+  finalidad actualmente activos.
+- **Gris**: no se ha identificado una señal específica con la información
+  disponible; no significa “No aplica”.
+
+Los indicadores no modifican estados ni bloquean actividades. Las señales
+estructuradas de tratamiento o finalidad corresponden solo al contexto activo;
+otros contextos pueden contener antecedentes diferentes. D7–D12 no muestran
+recomendaciones de actividades hasta que su contenido canónico sea incorporado.
+La franja inferior del navegador de contexto repite el nivel de orientación,
+independientemente del fondo de ubicación activa y del borde verde de una
+actividad revisada.
+
+## 8. Buscar, Glosario y Referencias
 
 - **Buscar**: localiza actividades y conceptos por nombre o código.
 - **Glosario**: términos jurídicos y técnicos en lenguaje simple, con ejemplo.
@@ -116,11 +154,11 @@ y se requiere una decisión explícita.
 
 Estas vistas son de consulta y no requieren empresa activa.
 
-## 8. Respaldo: exportar e importar
+## 9. Respaldo: exportar e importar
 
 En **Empresa**, con una empresa activa:
 
-- **Exportar respaldo JSON**: descarga el estado completo de esa empresa.
+- **Exportar respaldo JSON**: descarga el estado del workspace de esa empresa; no incluye las respuestas separadas de Triage.
 - **Importar respaldo JSON**: valida el archivo y lo carga.
 
 Reglas:
@@ -132,7 +170,7 @@ Reglas:
 
 Exportar con frecuencia: limpiar los datos del navegador borra el trabajo local.
 
-## 9. Límites conocidos
+## 10. Límites conocidos
 
 - Sin autenticación ni cifrado reales.
 - Sin backend ni trabajo multiusuario.

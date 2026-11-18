@@ -12,6 +12,7 @@ Sidebar de escritorio; en tablet se abre como drawer.
 
 ```text
 Empresa        /empresa        acceso asesor y empresas
+Triage         /triage         caracterización orientativa por empresa
 Trabajo        /trabajo        ámbitos operativos D1-D12
 Diagnóstico    /diagnostico    caracterización y hechos
 Buscar         /buscar         actividades y conceptos
@@ -30,6 +31,7 @@ Modo visible en topbar:
 |---|---|---|
 | `/` | Inicio | abierta |
 | `/empresa` | Acceso asesor / empresas | abierta |
+| `/triage` | Cuestionario de orientación | asesor + empresa |
 | `/trabajo` | Trabajo (resumen y lista) | asesor + empresa |
 | `/trabajo/:domainKey` | Detalle de dominio | asesor + empresa |
 | `/diagnostico` | Diagnóstico | asesor + empresa |
@@ -52,7 +54,7 @@ Redirects que conservan deep links antiguos:
 
 ## 3. Puerta de acceso
 
-`RequireCompany` protege Trabajo, Diagnóstico, Actividad y Guías.
+`RequireCompany` protege Triage, Trabajo, Diagnóstico, Actividad y Guías.
 
 - Sin asesor en sesión: “Se requiere sesión”, enlace a `/empresa`.
 - Con asesor sin empresa: “Selecciona una empresa”.
@@ -67,7 +69,9 @@ asesor → empresa. Ver `docs/DATA_CONTRACTS.md` §49 y ADR-055.
 - Guías: `content/protocols/*.ts` + `content/protocols/registry.ts`.
 - Proyección humana: `docs/domains/*.md` (generada).
 - Estado local: `localStorage`, clave `dporouter.stage1.v1`.
+- Triage: `localStorage`, clave separada `dporouter.orientation.v1`, aislada por asesor y empresa.
 - Respaldo: exportar/importar JSON por empresa desde `/empresa`.
+- Las respuestas de Triage no se incluyen en el respaldo JSON actual.
 
 No hay backend, cuentas reales ni sincronización.
 

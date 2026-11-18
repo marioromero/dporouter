@@ -1330,4 +1330,71 @@ Rules:
 * No activity owner, deadline, workflow, history or longitudinal audit is
   created by this access layer. Those remain Stage 2 concerns.
 
+## 50. Orientation Triage Responses
 
+The optional orientation triage is a non-legal characterization aid. Its
+answers are not diagnostic facts, protocol answers, applicability inputs,
+activity states or legal conclusions.
+
+Storage is independent from `WorkspaceData` and `CompanyState`:
+
+```text
+localStorage key: dporouter.orientation.v1
+schemaVersion: 1
+entries: Record<advisorId + companyId, TriageEntry>
+TriageEntry:
+  questionnaireVersion: "1"
+  updatedAt: ISO timestamp
+  responses: Record<stableQuestionOrResponseId, answer>
+```
+
+* Scope is the pair `(advisorId, companyId)`; advisors sharing access to one
+  company have separate triage answers.
+* Unanswered values are absent. Explicit `unknown`, `none`, and `no_sales`
+  values remain distinct. An empty multi-select is not a negative answer.
+* Multi-select records contain unique option IDs. Exclusive `none` and
+  `unknown` answers cannot coexist with affirmative selections.
+* T01 stores official SII activity codes and their source descriptions;
+  catalog metadata records the official source URL and consultation date,
+  without asserting a catalog version not published by SII.
+* Reads validate schema and responses. Corrupt or unsupported/future schema
+  data is not normalized, deleted or overwritten. Failed writes preserve the
+  current session answers in memory and are retryable.
+* This store is local, not encrypted or synchronized, and is excluded from
+  existing per-company workspace JSON exports/imports.
+* Triage answers do not write to `diagnosticFacts`, protocol state, reasoning,
+  activity status or treatment structures. Future orientation rules require
+  their own approved contract and must remain presentation-only unless
+  separately authorized.
+
+## 51. Computed Orientation Indicators
+
+Orientation indicators are a read-only presentation derived from the Triage
+response snapshot and an allowlisted projection of existing workspace data.
+They are not stored in `CompanyState`, Triage storage or protocol state.
+
+```text
+level: amber | blue | gray
+target: domain_key | activity_key
+reasons[]:
+  stable rule ID
+  source: Triage response ID | workspace signal
+  scope: company | active treatment | active purpose (when applicable)
+  human explanation
+```
+
+* `amber` is a general review suggestion; `blue` is supported by a specific,
+  resolved workspace antecedent; `gray` means no specific signal was produced
+  from currently available information. None means compliance, obligation or
+  inapplicability.
+* Triage answers alone can only produce `amber`. A `blue` result requires a
+  verified workspace signal in the same active company/treatment/purpose
+  context. Unknown, absent and conflicting workspace facts do not support blue.
+* When multiple reasons target one item, preserve all reasons and display the
+  strongest level (`blue` over `amber` over `gray`); do not score or accumulate
+  signals numerically.
+* Evaluation is pure and recalculated from current inputs. It never writes
+  facts, reasoning, protocol answers, applicability, dependencies or activity
+  work status. Activity dependencies are not orientation evidence.
+* Rules may target only defined domains/activities. Domains without imported
+  canonical activities receive no activity-level rules or provisional content.

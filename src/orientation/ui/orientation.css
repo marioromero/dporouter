@@ -1,0 +1,131 @@
+.orientation-indicator-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.orientation-indicator-badge--amber {
+  color: var(--warn);
+}
+
+.orientation-indicator-badge--blue {
+  color: var(--accent-dark);
+}
+
+.orientation-indicator-badge--gray {
+  color: var(--ink-faint);
+}
+
+.orientation-indicator-badge {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 3px 0;
+  font-size: 11px;
+}
+
+.orientation-indicator-dot {
+  width: 7px;
+  height: 7px;
+}
+
+.orientation-indicator-label {
+  font-weight: 650;
+}
+
+/* ContextNav: preserve `.ctx.current` background and `.ctx.done` border;
+   orientation is an independent, non-interactive inner stripe. */
+.ctx.orientation-nav-level--amber,
+.ctx.orientation-nav-level--blue,
+.ctx.orientation-nav-level--gray {
+  position: relative;
+  padding: 6px 13px 8px;
+}
+
+.ctx.orientation-nav-level--amber::after,
+.ctx.orientation-nav-level--blue::after,
+.ctx.orientation-nav-level--gray::after {
+  content: "";
+  position: absolute;
+  inset-inline: 8px;
+  bottom: 2px;
+  height: 3px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.ctx.orientation-nav-level--amber::after {
+  background: var(--warn);
+  box-shadow: 0 0 0 1px var(--surface);
+}
+
+.ctx.orientation-nav-level--blue::after {
+  background: var(--accent-dark);
+  box-shadow: 0 0 0 1px var(--surface);
+}
+
+.ctx.orientation-nav-level--gray::after {
+  background: var(--line);
+  box-shadow: 0 0 0 1px var(--surface);
+}
+
+/* Keep active navigation and reviewed work visible beside the compass stripe. */
+.ctx.current.ctx.done {
+  border-color: var(--ok);
+  background: var(--accent);
+  color: #fff;
+}
+
+.orientation-nav-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.orientation-domain-cell {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.orientation-domain-cell > a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.orientation-work-row .activity-row-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.orientation-work-row .activity-row-name {
+  display: block;
+  width: 100%;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.orientation-work-row .activity-row-meta {
+  align-self: stretch;
+}
+
+.orientation-work-row .orientation-indicator-badge {
+  margin: 4px 0 0;
+}

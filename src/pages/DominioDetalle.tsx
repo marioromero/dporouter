@@ -9,12 +9,15 @@ import { summarizeDomain } from "../workspace/suggest";
 import { ACTIVITY_WORK_STATUS_LABELS } from "../workspace/types";
 import { statusOf } from "../workspace/store";
 import { NotFoundPage } from "./NotFound";
+import { useOrientationIndicators } from "../orientation/state/useOrientationIndicators";
+import { OrientationBadge } from "../orientation/ui/OrientationIndicator";
 
 export function DominioDetallePage() {
   const { domainKey } = useParams<{ domainKey: string }>();
   const domain = domainKey ? getDomain(domainKey) : undefined;
   const [filter, setFilter] = useState("");
   const { company } = useWorkspace();
+  const orientation = useOrientationIndicators();
 
   const activities = useMemo(() => {
     if (!domain) return [];
@@ -63,6 +66,7 @@ export function DominioDetallePage() {
               {summary.blocked > 0 ? ` · ${summary.blocked} bloqueadas` : ""}
             </p>
           ) : null}
+          <OrientationBadge indicator={orientation.domains[domainKey]} />
         </div>
         <div>
           <CopyLinkButton />
@@ -120,7 +124,7 @@ export function DominioDetallePage() {
                 const st = company ? statusOf(company, a.activity_key) : null;
                 return (
                   <li key={a.activity_key}>
-                    <Link className="domain-row" to={`/actividad/${a.activity_key}`}>
+                    <Link className="domain-row orientation-work-row" to={`/actividad/${a.activity_key}`}>
                       <span className="domain-code" aria-hidden="true">
                         {a.human_code}
                       </span>
@@ -134,6 +138,7 @@ export function DominioDetallePage() {
                             </span>
                           ) : null}
                         </span>
+                        <OrientationBadge indicator={orientation.activities[a.activity_key]} />
                       </span>
                       <span className="domain-go" aria-hidden="true">
                         Abrir →

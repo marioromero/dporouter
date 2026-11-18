@@ -6,6 +6,8 @@ import { useWorkspace } from "../workspace/context";
 import { useGuidanceProtocol } from "../guidance/session";
 import { statusOf } from "../workspace/store";
 import { isFactResolved } from "../guidance/engine";
+import { useOrientationIndicators } from "../orientation/state/useOrientationIndicators";
+import { orientationLevelLabel, orientationNavClass } from "../orientation/ui/OrientationIndicator";
 
 /**
  * Navegador sticky de contexto: dominios D1-D12, actividades del dominio
@@ -35,6 +37,7 @@ export function ContextNav({
   };
 }) {
   const { company } = useWorkspace();
+  const orientation = useOrientationIndicators();
   const activities = domainKey ? domainActivities(domainKey) : [];
   const activityIdx = activityKey ? activities.indexOf(activityKey) : -1;
 
@@ -52,17 +55,22 @@ export function ContextNav({
   return (
     <nav className="contextnav" aria-label="Navegación de contexto">
       <div className="contextnav-row" data-testid="contextnav-domains">
-        {DOMAINS.map((d) => (
-          <Link
-            key={d.domain_key}
-            to={`/trabajo/${d.domain_key}`}
-            className={d.domain_key === domainKey ? "ctx current" : "ctx"}
-            aria-current={d.domain_key === domainKey ? "page" : undefined}
-            title={d.name}
-          >
-            {d.human_code}
-          </Link>
-        ))}
+        {DOMAINS.map((d) => {
+          const indicator = orientation.domains[d.domain_key];
+          const orientationLabel = orientationLevelLabel(indicator.level);
+          return (
+            <Link
+              key={d.domain_key}
+              to={`/trabajo/${d.domain_key}`}
+              className={`${d.domain_key === domainKey ? "ctx current" : "ctx"} ${orientationNavClass(indicator.level)}`}
+              aria-current={d.domain_key === domainKey ? "page" : undefined}
+              title={`${d.name} · Orientación: ${orientationLabel}`}
+            >
+              {d.human_code}
+              <span className="orientation-nav-visually-hidden">Orientación: {orientationLabel}</span>
+            </Link>
+          );
+        })}
       </div>
       {domainKey && activities.length > 0 ? (
         <div className="contextnav-row scroll" data-testid="contextnav-activities">
@@ -72,17 +80,23 @@ export function ContextNav({
               company != null &&
               (statusOf(company, k) === "reviewed" ||
                 statusOf(company, k) === "not_applicable");
+            const indicator = orientation.activities[k];
+            const orientationLabel = orientationLevelLabel(indicator.level);
+            const currentClass = [
+              "ctx",
+              ...(k === activityKey ? ["current"] : []),
+              ...(done ? ["done"] : []),
+            ].join(" ");
             return (
               <Link
                 key={k}
                 to={`/actividad/${k}`}
-                className={
-                  k === activityKey ? "ctx current" : done ? "ctx done" : "ctx"
-                }
+                className={`${currentClass} ${orientationNavClass(indicator.level)}`}
                 aria-current={k === activityKey ? "page" : undefined}
-                title={def?.name ?? k}
+                title={`${def?.name ?? k} · Orientación: ${orientationLabel}`}
               >
                 {def?.human_code ?? k}
+                <span className="orientation-nav-visually-hidden">Orientación: {orientationLabel}</span>
               </Link>
             );
           })}

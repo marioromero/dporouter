@@ -5,6 +5,9 @@ import { getCanonicalActivity } from "../../content/registry";
 import { useWorkspace } from "../workspace/context";
 import { summarizeDomain } from "../workspace/suggest";
 import { ContextNav } from "../components/ContextNav";
+import { useOrientationIndicators } from "../orientation/state/useOrientationIndicators";
+import { OrientationBadge } from "../orientation/ui/OrientationIndicator";
+import { OrientationLegend } from "../orientation/ui/OrientationLegend";
 
 /**
  * Trabajo: única entrada global D1-D12. Resumen para escanear estado,
@@ -15,6 +18,7 @@ import { ContextNav } from "../components/ContextNav";
 export function TrabajoPage() {
   const { company } = useWorkspace();
   const [view, setView] = useState<"resumen" | "lista">("lista");
+  const orientation = useOrientationIndicators();
 
   const summaries = DOMAINS.map((d) => {
     const activities = d.activity_keys
@@ -31,6 +35,7 @@ export function TrabajoPage() {
         Los doce ámbitos operativos en una única superficie. El estado
         describe avance de revisión, nunca cumplimiento jurídico.
       </p>
+      <OrientationLegend />
       <div className="actions" role="group" aria-label="Vista de trabajo">
         <button
           type="button"
@@ -69,9 +74,12 @@ export function TrabajoPage() {
                 return (
                   <tr key={s.domainKey}>
                     <td>
-                      <Link to={`/trabajo/${s.domainKey}`}>
-                        {s.domain.human_code} · {s.domain.name}
-                      </Link>
+                      <div className="orientation-domain-cell">
+                        <Link to={`/trabajo/${s.domainKey}`}>
+                          {s.domain.human_code} · {s.domain.name}
+                        </Link>
+                        <OrientationBadge indicator={orientation.domains[s.domainKey]} />
+                      </div>
                     </td>
                     <td>
                       {s.total === 0 ? (
@@ -108,7 +116,7 @@ export function TrabajoPage() {
               : undefined;
             return (
               <li key={s.domainKey}>
-                <Link className="domain-row" to={`/trabajo/${s.domainKey}`}>
+                <Link className="domain-row orientation-work-row" to={`/trabajo/${s.domainKey}`}>
                   <span className="domain-code" aria-hidden="true">
                     {s.domain.human_code}
                   </span>
@@ -133,6 +141,7 @@ export function TrabajoPage() {
                         <span>{s.blocked} bloqueadas</span>
                       ) : null}
                     </span>
+                    <OrientationBadge indicator={orientation.domains[s.domainKey]} />
                   </span>
                   <span className="domain-go" aria-hidden="true">
                     Abrir →

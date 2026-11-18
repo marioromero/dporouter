@@ -1,0 +1,282 @@
+[
+  {
+    "id": "triage.t03.diversity.dpo_assessment",
+    "level": "amber",
+    "source": { "kind": "triage", "questionId": "T03_treatment_diversity", "acceptedValues": ["several", "many"], "originLabel": "T03 · Diversidad de operaciones y finalidades" },
+    "target": { "kind": "activity", "activityKey": "dpo.need_assessment" },
+    "message": "La diversidad declarada aporta contexto para una evaluación profesional de necesidad de DPO; no determina su resultado."
+  },
+  {
+    "id": "triage.t03.diversity.mpi_assessment",
+    "level": "amber",
+    "source": { "kind": "triage", "questionId": "T03_treatment_diversity", "acceptedValues": ["several", "many"], "originLabel": "T03 · Diversidad de operaciones y finalidades" },
+    "target": { "kind": "activity", "activityKey": "mpi.need_assessment" },
+    "message": "La diversidad declarada puede aportar contexto para evaluar profesionalmente la conveniencia de un MPI; no implica obligación."
+  },
+  {
+    "id": "triage.t03.diversity.inventory",
+    "level": "amber",
+    "source": { "kind": "triage", "questionId": "T03_treatment_diversity", "acceptedValues": ["several", "many"], "originLabel": "T03 · Diversidad de operaciones y finalidades" },
+    "target": { "kind": "activity", "activityKey": "treatment.inventory_create" },
+    "message": "La diversidad declarada puede ser útil al revisar cómo se identifican y describen las operaciones en el inventario."
+  },
+  {
+    "id": "triage.t04.groups.inventory",
+    "level": "amber",
+    "source": { "kind": "triage", "questionId": "T04_people_groups", "acceptedValues": ["customers", "service_users", "workers", "job_applicants", "suppliers", "partners", "patients", "students", "beneficiaries", "visitors", "public", "other"], "originLabel": "T04 · Grupos de personas declarados" },
+    "target": { "kind": "activity", "activityKey": "treatment.inventory_create" },
+    "message": "Los grupos declarados pueden servir de contexto al revisar su representación en el inventario; no permiten inferir categorías de datos."
+  },
+  {
+    "id": "triage.t05.automated.assessment",
+    "level": "amber",
+    "source": { "kind": "triage", "questionId": "T05_operation_characteristics", "acceptedValues": ["profiling", "automated_decisions"], "originLabel": "T05 · Perfilamiento o decisiones automatizadas declaradas" },
+    "target": { "kind": "activity", "activityKey": "automated_decision.scope_assess" },
+    "message": "La característica declarada puede justificar revisar el alcance de estos usos. La selección no determina que se cumpla un umbral jurídico."
+  },
+  {
+    "id": "triage.t05.special-care.domain",
+    "level": "amber",
+    "source": { "kind": "triage", "questionId": "T05_operation_characteristics", "acceptedValues": ["special_care"], "originLabel": "T05 · Necesidad de especial cuidado declarada" },
+    "target": { "kind": "domain", "domainKey": "d5" },
+    "message": "La empresa identifica una operación que requiere especial cuidado; aún debe precisarse su naturaleza, sin atribuir automáticamente un régimen."
+  },
+  {
+    "id": "triage.t06.roles.assessment",
+    "level": "amber",
+    "source": { "kind": "triage", "questionId": "T06_processing_roles", "acceptedValues": ["determines_purposes", "follows_instructions", "coordinated"], "originLabel": "T06 · Participación general declarada" },
+    "target": { "kind": "activity", "activityKey": "treatment.actor_roles" },
+    "message": "La participación declarada puede orientar la identificación de actores y roles para cada tratamiento; no asigna un rol jurídico global."
+  },
+  {
+    "id": "triage.t06.external-roles.relationship-map",
+    "level": "amber",
+    "source": { "kind": "triage", "questionId": "T06_processing_roles", "acceptedValues": ["follows_instructions", "coordinated"], "originLabel": "T06 · Instrucciones de clientes o coordinación declaradas" },
+    "target": { "kind": "activity", "activityKey": "third_party.relationship_map" },
+    "message": "La participación externa declarada puede justificar mapear y clasificar la relación concreta; no determina que sea un encargo o corresponsabilidad."
+  },
+  {
+    "id": "triage.t07.external-relations.relationship-map",
+    "level": "amber",
+    "source": { "kind": "triage", "questionId": "T07_external_relationships", "acceptedValues": ["technology", "admin_services", "support", "hosting", "own_purposes", "services_for_us", "subcontracting", "collaboration", "other"], "originLabel": "T07 · Relaciones externas declaradas" },
+    "target": { "kind": "activity", "activityKey": "third_party.relationship_map" },
+    "message": "Las relaciones externas declaradas pueden justificar su identificación y clasificación; no permiten presumir el rol jurídico del tercero."
+  },
+  {
+    "id": "workspace.d1.mpi.active.reporting",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "company.mpi_active" },
+    "target": { "kind": "activity", "activityKey": "mpi.internal_reporting_and_whistleblowing" },
+    "message": "El estado estructurado del MPI indica actividad; revisar este componente sin presumir su estado de implementación."
+  },
+  {
+    "id": "workspace.d1.mpi.active.disciplinary",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "company.mpi_active" },
+    "target": { "kind": "activity", "activityKey": "mpi.internal_disciplinary_framework" },
+    "message": "El estado estructurado del MPI indica actividad; revisar este componente sin presumir su estado de implementación."
+  },
+  {
+    "id": "workspace.d1.mpi.active.internal-regulation",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "company.mpi_active" },
+    "target": { "kind": "activity", "activityKey": "mpi.internal_regulation_integrate" },
+    "message": "El estado estructurado del MPI indica actividad; revisar este componente sin presumir su estado de implementación."
+  },
+  {
+    "id": "workspace.d1.mpi.implementation.assemble",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "company.mpi_being_implemented" },
+    "target": { "kind": "activity", "activityKey": "mpi.assemble_program" },
+    "message": "El estado estructurado del MPI indica adopción o implementación; el programa puede revisarse en ese contexto."
+  },
+  {
+    "id": "workspace.d2.treatment.identified.inventory",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.identified" },
+    "target": { "kind": "activity", "activityKey": "treatment.inventory_create" },
+    "message": "Hay un tratamiento identificado en el workspace; revisar el inventario correspondiente sin asumir que está completo."
+  },
+  {
+    "id": "workspace.d2.actors.roles",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.actors_exist" },
+    "target": { "kind": "activity", "activityKey": "treatment.actor_roles" },
+    "message": "Hay actores registrados en el tratamiento activo; revisar sus roles en ese tratamiento, sin trasladarlos a otros."
+  },
+  {
+    "id": "workspace.d2.purposes.define",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.purposes_exist" },
+    "target": { "kind": "activity", "activityKey": "treatment.purpose_define" },
+    "message": "Hay finalidades registradas en el tratamiento activo; revisar su definición en ese contexto."
+  },
+  {
+    "id": "workspace.d2.sources.traceability",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.sources_exist" },
+    "target": { "kind": "activity", "activityKey": "treatment.source_traceability" },
+    "message": "Hay fuentes registradas en el tratamiento activo; su presencia no determina si la trazabilidad es suficiente."
+  },
+  {
+    "id": "workspace.d2.data.links.minimization",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.linked_data_exists" },
+    "target": { "kind": "activity", "activityKey": "data.minimization_review" },
+    "message": "Hay datos vinculados a finalidades en el tratamiento activo; revisar su relación con esas finalidades."
+  },
+  {
+    "id": "workspace.d2.retention.schedule",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.retention_rules_exist" },
+    "target": { "kind": "activity", "activityKey": "retention.schedule" },
+    "message": "Hay reglas de conservación registradas en el tratamiento activo; revisar sus criterios y vínculos."
+  },
+  {
+    "id": "workspace.d3.policy.publication",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "company.d3_policy_assembled" },
+    "target": { "kind": "activity", "activityKey": "transparency.publication_validate" },
+    "message": "El workspace registra una política ensamblada; revisar su disponibilidad y publicación."
+  },
+  {
+    "id": "workspace.d3.consent.route.design",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d3_consent_route" },
+    "target": { "kind": "activity", "activityKey": "consent.mechanism_design" },
+    "message": "La finalidad activa tiene una ruta de consentimiento registrada; revisar el diseño de su mecanismo."
+  },
+  {
+    "id": "workspace.d3.consent.mechanism.freedom",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d3_consent_mechanism_designed" },
+    "target": { "kind": "activity", "activityKey": "consent.freedom_assess" },
+    "message": "Hay un mecanismo de consentimiento diseñado para la finalidad activa; revisar la evaluación de libertad correspondiente."
+  },
+  {
+    "id": "workspace.d3.consent.mechanism.proof",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d3_consent_mechanism_designed" },
+    "target": { "kind": "activity", "activityKey": "consent.proof_design" },
+    "message": "Hay un mecanismo de consentimiento diseñado para la finalidad activa; revisar su capacidad de prueba."
+  },
+  {
+    "id": "workspace.d3.consent.mechanism.withdrawal",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d3_consent_mechanism_designed" },
+    "target": { "kind": "activity", "activityKey": "consent.withdrawal_enable" },
+    "message": "Hay un mecanismo de consentimiento diseñado para la finalidad activa; revisar cómo se habilita su retiro."
+  },
+  {
+    "id": "workspace.d4.automated-uses.scope",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.d4_automated_uses_exist" },
+    "target": { "kind": "activity", "activityKey": "automated_decision.scope_assess" },
+    "message": "Hay usos automatizados registrados en el tratamiento activo; revisar individualmente su alcance."
+  },
+  {
+    "id": "workspace.d4.automated-uses.safeguards",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.d4_covered_automated_uses_exist" },
+    "target": { "kind": "activity", "activityKey": "automated_decision.safeguards_enable" },
+    "message": "Hay un uso registrado como comprendido por el alcance evaluado; revisar sus salvaguardas en el tratamiento activo."
+  },
+  {
+    "id": "workspace.d5.sensitive",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d5_sensitive_candidate" },
+    "target": { "kind": "activity", "activityKey": "sensitive.lawfulness_assess" },
+    "message": "Un dato vinculado a la finalidad activa tiene una señal estructurada de sensibilidad; evaluar el régimen sin tratar la señal como conclusión jurídica."
+  },
+  {
+    "id": "workspace.d5.health-biological",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d5_health_biological_candidate" },
+    "target": { "kind": "activity", "activityKey": "sensitive.health_biological_assess" },
+    "message": "La finalidad activa tiene una señal estructurada de salud o perfil biológico; verificar su contexto y el régimen correspondiente."
+  },
+  {
+    "id": "workspace.d5.biometric",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d5_biometric_candidate" },
+    "target": { "kind": "activity", "activityKey": "sensitive.biometric_assess" },
+    "message": "La finalidad activa declara un uso de identificación biométrica como candidato; evaluar si el tratamiento corresponde a la definición jurídica."
+  },
+  {
+    "id": "workspace.d5.minors",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d5_minors_candidate" },
+    "target": { "kind": "activity", "activityKey": "minors.processing_assess" },
+    "message": "La finalidad activa tiene una señal contextual de participación de menores; verificar las condiciones concretas sin inferirlas desde el rubro."
+  },
+  {
+    "id": "workspace.d5.research",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d5_research_candidate" },
+    "target": { "kind": "activity", "activityKey": "research.public_interest_assess" },
+    "message": "La finalidad activa registra una candidatura de investigación de interés público; la exclusividad y el interés público requieren evaluación profesional."
+  },
+  {
+    "id": "workspace.d5.geolocation",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d5_geolocation_candidate" },
+    "target": { "kind": "activity", "activityKey": "geolocation.requirements_assess" },
+    "message": "Hay una señal estructurada de geolocalización vinculada a la finalidad activa; revisar sus requisitos sin concluir la licitud."
+  },
+  {
+    "id": "workspace.d5.title-iii",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d5_titleIII_candidate" },
+    "target": { "kind": "activity", "activityKey": "financial.titleIII_scope" },
+    "message": "La ruta registrada en D2 presenta una candidatura al Título III; su ámbito material requiere evaluación profesional."
+  },
+  {
+    "id": "workspace.d6.relationship-map",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.d6_relationships_exist" },
+    "target": { "kind": "activity", "activityKey": "third_party.relationship_map" },
+    "message": "Hay una relación con terceros registrada en el tratamiento activo; revisar su clasificación profesional."
+  },
+  {
+    "id": "workspace.d6.cession.lawfulness",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d6_cessions_exist" },
+    "target": { "kind": "activity", "activityKey": "cession.lawfulness_assess" },
+    "message": "El workspace contiene una relación registrada como cesión en la finalidad activa; revisar su fundamento sin asumir que el registro resuelve la licitud."
+  },
+  {
+    "id": "workspace.d6.cession.instrument",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "purpose.d6_cessions_exist" },
+    "target": { "kind": "activity", "activityKey": "cession.instrument_validate" },
+    "message": "El workspace contiene una relación registrada como cesión en la finalidad activa; revisar el instrumento correspondiente."
+  },
+  {
+    "id": "workspace.d6.processor.contract",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.d6_processors_exist" },
+    "target": { "kind": "activity", "activityKey": "processor.contract_validate" },
+    "message": "El workspace contiene una relación tipada como encargado en el tratamiento activo; revisar el contrato sin asumir que el registro determina el rol jurídico."
+  },
+  {
+    "id": "workspace.d6.processor.instructions",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.d6_processors_exist" },
+    "target": { "kind": "activity", "activityKey": "processor.instruction_controls_validate" },
+    "message": "El workspace contiene una relación tipada como encargado en el tratamiento activo; revisar instrucciones y límites operacionales."
+  },
+  {
+    "id": "workspace.d6.processor.security-exit",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.d6_processors_exist" },
+    "target": { "kind": "activity", "activityKey": "processor.security_exit_validate" },
+    "message": "El workspace contiene una relación tipada como encargado en el tratamiento activo; revisar obligaciones operacionales y de cierre, sin sustituir D9."
+  },
+  {
+    "id": "workspace.d6.subprocessor.authorization",
+    "level": "blue",
+    "source": { "kind": "workspace", "signalKey": "treatment.d6_subprocessors_exist" },
+    "target": { "kind": "activity", "activityKey": "subprocessor.authorization_validate" },
+    "message": "El workspace contiene una relación tipada como subencargo en el tratamiento activo; revisar autorización sin inferirla del nombre del proveedor."
+  }
+]

@@ -6,6 +6,7 @@ import { GlossaryFloat } from "./GlossaryFloat";
 
 const NAV = [
   { to: "/empresa", label: "Empresa", code: "EM", end: false },
+  { to: "/triage", label: "Triage", code: "TG", end: true },
   { to: "/trabajo", label: "Trabajo", code: "TR", end: false },
   { to: "/diagnostico", label: "Diagnóstico", code: "DG", end: true },
   { to: "/buscar", label: "Buscar", code: "BU", end: true },
@@ -26,6 +27,7 @@ function modeFor(pathname: string): { label: string; className: string } | null 
 function crumbsFor(pathname: string): string {
   if (pathname === "/") return "Inicio";
   if (pathname === "/empresa") return "Empresa";
+  if (pathname === "/triage") return "Triage";
   if (pathname.startsWith("/trabajo/")) return `Trabajo / ${pathname.split("/")[2] ?? ""}`;
   if (pathname === "/trabajo") return "Trabajo";
   if (pathname.startsWith("/actividad/")) {

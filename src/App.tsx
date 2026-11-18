@@ -14,6 +14,7 @@ import { BuscarPage } from "./pages/Buscar";
 import { GlosarioPage } from "./pages/Glosario";
 import { ReferenciasPage } from "./pages/Referencias";
 import { NotFoundPage } from "./pages/NotFound";
+import { TriagePage } from "./orientation";
 
 export function App() {
   return (
@@ -23,6 +24,7 @@ export function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/empresa" element={<EmpresaPage />} />
+            <Route path="/triage" element={<RequireCompany><TriagePage /></RequireCompany>} />
             <Route path="/trabajo" element={<RequireCompany><TrabajoPage /></RequireCompany>} />
             <Route path="/trabajo/:domainKey" element={<RequireCompany><DominioDetallePage /></RequireCompany>} />
             <Route path="/diagnostico" element={<RequireCompany><DiagnosticoPage /></RequireCompany>} />

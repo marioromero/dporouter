@@ -1,0 +1,320 @@
+.triage-intro {
+  margin-bottom: 10px;
+}
+
+.triage-save-line {
+  min-height: 24px;
+  margin: 6px 0 12px;
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.triage-save-error {
+  color: var(--danger);
+}
+
+.triage-save-error .btn {
+  margin-left: 6px;
+}
+
+.triage-sections {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.triage-section {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+
+.triage-section:last-child {
+  border-bottom: 0;
+}
+
+.triage-section:focus-within {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.triage-section-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 50px;
+  padding: 10px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.triage-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.triage-section-summary::after {
+  content: "";
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--ink-faint);
+  border-bottom: 2px solid var(--ink-faint);
+  transform: rotate(45deg);
+  margin: -4px 2px 0 0;
+}
+
+.triage-section[open] > .triage-section-summary::after {
+  transform: rotate(225deg);
+  margin-top: 4px;
+}
+
+.triage-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.triage-section-code {
+  flex: 0 0 auto;
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #c8d9e8;
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.triage-section-state {
+  margin-left: auto;
+  color: var(--ink-faint);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.triage-section-content {
+  padding: 0 18px 16px;
+  min-width: 0;
+}
+
+.triage-prompt {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.triage-help,
+.triage-source-note {
+  margin: 6px 0 12px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  max-width: 82ch;
+}
+
+.triage-options {
+  border: 0;
+  padding: 0;
+  margin: 12px 0 16px;
+  min-width: 0;
+}
+
+.triage-subquestion {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 650;
+  margin: 0 0 6px;
+}
+
+.triage-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 2px;
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.triage-option input {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 3px 0 0;
+  accent-color: var(--accent);
+}
+
+.triage-option:focus-within {
+  border-radius: 4px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.triage-other-field {
+  max-width: 620px;
+  margin: 12px 0;
+}
+
+.triage-other-field textarea {
+  min-height: 82px;
+  resize: vertical;
+}
+
+.triage-selected-activity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fafbfc;
+  overflow-wrap: anywhere;
+}
+
+.triage-combobox-field {
+  position: relative;
+  max-width: 760px;
+  margin: 10px 0 14px;
+}
+
+.triage-combobox-results {
+  position: relative;
+  max-height: min(300px, 45vh);
+  overflow-y: auto;
+  margin-top: 2px;
+  border: 1px solid var(--line);
+  border-radius: 0 0 6px 6px;
+  background: var(--surface);
+  box-shadow: 0 6px 16px rgba(23, 32, 46, 0.12);
+}
+
+.triage-combobox-option {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.triage-combobox-option:last-child {
+  border-bottom: 0;
+}
+
+.triage-combobox-option strong {
+  flex: 0 0 56px;
+  color: var(--accent-dark);
+}
+
+.triage-combobox-option span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.triage-combobox-option:hover,
+.triage-combobox-option.active,
+.triage-combobox-option[aria-selected="true"] {
+  background: var(--accent-soft);
+}
+
+.triage-combobox-empty {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.triage-selected-list {
+  list-style: none;
+  margin: 6px 0 12px;
+  padding: 0;
+  max-width: 760px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.triage-selected-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+.triage-selected-list li:last-child {
+  border-bottom: 0;
+}
+
+.triage-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.triage-section::details-content {
+  block-size: 0;
+  opacity: 0;
+  overflow: clip;
+  transition: block-size 180ms ease, opacity 180ms ease, content-visibility 180ms allow-discrete;
+}
+
+.triage-section[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .triage-section::details-content,
+  .triage-section-summary::after {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .triage-section-summary {
+    align-items: flex-start;
+    padding-inline: 12px;
+  }
+
+  .triage-section-title {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .triage-section-state {
+    font-size: 11px;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .triage-section-content {
+    padding-inline: 12px;
+  }
+
+  .triage-selected-activity,
+  .triage-selected-list li {
+    align-items: flex-start;
+  }
+}
